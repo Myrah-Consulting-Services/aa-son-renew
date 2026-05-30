@@ -1,0 +1,88 @@
+<form [formGroup]="benefitsForm" (ngSubmit)="onSubmit()">
+          <div class="modal-body">
+            <!-- Benefit Plan -->
+            <!-- <div class="mb-3"> -->
+              <label class="form-label">
+                 Benefit Name <span class="text-danger">*</span>
+              </label>
+              <span *ngIf="data?.length==0 || data==null || data==undefined">
+              <select class="form-select" formControlName="benefitPlan">
+                <option value="">Select...</option>
+                <option *ngFor="let plan of benefitPlans" [value]="plan.id">
+                  {{ plan.payslip_name }}
+                </option>
+              </select>
+              <div *ngIf="benefitsForm.get('benefitPlan')?.touched && benefitsForm.get('benefitPlan')?.invalid" class="text-danger small">
+                Benefit plan is required
+              </div>
+              </span>
+              <span *ngIf="data?.length > 0 || data!=null" class="form-control">
+                {{data.payslip_name}}
+              </span>
+            <!-- </div> -->
+            <!-- <hr /> -->
+
+            <!-- Employer Contribution -->
+            <h6 class="fw-semibold">Employer's Contribution</h6>
+            <div class="input-group mb-2">
+              <select class="form-select w-auto" formControlName="employer_amount_mode">
+                <option *ngFor="let mode of contributionModes" [value]="mode.id">{{ mode.label }}</option>
+              </select>
+              <input type="number" class="form-control w-25" formControlName="employer_amount_value" step="0.01" min="0"/>
+              <span class="input-group-text">per pay period</span>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Contribution Type</label>
+              <select class="form-select" formControlName="employer_end_rule">
+                <option *ngFor="let type of contributionTypes" [value]="type.id">{{ type.label }}</option>
+              </select>
+            </div>
+
+            <div class="mb-2" *ngIf="benefitsForm.get('employer_end_rule')?.value == 2 && benefitsForm.get('employer_end_rule')?.value">
+              <label class="form-label">Total Amount to Deduct</label>
+              <div class="input-group">
+                <span class="input-group-text">AED</span>
+                <input type="number" class="form-control" formControlName="employer_end_total_amount" step="0.01" min="0"/>
+              </div>
+            </div>
+
+            <hr />
+
+            <!-- Employee Contribution -->
+            <h6 class="fw-semibold">Employee's Contribution</h6>
+            <div class="input-group mb-2">
+              <select class="form-select w-auto" formControlName="employee_amount_mode">
+                <option *ngFor="let mode of contributionModes" [value]="mode.id">{{ mode.label }}</option>
+              </select>
+              <input type="number" class="form-control w-25" formControlName="employee_amount_value" step="0.01" min="0"/>
+              <span class="input-group-text">per pay period</span>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Contribution Type</label>
+              <select class="form-select" formControlName="employee_end_rule">
+                <option *ngFor="let type of contributionTypes" [value]="type.id">{{ type.label }}</option>
+              </select>
+            </div>
+
+            <div class="mb-2" *ngIf="benefitsForm.get('employee_end_rule')?.value == 2 && benefitsForm.get('employee_end_rule')?.value">
+              <label class="form-label">Total Amount to Deduct</label>
+              <div class="input-group">
+                <span class="input-group-text">AED</span>
+                <input type="number" class="form-control" formControlName="employee_end_total_amount" step="0.01" min="0"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="modal-footer justify-content-between">
+            <div>
+              <button type="submit" class="btn btn-primary me-2">Save</button>
+              <button type="button" class="btn btn-secondary" (click)="benefitsModalRef.close()">Cancel</button>
+            </div>
+            <div>
+              <p class="text-end text-danger small">* indicates mandatory fields</p>
+            </div>
+          </div>
+        </form>

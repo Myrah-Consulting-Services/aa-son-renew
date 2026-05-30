@@ -1,0 +1,163 @@
+// Card Styling
+.card {
+  border: 1px solid #e0e4f4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #41299b;
+  }
+}
+
+// Form Elements
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  
+  i {
+    font-size: 0.875rem;
+    color: #6c757d;
+    cursor: help;
+    
+    &:hover {
+      color: #41299b;
+    }
+  }
+}
+
+.form-control, .form-select {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  border-color: #e0e4f4;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  
+  &::placeholder {
+    color: #adb5bd;
+    font-size: 0.875rem;
+  }
+  
+  &:hover {
+    border-color: #41299b;
+  }
+  
+  &:focus {
+    border-color: #41299b;
+    box-shadow: 0 0 0 0.2rem rgba(65, 41, 155, 0.15);
+  }
+}
+
+// Input Groups
+.input-group {
+  .form-control {
+    border-right: 0;
+    
+    &:focus {
+      box-shadow: none;
+      border-color: #e0e4f4;
+    }
+  }
+  
+  .form-select {
+    border-left: 0;
+    padding-left: 0.5rem;
+    background-position: right 0.5rem center;
+    
+    &:focus {
+      box-shadow: none;
+      border-color: #e0e4f4;
+    }
+  }
+  
+  &:focus-within {
+    .form-control,
+    .form-select {
+      border-color: #41299b;
+    }
+  }
+}
+
+// Buttons
+.btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  
+  i {
+    font-size: 1rem;
+  }
+  
+  &.btn-primary {
+    background-color: #41299b;
+    border-color: #41299b;
+    
+    &:hover:not(:disabled) {
+      background-color: darken(#41299b, 5%);
+      border-color: darken(#41299b, 5%);
+      transform: translateY(-1px);
+    }
+    
+    &:disabled {
+      background-color: lighten(#41299b, 20%);
+      border-color: lighten(#41299b, 20%);
+    }
+  }
+  
+  &.btn-secondary {
+    background-color: #f8f9fa;
+    border-color: #e0e4f4;
+    color: #495057;
+    
+    &:hover {
+      background-color: #e9ecef;
+      border-color: #dee2e6;
+      color: #212529;
+    }
+  }
+}
+
+// Form Check
+.form-check {
+  .form-check-input {
+    &:checked {
+      background-color: #41299b;
+      border-color: #41299b;
+    }
+  }
+}
+
+// Tooltips
+:host ::ng-deep .tooltip {
+  font-size: 0.8125rem;
+  
+  .tooltip-inner {
+    background-color: #41299b;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .tooltip-arrow::before {
+    border-top-color: #41299b;
+  }
+}
+
+// Form Validation
+.text-danger {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+// Character Counter
+.text-muted {
+  font-size: 0.75rem;
+}

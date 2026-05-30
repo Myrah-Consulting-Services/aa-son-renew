@@ -1,0 +1,167 @@
+<!-- Compact Modal Header -->
+<div class="modal-header">
+  <div class="d-flex align-items-center gap-2">
+    <i class="fa fa-person-x-fill"></i>
+    <div>
+      <h6 class="mb-0 fw-bold">Employee Exit Process</h6>
+      <small class="text-muted">{{ employeeData.first_name }} {{ employeeData.last_name }}</small>
+    </div>
+  </div>
+  <button type="button" class="btn-close" aria-label="Close" (click)="onCancel()"></button>
+</div>
+
+<!-- Compact Modal Body -->
+<div class="modal-body p-0">
+  <div class="exit-container">
+    <!-- Loading State -->
+    <div *ngIf="!exitForm" class="loading-state">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="loading-text">Loading form...</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row g-0" *ngIf="exitForm">
+      <!-- Left: Employee Info -->
+      <div class="col-md-4 employee-sidebar">
+        <div class="employee-card">
+          <div class="employee-avatar">
+            <i class="bi bi-person-circle"></i>
+          </div>
+          
+          <div class="employee-info">
+            <h6 class="employee-name">{{ employeeData.first_name }} {{ employeeData.last_name }}</h6>
+            <span class="employee-id">{{ employeeData.emp_id }}</span>
+            
+            <div class="info-list">
+              <div class="info-row">
+                <span class="label">Designation</span>
+                <span class="value">{{ employeeData.designation_name }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Department</span>
+                <span class="value">{{ employeeData.department_name }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Joining Date</span>
+                <span class="value">{{ formatDate(employeeData.joining_date) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Exit Form -->
+      <div class="col-md-8 form-section">
+        <form [formGroup]="exitForm" (ngSubmit)="onSubmit()" class="exit-form">
+          <!-- Last Working Day & Exit Reason -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label-compact required">Last Working Day</label>
+              <input type="date" 
+                     class="form-control form-control-sm" 
+                     formControlName="lastWorkingDay"
+                     [class.is-invalid]="isFieldInvalid('lastWorkingDay')">
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('lastWorkingDay')">
+                Required
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-compact required">Reason for Exit</label>
+              <select class="form-select form-select-sm" 
+                      formControlName="reason_for_exit"
+                      [class.is-invalid]="isFieldInvalid('reason_for_exit')">
+                <option value="">Select reason</option>
+                <option *ngFor="let reason of reasonsForExit" [value]="reason.id">{{ reason.reason_name }}</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('reason_for_exit')">
+                Required
+              </div>
+            </div>
+          </div>
+
+          <!-- Pay Settlement Section -->
+          <div class="form-section-block mb-3">
+            <label class="section-label">Final Pay Settlement</label>
+            <div class="payment-options">
+              <div class="payment-option">
+                <input class="form-check-input" 
+                       type="radio" 
+                       name="paySettlement" 
+                       id="regularPay"
+                       value="regular"
+                       formControlName="paySettlement">
+                <label class="option-label" for="regularPay">
+                  <i class="bi bi-calendar-check me-1"></i>
+                  Regular pay schedule
+                </label>
+              </div>
+              <div class="payment-option">
+                <input class="form-check-input" 
+                       type="radio" 
+                       name="paySettlement" 
+                       id="specificDate"
+                       value="specific"
+                       formControlName="paySettlement">
+                <label class="option-label" for="specificDate">
+                  <i class="bi bi-calendar-event me-1"></i>
+                  Specific date
+                </label>
+              </div>
+            </div>
+            
+            <!-- Specific Date Input -->
+            <div class="specific-date-wrapper" *ngIf="exitForm.get('paySettlement')?.value === 'specific'">
+              <input type="date" 
+                     class="form-control form-control-sm" 
+                     formControlName="specificPayDate"
+                     placeholder="Select date">
+            </div>
+          </div>
+
+          <!-- Personal Email -->
+          <div class="mb-3">
+            <label class="form-label-compact">
+              Personal Email Address
+              <i class="bi bi-info-circle text-muted" 
+                 title="For future communications"></i>
+            </label>
+            <input type="email" 
+                   class="form-control form-control-sm" 
+                   formControlName="personalEmail"
+                   placeholder="personal@email.com">
+          </div>
+
+          <!-- Notes -->
+          <div class="mb-3">
+            <label class="form-label-compact">Additional Notes</label>
+            <textarea class="form-control form-control-sm" 
+                      rows="3" 
+                      formControlName="notes"
+                      placeholder="Enter any additional notes or comments..."></textarea>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="form-footer">
+            <div class="d-flex gap-2 justify-content-end">
+              <button type="button" 
+                      class="btn btn-outline-secondary btn-sm" 
+                      (click)="onCancel()">
+                <i class="bi bi-x-circle me-1"></i>Cancel
+              </button>
+              <button type="submit" 
+                      class="btn btn-danger btn-sm"
+                      [disabled]="exitForm.invalid || isSubmitting">
+                <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-1"></span>
+                <i class="bi bi-check-circle me-1" *ngIf="!isSubmitting"></i>
+                {{ isSubmitting ? 'Processing...' : 'Proceed with Exit' }}
+              </button>
+            </div>
+            <small class="text-muted mt-2 d-block">* Required fields</small>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

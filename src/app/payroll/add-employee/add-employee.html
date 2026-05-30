@@ -1,0 +1,1322 @@
+<div class="container-fluid" *ngIf="!showSuccess">
+  <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
+    <!-- Tab Navigation -->
+    <!-- <ul class="nav text-center d-flex justify-content-center">
+      <li class="nav-item position-relative"
+        [ngClass]="{'completed': basicCompleted, 'active': activeTab === 'basicInfo'}">
+        <div class="add-employee-nav-step">1</div>
+        <a class="add-employee-nav-text nav-link" href="javascript:void(0)" (click)="setActiveTab('basicInfo')">Basic Information</a>
+      </li>
+      <li class="nav-item position-relative"
+        [ngClass]="{'completed': salaryCompleted, 'active': activeTab === 'salaryDetails'}">
+        <div class="add-employee-nav-step">2</div>
+        <a class="add-employee-nav-text nav-link" href="javascript:void(0)" [class.disabled]="!isTabEnabled('salaryDetails')"  (click)="setActiveTab('salaryDetails') && isTabEnabled('salaryDetails')">Salary Details</a>
+      </li>
+      <li class="nav-item position-relative"
+        [ngClass]="{'completed': personalCompleted, 'active': activeTab === 'personalDetails'}">
+        <div class="add-employee-nav-step">3</div>
+        <a class="add-employee-nav-text nav-link" href="javascript:void(0)" [class.disabled]="!isTabEnabled('personalDetails')" (click)="setActiveTab('personalDetails') && isTabEnabled('personalDetails')">Personal Details</a>
+      </li>
+      <li class="nav-item position-relative"
+        [ngClass]="{'completed': paymentCompleted, 'active': activeTab === 'paymentDetails'}">
+        <div class="add-employee-nav-step">4</div>
+        <a class="add-employee-nav-text nav-link" href="javascript:void(0)" [class.disabled]="!isTabEnabled('paymentDetails')" (click)="setActiveTab('paymentDetails') && isTabEnabled('paymentDetails')">Payment Details</a>
+      </li>
+      <li class="nav-item position-relative"
+        [ngClass]="{'completed': documentsCompleted, 'active': activeTab === 'documents', 'disabled': !isTabEnabled('documents')}">
+        <div class="add-employee-nav-step">5</div>
+        <a class="add-employee-nav-text nav-link"  (click)="setActiveTab('documents') && isTabEnabled('documents')" [class.disabled]="!isTabEnabled('documents')"
+          href="javascript:void(0)">Documents</a>
+      </li>
+    </ul> -->
+
+    <!-- <ul class="nav step-tabs mb-4 flex-nowrap overflow-auto">
+      <li class="nav-item"  [ngClass]="{'completed': basicCompleted, 'active': activeTab === 'basicInfo'}">
+        <a class="nav-link" [class.active]="activeTab === 'basicInfo'" (click)="setActiveTab('basicInfo')">
+          <i class="bi bi-person-lines-fill"></i>
+          <span class="step-title">Basic Information</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'salaryDetails'"
+          [class.disabled]="!isTabEnabled('salaryDetails')"
+          (click)="isTabEnabled('salaryDetails') && setActiveTab('salaryDetails')">
+          <i class="bi bi-cash-stack"></i>
+          <span class="step-title">Salary Details</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'personalDetails'"
+          [class.disabled]="!isTabEnabled('personalDetails')"
+          (click)="isTabEnabled('personalDetails') && setActiveTab('personalDetails')">
+          <i class="bi bi-card-checklist"></i>
+          <span class="step-title">Personal Details</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'paymentDetails'"
+          [class.disabled]="!isTabEnabled('paymentDetails')"
+          (click)="isTabEnabled('paymentDetails') && setActiveTab('paymentDetails')">
+          <i class="bi bi-credit-card-2-front"></i>
+          <span class="step-title">Payment Details</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'documents'" [class.disabled]="!isTabEnabled('documents')"
+          (click)="isTabEnabled('documents') && setActiveTab('documents')">
+          <i class="bi bi-files"></i>
+          <span class="step-title">Documents</span>
+        </a>
+      </li>
+    </ul> -->
+    <!-- Step Navigation -->
+    <ul class="nav step-tabs mb-4 flex-nowrap overflow-auto position-relative">
+      <li class="nav-item" [ngClass]="{'completed': basicCompleted, 'active': activeTab === 'basicInfo'}">
+        <a class="nav-link" [class.active]="activeTab === 'basicInfo'" (click)="setActiveTab('basicInfo')">
+          <div class="step-icon">
+            <i *ngIf="!basicCompleted" class="bi bi-person-lines-fill"></i>
+            <i *ngIf="basicCompleted" class="bi bi-check-circle-fill text-success"></i>
+          </div>
+          <span class="step-title">Basic Information</span>
+        </a>
+      </li>
+      <!-- [class.disabled]="!isTabEnabled('salaryDetails')" -->
+      <!-- isTabEnabled('salaryDetails') &&  -->
+      <li class="nav-item" [ngClass]="{'completed': salaryCompleted, 'active': activeTab === 'salaryDetails'}">
+        <a class="nav-link" [class.active]="activeTab === 'salaryDetails'" (click)="setActiveTab('salaryDetails')">
+          <div class="step-icon">
+            <i *ngIf="!salaryCompleted" class="bi bi-cash-stack"></i>
+            <i *ngIf="salaryCompleted" class="bi bi-check-circle-fill text-success"></i>
+          </div>
+          <span class="step-title">Salary Details</span>
+        </a>
+      </li>
+
+      <li class="nav-item" [ngClass]="{'completed': personalCompleted, 'active': activeTab === 'personalDetails'}">
+        <a class="nav-link" [class.active]="activeTab === 'personalDetails'"
+          [class.disabled]="!isTabEnabled('personalDetails')"
+          (click)="isTabEnabled('personalDetails') && setActiveTab('personalDetails')">
+          <div class="step-icon">
+            <i *ngIf="!personalCompleted" class="bi bi-card-checklist"></i>
+            <i *ngIf="personalCompleted" class="bi bi-check-circle-fill text-success"></i>
+          </div>
+          <span class="step-title">Personal Details</span>
+        </a>
+      </li>
+
+      <li class="nav-item" [ngClass]="{'completed': paymentCompleted, 'active': activeTab === 'paymentDetails'}">
+        <a class="nav-link" [class.active]="activeTab === 'paymentDetails'"
+          [class.disabled]="!isTabEnabled('paymentDetails')"
+          (click)="isTabEnabled('paymentDetails') && setActiveTab('paymentDetails')">
+          <div class="step-icon">
+            <i *ngIf="!paymentCompleted" class="bi bi-credit-card-2-front"></i>
+            <i *ngIf="paymentCompleted" class="bi bi-check-circle-fill text-success"></i>
+          </div>
+          <span class="step-title">Payment Details</span>
+        </a>
+      </li>
+
+      <li class="nav-item" [ngClass]="{'completed': documentsCompleted, 'active': activeTab === 'documents'}">
+        <a class="nav-link" [class.active]="activeTab === 'documents'" [class.disabled]="!isTabEnabled('documents')"
+          (click)="isTabEnabled('documents') && setActiveTab('documents')">
+          <div class="step-icon">
+            <i *ngIf="!documentsCompleted" class="bi bi-files"></i>
+            <i *ngIf="documentsCompleted" class="bi bi-check-circle-fill text-success"></i>
+          </div>
+          <span class="step-title">Documents</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Progress Bar -->
+    <div class="progress" style="height: 4px;">
+      <div class="progress-bar bg-primary" role="progressbar" [style.width.%]="progressPercentage"
+        aria-valuenow="{{progressPercentage}}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+
+      <!-- Basic Information Tab -->
+      <div *ngIf="activeTab === 'basicInfo'" formGroupName="basicInfo">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Basic Information</h6>
+          </div>
+          <div class="card-body">
+            <div class="row g-2">
+              <!-- Row 0: Dates -->
+
+
+              <!-- Row 1: Employee Name -->
+              <div class="col-md-6">
+                <label class="form-label">Employee Name <span class="text-danger">*</span></label>
+                <div class="row">
+                  <div class="col">
+                    <input type="text" class="form-control form-control-sm" formControlName="first_name"
+                      placeholder="First Name">
+                    <div
+                      *ngIf="employeeForm.get('basicInfo.first_name')?.invalid && employeeForm.get('basicInfo.first_name')?.touched"
+                      class="text-danger small mt-1">
+                      <div *ngIf="employeeForm.get('basicInfo.first_name')?.errors?.['required']">First name is required
+                      </div>
+                      <div *ngIf="employeeForm.get('basicInfo.first_name')?.errors?.['maxlength']">First name cannot
+                        exceed 100 characters</div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <input type="text" class="form-control form-control-sm" formControlName="last_name"
+                      placeholder="Last Name">
+                    <div
+                      *ngIf="employeeForm.get('basicInfo.last_name')?.invalid && employeeForm.get('basicInfo.last_name')?.touched"
+                      class="text-danger small mt-1">
+                      <div *ngIf="employeeForm.get('basicInfo.last_name')?.errors?.['required']">Last name is required
+                      </div>
+                      <div *ngIf="employeeForm.get('basicInfo.last_name')?.errors?.['maxlength']">Last name cannot
+                        exceed 100 characters</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Work Email & Mobile -->
+              <div class="col-md-6">
+                <label class="form-label">Work Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control form-control-sm" formControlName="work_email"
+                  placeholder="name@company.com">
+                <div
+                  *ngIf="employeeForm.get('basicInfo.work_email')?.invalid && employeeForm.get('basicInfo.work_email')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.work_email')?.errors?.['required']">Work email is required
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 2: Mobile Number -->
+              <div class="col-md-6">
+                <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                <div class="input-group input-group-sm">
+                  <select class="form-select form-select-sm" style="max-width: 120px;" formControlName="phone_country">
+                    <option value="" selected>Select Country</option>
+                    <option *ngFor="let country of countryList.countryList" [value]="country.id">
+                      {{ country.name }} ({{ country.phone_code }})
+                    </option>
+                  </select>
+                  <input type="tel" class="form-control form-control-sm" formControlName="phone_number"
+                    placeholder="Enter Mobile Number">
+                </div>
+                <div
+                  *ngIf="employeeForm.get('basicInfo.phone_number')?.invalid && employeeForm.get('basicInfo.phone_number')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.phone_number')?.errors?.['required']">Phone number is required
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gender -->
+              <div class="col-md-6">
+                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                <select class="form-select form-select-sm" formControlName="gender">
+                  <option value="" selected>Select</option>
+                  <option value="1">Male</option>
+                  <option value="2">Female</option>
+                  <option value="3">Other</option>
+                </select>
+                <div
+                  *ngIf="employeeForm.get('basicInfo.gender')?.invalid && employeeForm.get('basicInfo.gender')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.gender')?.errors?.['required']">Gender is required</div>
+                </div>
+              </div>
+              <!-- Employee id -->
+              <div class="col-md-6">
+                <label class="form-label">Employee ID <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm" formControlName="emp_id"
+                  placeholder="Enter Employee Id">
+                <div
+                  *ngIf="employeeForm.get('basicInfo.emp_id')?.invalid && employeeForm.get('basicInfo.emp_id')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.emp_id')?.errors?.['required']">Employee ID is required</div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Date of Joining <span class="text-danger">*</span></label>
+                <input type="date" class="form-control form-control-sm" formControlName="joining_date">
+                <div
+                  *ngIf="employeeForm.get('basicInfo.joining_date')?.invalid && employeeForm.get('basicInfo.joining_date')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.joining_date')?.errors?.['required']">Joining date is required
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirmation Date</label>
+                <input type="date" class="form-control form-control-sm" formControlName="confirmation_date">
+              </div>
+              <!-- Row 3: Job Title & Department -->
+              <div class="col-md-6">
+                <label class="form-label">Job Title <span class="text-danger">*</span></label>
+                <input class="form-control form-control-sm" formControlName="job_title" placeholder="Enter Job Title">
+                <div
+                  *ngIf="employeeForm.get('basicInfo.job_title')?.invalid && employeeForm.get('basicInfo.job_title')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.job_title')?.errors?.['maxlength']">Job title cannot exceed
+                    100 characters</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Department <span class="text-danger">*</span></label>
+                <div class="d-flex gap-2">
+                  <select class="form-select form-select-sm" formControlName="department">
+                    <option value="" selected>Select Department</option>
+                    <option *ngFor="let department of departmentList" [value]="department.id">
+                      {{department.department_name}}</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openDepartmentModal()">
+                    <i class="bi bi-plus"></i>
+                  </button>
+                </div>
+                <div *ngIf="employeeForm.get('basicInfo.department')?.invalid && employeeForm.get('basicInfo.department')?.touched" class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.department')?.errors?.['required']">Department is required</div>
+              </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Branch <span class="text-danger">*</span></label>
+                <div class="d-flex gap-2">
+                  <select class="form-select form-select-sm" formControlName="branch">
+                    <option value="" selected>Select Branch</option>
+                    <option *ngFor="let branch of branchList" [value]="branch.id">{{branch.branchName}}</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openBranchModal()">
+                    <i class="bi bi-plus"></i>
+                  </button>
+                </div>
+                <div *ngIf="employeeForm.get('basicInfo.branch')?.invalid && employeeForm.get('basicInfo.branch')?.touched" class="text-danger small mt-1">
+                <div *ngIf="employeeForm.get('basicInfo.branch')?.errors?.['required']">
+                  Branch is required</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Designation <span class="text-danger">*</span></label>
+                <div class="d-flex gap-2">
+                  <select class="form-select form-select-sm" formControlName="designation">
+                    <option value="" selected>Select Designation</option>
+                    <option *ngFor="let designation of designationList" [value]="designation.id">
+                      {{designation.designation_name}}</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openDesignationModal()">
+                    <i class="bi bi-plus"></i>
+                  </button>
+                </div>
+                <div *ngIf="employeeForm.get('basicInfo.designation')?.invalid && employeeForm.get('basicInfo.designation')?.touched" class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.designation')?.errors?.['required']">Designation is required</div>
+                </div>
+              </div>
+
+
+              <!-- Row 4: Work Location -->
+              <div class="col-md-3">
+                <label class="form-label">Work Location <span class="text-danger">*</span></label>
+                <div class="d-flex gap-2">
+                  <select class="form-select form-select-sm" formControlName="location">
+                    <option value="" selected>Select Location</option>
+                    <option [value]="a.id" *ngFor="let a of locationPayList">{{a.Location_name}}</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openLocationPayModal()">
+                    <i class="bi bi-plus"></i>
+                  </button>
+                </div>
+                <div *ngIf="employeeForm.get('basicInfo.location')?.invalid && employeeForm.get('basicInfo.location')?.touched" class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.location')?.errors?.['required']">Location is required</div>
+                </div>
+              </div>
+
+              <!-- Row 5: Contract Details -->
+              <div class="col-md-4">
+                <label class="form-label">Contract Type <span class="text-danger">*</span></label>
+                <select class="form-select form-select-sm" formControlName="contract_type">
+                  <option value="" selected>Select Contract Type</option>
+                  <option [value]="1">Limited</option>
+                  <option [value]="2">Unlimited</option>
+                </select>
+                <div
+                  *ngIf="employeeForm.get('basicInfo.contract_type')?.invalid && employeeForm.get('basicInfo.contract_type')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.contract_type')?.errors?.['required']">Contract type is
+                    required</div>
+                  <div *ngIf="employeeForm.get('basicInfo.contract_type')?.errors?.['pattern']">Please select a valid
+                    contract type (Limited or Unlimited)</div>
+                </div>
+              </div>
+
+              <!-- Row 6: Contract Dates -->
+              <div class="col-md-4" *ngIf="employeeForm.get('basicInfo.contract_type')?.value == '1'">
+                <label class="form-label">Contract Start Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-control form-control-sm" formControlName="contract_start_date">
+              </div>
+              <div class="col-md-4" *ngIf="employeeForm.get('basicInfo.contract_type')?.value == '1'">
+                <label class="form-label">Contract End Date <span class="text-danger"
+                    *ngIf="employeeForm.get('basicInfo.contract_type')?.value === 'Limited'">*</span></label>
+                <input type="date" class="form-control form-control-sm" formControlName="contract_end_date"
+                  [required]="employeeForm.get('basicInfo.contract_type')?.value === '1'">
+                <div *ngIf="employeeForm.get('basicInfo')?.errors?.['invalidContractDates']"
+                  class="text-danger small mt-1">
+                  Contract end date is required for Limited contracts and must be after start date
+                </div>
+              </div>
+
+              <!-- Row 7: Identity Documents -->
+              <div class="col-md-3">
+                <label class="form-label">Emirates ID <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm" formControlName="emirates_id"
+                  placeholder="Enter Emirates ID">
+                <div
+                  *ngIf="employeeForm.get('basicInfo.emirates_id')?.invalid && employeeForm.get('basicInfo.emirates_id')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.emirates_id')?.errors?.['required']">Emirates ID is required
+                  </div>
+                  <div *ngIf="employeeForm.get('basicInfo.emirates_id')?.errors?.['maxlength']">Emirates ID cannot
+                    exceed 50 characters</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Passport Number <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm" formControlName="passport_number"
+                  placeholder="Enter Passport Number">
+                <div
+                  *ngIf="employeeForm.get('basicInfo.passport_number')?.invalid && employeeForm.get('basicInfo.passport_number')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.passport_number')?.errors?.['required']">Passport number is
+                    required</div>
+                  <div *ngIf="employeeForm.get('basicInfo.passport_number')?.errors?.['maxlength']">Passport number
+                    cannot exceed 50 characters</div>
+                </div>
+              </div>
+
+              <!-- Row 8: Visa & Labour Card -->
+
+              <div class="col-md-3">
+                <label class="form-label">Labour Card Number <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm" formControlName="labour_card_number"
+                  placeholder="Enter Labour Card Number">
+                <div
+                  *ngIf="employeeForm.get('basicInfo.labour_card_number')?.invalid && employeeForm.get('basicInfo.labour_card_number')?.touched"
+                  class="text-danger small mt-1">
+                  <div *ngIf="employeeForm.get('basicInfo.labour_card_number')?.errors?.['required']">Labour card number
+                    is required for WPS</div>
+                  <div *ngIf="employeeForm.get('basicInfo.labour_card_number')?.errors?.['maxlength']">Labour card
+                    number cannot exceed 50 characters</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Visa Expiry <span class="text-danger">*</span></label>
+                <input type="date" class="form-control form-control-sm" formControlName="visa_expiry">
+              </div>
+              <!-- Portal Access & Social Security Details -->
+              <div class="col-12">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" formControlName="portal_access_enabled"
+                    id="portalAccess">
+                  <label class="form-check-label" for="portalAccess">Enable Portal Access</label>
+
+                </div>
+                <div class="p-2">
+                  <div class="font-mm ms-6">The employee will be able to view payslips and social security benefit
+                    details through the employee portal.</div>
+                </div>
+              </div>
+              <label for="" class="form-label">Social Security Benefit Details <span
+                  class="text-danger">*</span></label>
+              <div>
+                <div class="font-mm">Tell us about the origin country of the employee so we can enable the
+                  applicable social security benefits. You can review them later in Settings > Social Security.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Is this Employee a GCC National?</label>
+                <div class="d-flex gap-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" [value]="true" formControlName="is_gcc_national"
+                      (change)="onGccNationalChange($event)">
+                    <label class="form-check-label" for="gccYes">Yes</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" [value]="false" formControlName="is_gcc_national"
+                      (change)="onGccNationalChange($event)">
+                    <label class="form-check-label" for="gccNo">No</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Select Origin Country/Nationality </label>
+                <select class="form-select form-select-sm" formControlName="origin_country"
+                  (change)="onOriginCountryChange($event)">
+                  <option value="">Select</option>
+                  <option *ngFor="let c of countryCodes" [value]="c.id">{{ c.name }}</option>
+                </select>
+              </div>
+              <div class="row mt-2">
+                <div class="note rounded-2 mt-6" *ngIf="note">
+                  <div>
+                    <b>Note:</b>
+                    <span>
+                      {{ note }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="is_first_time_employed"
+                    id="firstTimeEmp">
+                  <label class="form-check-label" for="firstTimeEmp">Is this employee employed for the first
+                    time?</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <label for="">Custom Fields</label>
+                <div *ngFor="let field of settings?.custom_fields" class="mb-3">
+                  <label>{{ field.name }}</label>
+
+                  <!-- Render based on field type -->
+                  <input *ngIf="field.field_type === 'Text'" type="text" class="form-control form-control-sm"
+                    [formControlName]="field.name">
+
+                  <input *ngIf="field.field_type === 'Number'" type="number" class="form-control form-control-sm"
+                    [formControlName]="field.name">
+
+                  <input *ngIf="field.field_type === 'Date'" type="date" class="form-control form-control-sm"
+                    [formControlName]="field.name">
+                </div>
+              </div>
+
+              <!-- Row 10: Custom Fields -->
+              <!-- <div class="col-md-6">
+            <label class="form-label">Emergency Contact</label>
+            <input type="tel" class="form-control" formControlName="custom_fields.emergency_contact" placeholder="+971501234568">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Blood Group</label>
+            <select class="form-select" formControlName="custom_fields.blood_group">
+              <option value="">Select Blood Group</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+          </div> -->
+            </div>
+            <span class="text-danger me-auto">* indicates mandatory fields</span>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+              <!-- <button type="button" class="btn btn-outline-secondary btn-sm" (click)="skipTab()">Skip</button> -->
+              <button type="submit" class="btn btn-primary btn-sm">Save & Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salary Details Tab -->
+      <div *ngIf="activeTab === 'salaryDetails'" formGroupName="salaryDetails" class="salary-details-container">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Salary Details</h6>
+          </div>
+          <div class="card-body">
+            <!-- Salary Structure Selector -->
+            <div class="row mb-4 align-items-center">
+              <label class="col-md-2 col-form-label">Salary Structure</label>
+              <div class="col-md-6">
+                <div class="position-relative">
+                  <input type="text" formControlName="salaryStructureName" class="form-control form-control-sm"
+                    placeholder="Search and select salary structure..." [value]="salaryStructureSearchTerm"
+                    (focus)="onSalaryStructureFocus()" (input)="onSalaryStructureInput($event)"
+                    (blur)="onSalaryStructureBlur()" />
+                  <!-- Dropdown for salary structure search -->
+                  <div class="dropdown-menu show position-absolute w-100"
+                    *ngIf="showSalaryStructureDropdown && filteredSalaryStructures.length > 0"
+                    style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                    <div class="dropdown-item" *ngFor="let structure of filteredSalaryStructures"
+                      (mousedown)="selectSalaryStructure(structure)" style="cursor: pointer; padding: 8px 12px;">
+                      <div class="fw-bold">{{ structure.name }}</div>
+                      <div class="small text-muted">{{ structure.description }}</div>
+                      <div class="small text-primary">{{ structure.total_components }} components</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Annual CTC -->
+            <!-- <div class="row mb-4 align-items-center">
+          <label class="col-md-2 col-form-label">Annual CTC <span class="text-danger">*</span></label>
+          <div class="col-md-4">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">AED </span>
+              <input type="number" class="form-control form-control-sm" formControlName="annualCTC" (input)="onCalculationTypeChange()">
+              <span class="input-group-text">per year</span>
+            </div>
+          </div>
+        </div> -->
+
+            <!-- CTC Validation Message -->
+            <!-- <div class="row mb-3" *ngIf="ctcValidationMessage">
+          <div class="col-md-6 offset-md-2">
+            <div class="alert" 
+                 [ngClass]="{
+                   'alert-success': ctcValidationStatus === 'success',
+                   'alert-warning': ctcValidationStatus === 'warning',
+                   'alert-info': ctcValidationStatus === 'info'
+                 }"
+                 role="alert">
+              <small>{{ ctcValidationMessage }}</small>
+            </div>
+          </div>
+        </div> -->
+
+            <!-- Earnings Section -->
+            <div class="col-12 mb-4">
+              <!-- <h4 class="text-success font-semibold font-xmedium">Benefits</h4> -->
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-success fw-bold mb-0">Earnings</h6>
+                <!-- <button type="button" class="btn btn-outline-success btn-sm" (click)="addEarningsRow()">
+                  <i class="bi bi-plus me-1"></i>Add Row
+                </button> -->
+              </div>
+              <div class="">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Salary Components</th>
+                      <th>Calculation Type</th>
+                      <th>Monthly Amount</th>
+                      <th>Annual Amount</th>
+                    </tr>
+                  </thead>
+
+                  <tbody formArrayName="earnings">
+                    <tr *ngFor="let earning of earnings.controls; let i = index" [formGroupName]="i">
+
+                      <!-- Dropdown only if category has heads -->
+                      <td *ngIf="earning.get('isDropdown')?.value; else noHeads">
+                        <select class="form-select" formControlName="head_name" (change)="onHeadChange(i)">
+                          <option value="">Select</option>
+                          <option *ngFor="let head of salaryData[i]?.heads" [ngValue]="head.head_name">
+                            {{ head.head_name }}
+                          </option>
+                        </select>
+                      </td>
+
+                      <!-- Otherwise show plain text -->
+                      <ng-template #noHeads>
+                        <td>{{ earning.get('categoryName')?.value }}</td>
+                      </ng-template>
+
+                      <td>
+                        <div class="d-flex w-100" *ngIf="earning.get('calculation_type')?.value != 1">
+                          <!-- Percentage value input -->
+                          <input type="number" class="form-control form-control-sm text-end"
+                            formControlName="calculation_value" style="width: 80px;"
+                            (input)="onCalculationValueChange(i)" />
+
+                          <!-- Label -->
+                          <span class="form-control-plaintext border rounded p-2 text-center"
+                            style="min-width: 120px; border-left: none; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                            <ng-container [ngSwitch]="earning.get('calculation_type')?.value">
+                              <span *ngSwitchCase="2">% of Basic</span>
+                              <span *ngSwitchDefault>Other</span>
+                            </ng-container>
+                          </span>
+                        </div>
+                        <span class="form-control-plaintext border rounded p-2 w-100"
+                          *ngIf="earning.get('calculation_type')?.value == 1">
+                          Fixed
+                        </span>
+                        <!-- {{ earning.get('calculation_type_name')?.value }} -->
+                      </td>
+                      <td>
+                        <input type="number" class="form-control" formControlName="monthly_value"
+                          (input)="onMonthlyAmountChange(i)" />
+                      </td>
+                           <td>
+                        <div class="d-flex align-items-center">
+                          <input type="text" class="form-control me-2" formControlName="annual_value">
+                          <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeEarningsRow(i)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                    </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Total Gross Pay Row -->
+              <div class="row mt-3">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-center p-3 bg-light border rounded">
+                    <div class="fw-bold">Total Gross Pay</div>
+                    <div class="d-flex gap-4">
+                      <div>
+                        <span class="text-muted me-2">Monthly Amount:</span>
+                        <span class="fw-bold">AED {{ grossMonthlyEarnings | number:'1.2-2' }}</span>
+                      </div>
+                      <div>
+                        <span class="text-muted me-2">Annual Amount:</span>
+                        <span class="fw-bold">AED {{ grossAnnualEarnings | number:'1.2-2' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- benefit -->
+              <!-- <div class="card mt-3" *ngIf="benefitsData?.length > 0">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0">Benefits</h6>
+                </div>
+                <div class="card-body p-0">
+                  <table class="table mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Deduction Name</th>
+                        <th>Calculation Type</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let benefit of benefitsData">
+                        <td width="42%">
+                          <div>{{ benefit.head_name }}</div>
+                          <div style="border-left: 1px solid #ececec;" class="ms-2">
+                            <div class="contribution-splitup">
+                              Employer's Contribution
+
+                            </div>
+                            <div class="contribution-splitup">
+                              Employee's Contribution
+
+                            </div>
+                          </div>
+                        </td>
+
+                        <td width="42%" style="padding-top: 30px;">
+                      
+                          <div>
+                            <span *ngIf="benefit.employer_end_rule=='3'">
+                              Fixed Amount of AED{{ benefit.employer_amount_value }}
+                            </span>
+                            <span *ngIf="benefit.employer_end_rule=='2'">
+                            {{ benefit.employer_amount_value }}  % of Basic
+                            </span>
+                          </div>
+                          <div>
+                            <span *ngIf="benefit.employee_amount_mode=='1'">
+                              Fixed Amount of AED{{ benefit.employee_amount_value }}
+                            </span>
+                            <span *ngIf="benefit.employee_amount_mode=='2'">
+                              {{ benefit.employee_amount_value }} % of Basic
+                            </span>
+                          </div>
+                        </td>
+                        <td width="16%" style="padding-top: 30px;">
+                          <button class="btn btn-sm btn-outline-primary me-2"
+                            (click)="editBenefit(benefit,benefitModal)">
+                            <i class="bi bi-pencil text-primary"></i>
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger" (click)="deleteBenefit(benefit.id)">
+                            <i class="bi bi-trash text-danger"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="salary-pdf-form p-7 pt-2" *ngIf="benefitsData?.length == 0">
+                <h4 class="font-semibold font-xmedium">Benefits</h4>
+                <hr class="mx-2">
+
+                <div class="d-flex align-items-start px-2">
+                  <i class="fas fa-notes-medical fa-2x text-warning mt-1"></i>
+
+                  <div class="me-2">
+                    <div class="font-semibold mb-2">
+                      Do you offer medical insurance for this employee?
+                    </div>
+                    <div>Add medical insurance and define contribution details for this employee.</div>
+                  </div>
+
+                  <button type="button" class="btn btn-outline-primary mt-1 mb-3" (click)="openBenefitModal(benefitModal); $event.stopPropagation(); $event.preventDefault();">
+                    <i class="bi bi-plus-circle me-2"></i> Add Benefit
+                  </button>
+                </div>
+              </div> -->
+
+              <!-- Modal Template (hidden, but needed) -->
+              <ng-template #benefitModal let-modal>
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Add Benefit</h5>
+                    <button type="button" class="btn-close" aria-label="Close"
+                      (click)="modal.dismiss('Cross click')"></button>
+                  </div>
+                  <div class="modal-body">
+                    <app-benefit-creation [employee]="employeeId" [data]="benefitsData"
+                      [benefitsModalRef]="benefitsModalRef"></app-benefit-creation>
+                  </div>
+                </div>
+              </ng-template>
+
+            </div>
+            <span class="text-danger me-auto">* indicates mandatory fields</span>
+
+            <div class="d-flex justify-content-end gap-2 mt-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="skipTab()">Skip</button>
+              <button type="submit" class="btn btn-primary btn-sm">Save & Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Details Tab -->
+      <div *ngIf="activeTab === 'paymentDetails'" formGroupName="paymentDetails" class="payment-details-container">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-credit-card-2-front me-2"></i>Payment Details</h6>
+          </div>
+          <div class="card-body">
+            <h6 class="mb-2">How would you like to pay this employee?<span class="text-danger">*</span></h6>
+
+            <div class="list-group mb-3">
+              <!-- Manual Bank Transfer -->
+              <label class="list-group-item py-2 payment-option"
+                [ngClass]="{'is-selected': employeeForm.get('paymentDetails.payment_mode')?.value == '1'}">
+                <div class="d-flex align-items-start gap-3 option-body">
+                  <div class="mode-icon bg-primary-subtle text-primary"><i class="bi bi-bank2"></i></div>
+                  <div class="flex-grow-1">
+                    <div class="option-title">Manual Bank Transfer / WPS</div>
+                    <div class="option-desc">Download the bank advice to make payments via your bank's website, or
+                      download the SIF file to pay through the Wage Protection System (WPS).</div>
+                  </div>
+                  <input class="form-check-input ms-2 mt-1" type="radio" value="1" formControlName="payment_mode">
+                </div>
+                <div class="card mb-2" *ngIf="employeeForm.get('paymentDetails.payment_mode')?.value == '1'">
+                  <div class="card-body">
+                    <div class="row g-2">
+                      <div class="col-md-6">
+                        <label class="form-label">Account Holder Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" formControlName="account_holder_name"
+                          placeholder="Enter Account Holder Name">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Bank Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" formControlName="bank_name"
+                          placeholder="Enter Bank Name">
+                      </div>
+                      <div class="col-md-12">
+                        <label class="form-label">IBAN Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm iban-input" formControlName="iban"
+                          placeholder="AE07 2410 2303 1907" autocomplete="off">
+                        <small class="text-muted">Use UAE format: AE + 21 characters. We recommend copying directly from
+                          your bank statement.</small>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">SWIFT Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" formControlName="swift_code"
+                          placeholder="e.g. EBILLAEAD">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Cheque -->
+              <label class="list-group-item py-2 payment-option"
+                [ngClass]="{'is-selected': employeeForm.get('paymentDetails.payment_mode')?.value == '2'}">
+                <div class="d-flex align-items-center gap-3 option-body">
+                  <div class="mode-icon bg-secondary-subtle text-secondary"><i class="bi bi-receipt"></i></div>
+                  <div class="flex-grow-1 option-title">Cheque</div>
+                  <input class="form-check-input ms-2" type="radio" value="2" formControlName="payment_mode"
+                    checked="employeeForm.get('paymentDetails.payment_mode')?.value == '2'">
+                </div>
+              </label>
+
+              <!-- Cash -->
+              <label class="list-group-item py-2 payment-option"
+                [ngClass]="{'is-selected': employeeForm.get('paymentDetails.payment_mode')?.value == '3'}">
+                <div class="d-flex align-items-center gap-3 option-body">
+                  <div class="mode-icon bg-success-subtle text-success"><i class="bi bi-cash-coin"></i></div>
+                  <div class="flex-grow-1 option-title">Cash</div>
+                  <input class="form-check-input ms-2" type="radio" value="3" formControlName="payment_mode"
+                    [checked]="employeeForm.get('paymentDetails.payment_mode')?.value == '3'">
+                </div>
+              </label>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mt-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="skipTab()">Skip</button>
+              <button type="submit" class="btn btn-primary btn-sm">Save and Continue</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents Tab -->
+      <div *ngIf="activeTab === 'documents'" class="documents-container" formGroupName="documents">
+        <!-- <div class="alert alert-light small border-start border-1 border-secondary mb-3">
+          <i class="bi bi-info-circle me-2"></i>
+          <div class="font-sm mb-2">
+            Safely upload scanned personal documents of this employee for record-keeping.
+          </div>
+        </div> -->
+
+
+        <!-- prajus -->
+
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-light d-flex align-items-center justify-content-between">
+            <h6 class="mb-0">
+              <i class="bi bi-file-earmark-text me-2"></i> Employee Documents
+            </h6>
+            <span class="badge bg-primary">{{ documentList?.length || 0 }} Uploaded</span>
+          </div>
+
+          <div class="card-body">
+            <div class="row g-4">
+
+              <!-- Left: Status Panel -->
+              <div class="col-lg-5">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-header bg-white fw-semibold">
+                    <i class="bi bi-clipboard-check me-1 text-success"></i> Document Status
+                  </div>
+                  <div class="card-body small">
+
+                    <!-- Required Docs -->
+                    <div class="mb-3">
+                      <h6 class="text-primary fw-bold small mb-2">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Required
+                      </h6>
+                      <div *ngFor="let doc of requiredDocumentTypes"
+                        class="d-flex justify-content-between align-items-center p-2 border rounded mb-2 cursor-pointer"
+                        (click)="openUploadModal(uploadDocs,doc.type)"
+                        [class.bg-light-success]="isDocumentUploaded(doc.type_name)">
+                        <div>
+                          <i class="bi" [class.bi-check-circle-fill]="isDocumentUploaded(doc.type_name)"
+                            [class.bi-circle]="!isDocumentUploaded(doc.type_name)"></i>
+                          <span class="ms-2">{{ doc.type_name }}</span>
+                        </div>
+                        <span *ngIf="!isDocumentUploaded(doc.type_name)" class="badge bg-warning">Pending</span>
+                        <span *ngIf="isDocumentUploaded(doc.type_name)" class="badge bg-success">Complete</span>
+                      </div>
+                    </div>
+
+                    <!-- Optional Docs -->
+                    <div>
+                      <h6 class="text-secondary fw-bold small mb-2">
+                        <i class="bi bi-plus-circle me-1"></i> Optional
+                      </h6>
+                      <div *ngFor="let doc of optionalDocumentTypes"
+                        class="d-flex justify-content-between align-items-center p-2 border rounded mb-2"
+                        [class.bg-light-success]="isDocumentUploaded(doc.type_name)">
+                        <div>
+                          <i class="bi" [class.bi-check-circle-fill]="isDocumentUploaded(doc.type_name)"
+                            [class.bi-circle]="!isDocumentUploaded(doc.type_name)"></i>
+                          <span class="ms-2">{{ doc.type_name }}</span>
+                        </div>
+                        <span *ngIf="!isDocumentUploaded(doc.type_name)" class="badge bg-secondary">Optional</span>
+                        <span *ngIf="isDocumentUploaded(doc.type_name)" class="badge bg-success">Complete</span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Upload Panel -->
+              <div class="col-lg-7">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-header bg-white fw-semibold">
+                    <i class="bi bi-cloud-arrow-up me-1"></i> Upload Documents
+                  </div>
+                  <div class="card-body text-center">
+
+                    <!-- Upload Area -->
+                    <div class="upload-box border rounded p-4 position-relative">
+                      <i class="bi bi-cloud-arrow-up fs-3 text-primary"></i>
+                      <p class="mb-1">Drag & Drop or
+                        <span class="btn-link" (click)="fileInput1.click()">Choose File</span>
+                      </p>
+                      <input type="file" #fileInput1 class="d-none" multiple accept="image/*,application/pdf"
+                        (change)="onFileSelected($event,uploadDocs)">
+                      <small class="text-muted d-block mt-2">Allowed: PDF, Images (Max 10MB)</small>
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #uploadDocs let-modal>
+
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="departmentModalLabel">Upload</h5>
+              <button type="button" class="btn-close" (click)="modal.dismiss()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="upload-section">
+                <!-- upload.component.html -->
+                <div class="add-document-container text-center p-4 border rounded position-relative"
+                  (drop)="onFileDrop($event)" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+                  [class.border-primary]="isDragOver">
+
+                  <div class="upload-document-icon mb-2">
+                    <i class="bi bi-upload fs-3 text-primary"></i>
+                    <p class="text-muted small mb-2">Upload a document</p>
+
+                    <!-- Hidden file input -->
+                    <input type="file" #fileInput class="d-none" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      (change)="onFileSelected($event)">
+
+                    <!-- Trigger button -->
+                    <button type="button" class="btn btn-sm btn-outline-primary" (click)="fileInput.click()">
+                      <i class="bi bi-plus-lg me-1"></i> Choose File
+                    </button>
+                  </div>
+
+                  <p class="upload-documents-notes small">
+                    Allowed: PDF, DOCX, JPG, PNG (Max 10MB)
+                  </p>
+
+                  <p *ngIf="selectedFile" class="mt-2 text-success fw-bold">
+                    Selected: {{ selectedFile.name }}
+                  </p>
+                </div>
+                <div class="row g-3 mt-3">
+                  <div class="col-md-12">
+                    <label class="form-label">Document Title <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" placeholder="Enter document title"
+                      formControlName="title">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">File Type <span class="text-danger">*</span></label>
+                    <select class="form-select form-select-sm" formControlName="type">
+                      <option value="">Select Document Type</option>
+                      <option *ngFor="let doc of requiredDocumentTypes" [value]="doc.id">{{ doc.type_name }}
+                      </option>
+                      <option *ngFor="let doc of optionalDocumentTypes" [value]="doc.id">{{ doc.type_name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Document Number <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" placeholder="Enter document number"
+                      formControlName="document_number">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Country</label>
+                    <select class="form-select form-select-sm" formControlName="country">
+                      <option value="">Country</option>
+                      <option *ngFor="let c of countryCodes" [value]="c.id">{{ c.name }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Issued on </label>
+                    <input type="date" class="form-control form-control-sm" formControlName="issued_on">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Valid from</label>
+                    <input type="date" class="form-control form-control-sm" formControlName="valid_from">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Expires on <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control form-control-sm" formControlName="expires_on">
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check mt-1">
+                      <input type="checkbox" class="form-check-input" formControlName="is_primary">
+                      <label class="form-check-label" for="primaryDocChk">Mark as Primary Document</label>
+                    </div>
+                  </div>
+                  <div class="col-12 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                      (click)="modal.close()">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" (click)="submitDocuments()">Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+        <!-- Uploaded Documents List -->
+        <div class="card" *ngIf="hasAnyDocuments()">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h6 class="mb-0">
+              <i class="bi bi-files me-2"></i>Uploaded Documents
+            </h6>
+            <span class="badge bg-secondary">{{ documentList?.length || 0 }}</span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6 col-lg-4" *ngFor="let docType of documentList">
+                <div class="border rounded h-100 p-3 d-flex flex-column">
+                  <div class="d-flex align-items-start justify-content-between mb-2">
+                    <div class="d-flex align-items-center">
+                      <i class="bi bi-file-earmark-pdf fs-4 text-danger me-2"></i>
+                      <div>
+                        <div class="fw-semibold text-truncate" title="{{ docType.document?.title }}">{{
+                          docType.document?.title ||
+                          'Untitled Document' }}</div>
+                        <div class="small text-muted text-truncate" title="{{ docType.document?.file_name }}">{{
+                          docType.document?.title || 'No file name' }}</div>
+                      </div>
+                    </div>
+                    <span class="badge bg-light text-dark border">{{ docType.document?.type_name }}</span>
+                  </div>
+                  <div class="small text-muted mb-3">
+                    <div *ngIf="docType.document?.issued_on || docType.document?.valid_from">
+                      <i class="bi bi-calendar-event me-1"></i>
+                      <span *ngIf="docType.document?.issued_on">Issued: {{ docType.document?.issued_on }}</span>
+                      <span *ngIf="docType.document?.valid_from">&nbsp;•&nbsp;Valid From: {{
+                        docType.document?.valid_from }}</span>
+                    </div>
+                    <div *ngIf="docType.document?.expires_on">
+                      <i class="bi bi-hourglass-split me-1"></i>
+                      Expires: {{ docType.document?.expires_on }}
+                    </div>
+                    <div *ngIf="docType.document?.is_primary" class="text-success"><i
+                        class="bi bi-check2-circle me-1"></i>Primary</div>
+                  </div>
+                  <div class="mt-auto d-flex align-items-center justify-content-between">
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-outline-primary"
+                        (click)="editDocument(uploadDocs,docType.document)">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                      </button>
+                      <button type="button" class="btn btn-outline-danger" (click)="removeDocument(docType.document)">
+                        <i class="bi bi-trash me-1"></i>Remove
+                      </button>
+                    </div>
+                    <a *ngIf="docType.document?.file" class="btn btn-outline-secondary btn-sm"
+                      [href]="docType.document?.file" target="_blank">
+                      <i class="bi bi-download"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Details Tab -->
+      <div *ngIf="activeTab === 'personalDetails'" formGroupName="personalDetails">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-card-checklist me-2"></i>Personal Details</h6>
+          </div>
+          <div class="card-body">
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                <input type="date" class="form-control form-control-sm" formControlName="dob">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Age</label>
+                <input type="text" class="form-control form-control-sm" formControlName="age" disabled>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Father's Name</label>
+                <input type="text" class="form-control form-control-sm" formControlName="father_name">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Personal Email Address</label>
+                <input type="email" class="form-control form-control-sm" formControlName="personal_email">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Present Residential Address</label>
+                <input type="text" class="form-control form-control-sm mb-2" placeholder="Address Line 1"
+                  formControlName="present_address_line1">
+                <input type="text" class="form-control form-control-sm mb-2" placeholder="Address Line 2"
+                  formControlName="present_address_line2">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <input type="text" class="form-control form-control-sm" placeholder="City"
+                      formControlName="present_city">
+                  </div>
+                  <div class="col-md-6">
+                    <input type="text" class="form-control form-control-sm" placeholder="State"
+                      formControlName="present_state">
+                  </div>
+                </div>
+                <input type="text" class="form-control form-control-sm mt-2" placeholder="Country"
+                  formControlName="present_country">
+              </div>
+
+              <div class="col-12 d-flex justify-content-end">
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="copyPresentToPermanent()">Copy
+                  Present Residential Address</button>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Permanent Address</label>
+                <input type="text" class="form-control form-control-sm mb-2" placeholder="Address Line 1"
+                  formControlName="permanent_address_line1">
+                <input type="text" class="form-control form-control-sm mb-2" placeholder="Address Line 2"
+                  formControlName="permanent_address_line2">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <input type="text" class="form-control form-control-sm" placeholder="City"
+                      formControlName="permanent_city">
+                  </div>
+                  <div class="col-md-3">
+                    <input type="text" class="form-control form-control-sm" placeholder="State"
+                      formControlName="permanent_state">
+                  </div>
+                  <div class="col-md-3">
+                    <input type="text" class="form-control form-control-sm" placeholder="PIN Code"
+                      formControlName="permanent_pin_code">
+                  </div>
+                </div>
+                <input type="text" class="form-control form-control-sm mt-2" placeholder="Country"
+                  formControlName="permanent_country">
+              </div>
+            </div>
+            <span class="text-danger me-auto">* indicates mandatory fields</span>
+            <div class="d-flex justify-content-end gap-2 mt-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="skipTab()">Skip</button>
+              <button type="submit" class="btn btn-primary btn-sm">Save & Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="form-actions mt-4">
+      <!-- <button type="submit" class="btn btn-primary btn-save">Save & Next</button> -->
+    </div>
+  </form>
+</div>
+
+<!-- Success Screen -->
+<div class="container py-5" *ngIf="showSuccess">
+  <div class="text-center my-4">
+    <ul class="nav justify-content-center small mb-4 gap-5">
+      <li class="nav-item"><span class="text-success"><i class="bi bi-check-circle-fill me-2"></i>Basic Details</span>
+      </li>
+      <li class="nav-item"><span class="text-success"><i class="bi bi-check-circle-fill me-2"></i>Salary Details</span>
+      </li>
+      <li class="nav-item"><span class="text-success"><i class="bi bi-check-circle-fill me-2"></i>Personal
+          Details</span></li>
+      <li class="nav-item"><span class="text-success"><i class="bi bi-check-circle-fill me-2"></i>Payment
+          Information</span></li>
+      <li class="nav-item"><span class="text-success"><i class="bi bi-check-circle-fill me-2"></i>Documents</span></li>
+    </ul>
+    <div class="display-6 mb-4">{{ createdEmployeeFullName || 'Employee' }}'s Profile</div>
+    <div class="my-4">
+      <img src="assets/images/success-illustration.svg" alt="success" style="max-width: 240px; opacity:.9"
+        *ngIf="false">
+      <div class="rounded-circle bg-primary-subtle d-inline-flex align-items-center justify-content-center"
+        style="width:140px;height:140px;">
+        <i class="bi bi-person-check-fill text-primary" style="font-size:64px;"></i>
+      </div>
+    </div>
+    <h4 class="mt-4">You've successfully added {{ createdEmployeeFullName || 'the employee' }}</h4>
+    <p class="text-muted">You can edit employees' information anytime from the employee details page.</p>
+    <div class="d-flex justify-content-center gap-3 mt-3">
+      <button class="btn btn-primary" (click)="addAnotherEmployee()">Add Another Employee</button>
+      <button class="btn btn-outline-secondary" (click)="goToEmployeeDetails()">Go to Employee Details</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Department Modal -->
+<div class="modal fade" id="departmentModal" tabindex="-1" aria-labelledby="departmentModalLabel" aria-hidden="true"
+  [class.show]="showDepartmentModal" [style.display]="showDepartmentModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="departmentModalLabel">Manage Departments</h5>
+        <button type="button" class="btn-close" (click)="closeDepartmentModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <app-department (closeModal)="closeDepartmentModal()"></app-department>
+      </div>
+      <!-- <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDepartmentModal()">Close</button>
+      </div> -->
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showDepartmentModal"></div>
+
+<!-- Branch Modal -->
+<div class="modal fade" id="branchModal" tabindex="-1" aria-labelledby="branchModalLabel" aria-hidden="true"
+  [class.show]="showBranchModal" [style.display]="showBranchModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="branchModalLabel">Manage Branches</h5>
+        <button type="button" class="btn-close" (click)="closeBranchModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <app-branch (closeModal)="closeBranchModal()"></app-branch>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Designation Modal -->
+<div class="modal fade" id="designationModal" tabindex="-1" aria-labelledby="designationModalLabel" aria-hidden="true"
+  [class.show]="showDesignationModal" [style.display]="showDesignationModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="designationModalLabel">Manage Designations</h5>
+        <button type="button" class="btn-close" (click)="closeDesignationModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <app-designation (closeModal)="closeDesignationModal()"></app-designation>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Location Pay Modal -->
+<div class="modal fade" id="locationPayModal" tabindex="-1" aria-labelledby="locationPayModalLabel" aria-hidden="true"
+  [class.show]="showLocationPayModal" [style.display]="showLocationPayModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="locationPayModalLabel">Manage Work Locations</h5>
+        <button type="button" class="btn-close" (click)="closeLocationPayModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <app-location-pay (closeModal)="closeLocationPayModal()"></app-location-pay>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrops -->
+<div class="modal-backdrop fade show" *ngIf="showBranchModal"></div>
+<div class="modal-backdrop fade show" *ngIf="showDesignationModal"></div>
+<div class="modal-backdrop fade show" *ngIf="showLocationPayModal"></div>
+<div class="modal-backdrop fade show" *ngIf="showLocationPayModal"></div>

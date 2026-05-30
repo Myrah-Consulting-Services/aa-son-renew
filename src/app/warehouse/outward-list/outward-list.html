@@ -1,0 +1,287 @@
+<div class="outward-list-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Outward Dispatches</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="outward-list-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="outward-logo">
+          <i class="bi bi-box-arrow-up"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Outward Dispatches</h1>
+          <p class="header-subtitle">Manage outward dispatches and deliveries ({{ filteredTransactions.length }})</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" (click)="refreshData()" title="Refresh Data">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-ul"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total</h3>
+          <p class="stat-number">{{ totalDispatches }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Today</h3>
+          <p class="stat-number">{{ todayDispatches }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-month"></i>
+        </div>
+        <div class="stat-content">
+          <h3>This Month</h3>
+          <p class="stat-number">{{ thisMonthDispatches }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-currency-dollar"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Value</h3>
+          <p class="stat-number">AED {{ totalAmount | number:'1.0-0' }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <div class="filter-item">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search dispatches..." 
+              [(ngModel)]="searchText"
+              (input)="loadData(1)"
+            >
+          </div>
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            placeholder="Start Date"
+            [(ngModel)]="startDate"
+          >
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            placeholder="End Date"
+            [(ngModel)]="endDate"
+          >
+        </div>
+        <div class="filter-item">
+          <select class="form-select form-select-sm" [(ngModel)]="selectedStatus">
+            <option value="">All Status</option>
+            <option value="PENDING_APPROVAL">Pending</option>
+            <option value="PICKING_IN_PROGRESS">Picking</option>
+            <option value="READY_FOR_DISPATCH">Ready</option>
+            <option value="DISPATCHED">Dispatched</option>
+            <option value="DELIVERED">Delivered</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-primary btn-sm w-100" type="button" (click)="loadData(1)">
+            <i class="bi bi-search me-1"></i>Search
+          </button>
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-secondary btn-sm w-100" type="button" (click)="clearFilter()">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-list-ul me-2"></i>Dispatches List
+          </h3>
+        </div>
+        <div class="table-body">
+          <!-- Loading State -->
+          <div *ngIf="loading" class="loading-state">
+            <i class="bi bi-arrow-repeat spinner"></i>
+            <p>Loading dispatches...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loading && filteredTransactions.length === 0" class="empty-state">
+            <i class="bi bi-box-arrow-up"></i>
+            <h6>No dispatches found</h6>
+            <p>No dispatches match your search criteria</p>
+          </div>
+
+          <!-- Table -->
+          <table *ngIf="!loading && filteredTransactions.length > 0" class="compact-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Doc No.</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Reference</th>
+                <th>Items</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dispatch of filteredTransactions; let i = index">
+                <td>
+                  <span class="badge bg-light">{{ i+1 }}</span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-box-arrow-up text-primary me-1"></i>
+                    <span class="badge bg-light">{{ dispatch.invoiceNo }}</span>
+                  </div>
+                </td>
+                <td>
+                  <small class="fw-medium">{{ dispatch.date | date:'dd/MM/yy' }}</small>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getOutwardTypeBadgeClass(dispatch.outwardType)">
+                    {{ getOutwardTypeShort(dispatch.outwardType) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="warehouse-info">
+                    <div class="fw-medium small">{{ dispatch.warehouseIdName }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="warehouse-info">
+                    <div class="fw-medium small">{{ dispatch.to_warehouseName }}</div>
+                  </div>
+                </td>
+                <td>
+                  <small class="fw-medium text-info">{{ dispatch.reference_no }}</small>
+                </td>
+                <td>
+                  <div class="items-summary">
+                    <small class="fw-medium">{{ dispatch.total_items || 0 }} items</small>
+                    <br>
+                    <small class="text-muted">{{ dispatch.total_quantity }} qty</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(dispatch.statusName)">
+                    {{ getStatusShort(dispatch.statusName) }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <div *ngIf="dispatch.status === 'READY_FOR_DISPATCH'" class="action-group mb-1">
+                      <button 
+                        class="btn-action-icon dispatch" 
+                        (click)="dispatchOrder(dispatch.id)"
+                        title="Mark as Dispatched">
+                        <i class="bi bi-truck"></i>
+                      </button>
+                    </div>
+                    <div class="action-group">
+                      <button 
+                        class="btn-action-icon view" 
+                        (click)="openForm(dispatch)"
+                        title="View Dispatch"
+                        [disabled]="dispatch.status === 'DISPATCHED' || dispatch.status === 'DELIVERED'">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button 
+                        class="btn-action-icon print" 
+                        (click)="printDispatch(dispatch)"
+                        title="Print Dispatch">
+                        <i class="bi bi-printer"></i>
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-section" *ngIf="!loading && filteredTransactions.length > 0 && totalPages > 1">
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          <label class="me-2">Dispatches per page:</label>
+          <select 
+            class="form-select form-select-sm page-size" 
+            [(ngModel)]="pageSize"
+            (change)="onPageSizeChange()">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <div class="pagination-controls">
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            class="btn-page"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

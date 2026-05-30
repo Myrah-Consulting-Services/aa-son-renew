@@ -1,0 +1,303 @@
+<div class="inward-list-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Inward Receipts</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="inward-list-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="inward-logo">
+          <i class="bi bi-box-arrow-in-down"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Inward Receipts</h1>
+          <p class="header-subtitle">Manage and track incoming inventory receipts</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" (click)="refreshData()" [disabled]="loading">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="exportData()">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="openForm()">
+          <i class="bi bi-plus-lg me-1"></i>New Receipt
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Receipts</h3>
+          <p class="stat-number">{{ totalReceipts }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-currency-dollar"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Amount</h3>
+          <p class="stat-number">{{ getcurrency() }} {{ totalAmount | number:'1.2-2' }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Today</h3>
+          <p class="stat-number">{{ todayReceipts }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-month"></i>
+        </div>
+        <div class="stat-content">
+          <h3>This Month</h3>
+          <p class="stat-number">{{ thisMonthReceipts }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <div class="filter-item">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search GRN, Supplier, PO..."
+              [(ngModel)]="searchText"
+              (input)="searchReceipts()"
+            >
+          </div>
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            [(ngModel)]="fromDate"
+            placeholder="From Date"
+          >
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            [(ngModel)]="toDate"
+            placeholder="To Date"
+          >
+        </div>
+        <div class="filter-item">
+          <button 
+            class="btn btn-primary btn-sm w-100" 
+            (click)="filterByDate()"
+            [disabled]="loading || !fromDate || !toDate"
+          >
+            <i class="bi bi-funnel me-1"></i>Filter
+          </button>
+        </div>
+        <div class="filter-item">
+          <button 
+            class="btn btn-secondary btn-sm w-100" 
+            (click)="clearFilter()"
+            [disabled]="loading"
+          >
+            <i class="bi bi-x-lg me-1"></i>Clear
+          </button>
+        </div>
+        <div class="filter-item">
+          <div class="results-summary">
+            <small>{{ filteredReceipts.length }} records found</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-list-ul me-2"></i>Receipts List
+          </h3>
+        </div>
+        <div class="table-body">
+          <!-- Loading State -->
+          <div *ngIf="loading" class="loading-state">
+            <i class="bi bi-arrow-repeat spinner"></i>
+            <p>Loading receipts...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loading && filteredReceipts.length === 0" class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h6>No receipts found</h6>
+            <p>{{ searchText || fromDate || toDate ? 'Try adjusting your filters' : 'Create your first inward receipt' }}</p>
+            <button 
+              *ngIf="!searchText && !fromDate && !toDate"
+              class="btn btn-primary btn-sm" 
+              (click)="openForm()"
+            >
+              <i class="bi bi-plus-lg me-1"></i>Create Receipt
+            </button>
+          </div>
+
+          <!-- Table -->
+          <table *ngIf="!loading && filteredReceipts.length > 0" class="compact-table">
+            <thead>
+              <tr>
+                <th>GRN Details</th>
+                <th>Date</th>
+                <th>Supplier</th>
+                <th>Type</th>
+                <th>Reference</th>
+                <th>Received By</th>
+                <th>Amount</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let receipt of filteredReceipts">
+                <td>
+                  <div class="grn-info">
+                    <div class="grn-number">{{ receipt.grnNo }}</div>
+                    <small class="grn-id">#{{ receipt.id }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="date-info">
+                    <div class="date-main">{{ receipt.date | date:'dd MMM' }}</div>
+                    <small class="date-time">{{ receipt.date | date:'shortTime' }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="supplier-name">{{ getSupplierName(receipt.supplierId) }}</div>
+                </td>
+                <td>
+                  <span [class]="getInwardTypeBadgeClass(receipt.inwardType)" class="badge">
+                    {{ getInwardTypeName(receipt.inwardType) }}
+                  </span>
+                </td>
+                <td>
+                  <div *ngIf="receipt.poNo" class="reference-info">
+                    <i class="bi bi-file-earmark-text me-1"></i>
+                    <span *ngFor="let po of receipt.poNo; let last = last">
+                      {{ po.invoice_no }}<span *ngIf="!last">, </span>
+                    </span>
+                  </div>
+                  <div *ngIf="receipt.invoiceNo" class="reference-info">
+                    <i class="bi bi-receipt me-1"></i>
+                    {{ receipt.invoiceNo }}
+                  </div>
+                  <span *ngIf="!receipt.poNo && !receipt.invoiceNo" class="text-muted small">No ref</span>
+                </td>
+                <td>
+                  <div class="received-by-info">
+                    <div class="user-icon">
+                      <i class="bi bi-person"></i>
+                    </div>
+                    <div class="user-name">{{ receipt.receivedBy }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="amount-info">
+                    <div class="amount-value">{{ getcurrency() }} {{ receipt.totalAmount | number:'1.2-2' }}</div>
+                    <small class="items-count" *ngIf="receipt.items?.length">
+                      {{ receipt.items?.length }} items
+                    </small>
+                  </div>
+                </td>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <button 
+                      class="btn-action-icon edit" 
+                      (click)="openForm(receipt.id)"
+                      title="Edit"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                      class="btn-action-icon delete" 
+                      (click)="deleteReceipt(receipt.id)"
+                      title="Delete"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-section" *ngIf="!loading && filteredReceipts.length > 0 && totalPages > 1">
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          <label class="me-2">Receipts per page:</label>
+          <select 
+            class="form-select form-select-sm page-size" 
+            [(ngModel)]="pageSize"
+            (change)="onPageSizeChange()">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <span class="ms-3 small text-muted">Page {{ currentPage }} of {{ totalPages }} ({{ totalData }} total)</span>
+        </div>
+        <div class="pagination-controls">
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            class="btn-page"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

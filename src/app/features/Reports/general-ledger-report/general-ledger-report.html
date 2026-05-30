@@ -1,0 +1,76 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-book me-2"></i>General Ledger Report
+      </h3>
+      <button class="btn btn-outline-primary btn-sm" (click)="exportReport()">
+        <i class="bi bi-download me-1"></i>Export
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="row g-3 align-items-end mb-4">
+      <div class="col-md-3">
+        <label for="dateFrom" class="form-label fw-semibold small">From</label>
+        <input type="date" class="form-control" id="dateFrom" [(ngModel)]="dateFrom" (change)="onFilterChange()">
+      </div>
+      <div class="col-md-3">
+        <label for="dateTo" class="form-label fw-semibold small">To</label>
+        <input type="date" class="form-control" id="dateTo" [(ngModel)]="dateTo" (change)="onFilterChange()">
+      </div>
+      <div class="col-md-3">
+        <label for="account" class="form-label fw-semibold small">Account</label>
+        <select class="form-select" id="account" [(ngModel)]="selectedAccount" (change)="onFilterChange()">
+          <option *ngFor="let acc of accountList" [value]="acc.id">{{acc.name}}</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" (click)="generateReport()" [disabled]="isLoading">
+          <i class="bi bi-arrow-repeat me-1" [class.spinner-border]="isLoading" [class.spinner-border-sm]="isLoading"></i>
+          {{isLoading ? 'Loading...' : 'Filter'}}
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Generating General Ledger...</p>
+    </div>
+
+    <!-- Report Body -->
+    <div class="table-responsive" *ngIf="!isLoading">
+      <table class="table table-bordered table-hover">
+        <thead class="table-light text-center">
+          <tr>
+            <th>Date</th>
+            <th>Account</th>
+            <th>Type</th>
+            <th class="text-start">Description</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of ledgerData">
+            <td class="text-center">{{entry.date | date}}</td>
+            <td>{{entry.account}}</td>
+            <td class="text-center">{{entry.transaction_type}}</td>
+            <td>{{entry.description}}</td>
+            <td class="text-end text-success">{{entry.debit | number:'1.2-2'}}</td>
+            <td class="text-end text-danger">{{entry.credit | number:'1.2-2'}}</td>
+            <td class="text-end fw-bold">{{entry.balance | number:'1.2-2'}}</td>
+          </tr>
+          <tr *ngIf="ledgerData.length === 0">
+            <td colspan="7" class="text-center text-muted p-4">No transactions found for the selected criteria.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div> 

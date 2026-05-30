@@ -1,0 +1,29 @@
+/* You can add global styles to this file, and also import other style files */
+@use 'bootstrap/scss/bootstrap' as bootstrap;
+
+:root {
+  --bs-primary: #41299b;
+  --bs-primary-rgb: 65, 41, 155;
+}
+
+.btn-primary {
+  --bs-btn-bg: #41299b;
+  --bs-btn-border-color: #41299b;
+  --bs-btn-hover-bg: #35208a;
+  --bs-btn-hover-border-color: #35208a;
+  --bs-btn-active-bg: #35208a;
+  --bs-btn-active-border-color: #35208a;
+  --bs-btn-disabled-bg: #41299b;
+  --bs-btn-disabled-border-color: #41299b;
+}
+.btn-outline-primary {
+  --bs-btn-color: #41299b;
+  --bs-btn-border-color: #41299b;
+  --bs-btn-hover-bg: #41299b;
+  --bs-btn-hover-border-color: #41299b;
+  --bs-btn-active-bg: #41299b;
+  --bs-btn-active-border-color: #41299b;
+  --bs-btn-disabled-bg: #41299b;
+  --bs-btn-disabled-border-color: #41299b;
+}
+

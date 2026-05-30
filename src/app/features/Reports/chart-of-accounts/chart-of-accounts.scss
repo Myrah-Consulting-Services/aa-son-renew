@@ -1,0 +1,163 @@
+/* Chart of Accounts Styles */
+.coa-page {
+  background: #f5f7fb;
+}
+
+.breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.crumb-link {
+  color: #3f5bd7;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.crumb-link:hover {
+  color: #2d45b3;
+}
+
+.crumb-separator {
+  color: #94a3b8;
+}
+
+.crumb-active {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.coa-card {
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+.title {
+  color: #223a8f;
+}
+
+.subtitle {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.summary-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.chip {
+  background: linear-gradient(135deg, #eef3ff, #f8faff);
+  border: 1px solid #dbe5ff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chip span {
+  color: #56607a;
+  font-size: 0.86rem;
+}
+
+.chip strong {
+  color: #16275f;
+  font-size: 1.05rem;
+}
+
+.filter-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 8px;
+}
+
+.form-label {
+  color: #334155;
+  font-weight: 600;
+}
+
+.form-control,
+.form-select {
+  border-radius: 10px;
+  border-color: #d1d9e6;
+}
+
+.btn {
+  border-radius: 9px;
+  font-weight: 500;
+}
+
+.coa-table-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.coa-table {
+  margin-bottom: 0;
+}
+
+.coa-table thead th {
+  font-weight: 600;
+  border-bottom: 1px solid #dbe3ef;
+  background: #edf2ff;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.coa-table td {
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f3f7ff;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  font-weight: 600;
+}
+
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.summary-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.summary-card .card-title {
+  color: #334155;
+  font-weight: 700;
+}
+
+.summary-card p {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 992px) {
+  .summary-chips {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .coa-table-wrap {
+    font-size: 0.875rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+}

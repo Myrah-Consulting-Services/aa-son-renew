@@ -1,0 +1,108 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+    <h3 class="fw-bold text-primary mb-0">
+      <i class="bi bi-book me-2"></i>General Ledger Report
+    </h3>
+    <!-- <button class="btn btn-outline-primary btn-sm" (click)="getLedgerReport()">
+      <i class="bi bi-download me-1"></i>Export
+    </button> -->
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2 text-muted">Loading ledger report...</p>
+  </div>
+
+  <!-- Data Display -->
+  <div *ngIf="!loading && ledgerReport && ledgerReport.length ; else noData">
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle mb-0">
+        <thead class="table-primary">
+          <tr class="text-center">
+            <th>#</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Current Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of ledgerReport; let i = index" class="text-center">
+            <td>{{ getStartEntryNumber() + i }}</td>
+            <td class="text-start fw-semibold">{{ row?.name || '-' }}</td>
+            <td>
+              <span class="badge bg-secondary text-uppercase">{{ row?.type || 'N/A' }}</span>
+            </td>
+            <td [ngClass]="(row?.current_balance || 0) >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold'">
+              {{ row?.current_balance | number:'1.2-2' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="!loading && pagination.total_pages > 0">
+      <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0 me-2">Page Size:</label>
+        <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize" (change)="onPageSizeChange($event)">
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+        <small class="text-muted ms-2">
+          Showing {{ getStartEntryNumber() }} to {{ getEndEntryNumber() }} of {{ pagination.total_data }} entries
+        </small>
+      </div>
+      
+      <nav aria-label="Ledger report pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <!-- First Page -->
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="onPageChange(1)" [disabled]="currentPage === 1">
+              <i class="bi bi-chevron-double-left"></i>
+            </button>
+          </li>
+          
+          <!-- Previous Page -->
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          
+          <!-- Page Numbers -->
+          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+            <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+          </li>
+          
+          <!-- Next Page -->
+          <li class="page-item" [class.disabled]="currentPage === pagination.total_pages">
+            <button class="page-link" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === pagination.total_pages">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+          
+          <!-- Last Page -->
+          <li class="page-item" [class.disabled]="currentPage === pagination.total_pages">
+            <button class="page-link" (click)="onPageChange(pagination.total_pages)" [disabled]="currentPage === pagination.total_pages">
+              <i class="bi bi-chevron-double-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <!-- No Data Template -->
+  <ng-template #noData>
+    <div class="alert alert-info mb-0">
+      <i class="bi bi-info-circle me-2"></i>
+      No ledger data available.
+    </div>
+  </ng-template>
+</div>

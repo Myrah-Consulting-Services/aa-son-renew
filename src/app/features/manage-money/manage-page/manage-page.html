@@ -1,0 +1,542 @@
+<div class="manage-money-page-container">
+  <!-- Compact Header -->
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <a routerLink="/manage-money" class="breadcrumb-link active">
+        <i class="bi bi-wallet2"></i>
+        <span>Manage Money</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Page Header with Actions -->
+  <div class="page-header-section">
+    <div class="header-left">
+      <div class="title-group">
+        <h1 class="page-title">
+          <i class="bi bi-wallet2"></i> Manage Money
+        </h1>
+        <p class="page-subtitle">Track and manage your bank accounts and cash ledgers</p>
+      </div>
+    </div>
+    <div class="header-actions-primary">
+      <button *ngIf="selectedTab === 'bank'" type="button" class="btn-primary-action" (click)="openAddBankModal(addBankModal)">
+        <i class="bi bi-plus-lg"></i> Add Bank
+      </button>
+      <button *ngIf="selectedTab === 'cash'" class="btn-primary-action" (click)="openAddCashLedgerModal(addCashLedgerModal)">
+        <i class="bi bi-plus-lg"></i> Add Cash Ledger
+      </button>
+    </div>
+  </div>
+
+  <!-- Action Buttons Row -->
+  <div class="action-buttons-row">
+    <button class="action-btn-grey" (click)="openCashWithdrawModal(cashWithdrawModal)">
+      <i class="bi bi-arrow-down-circle"></i> Cash Withdraw
+    </button>
+    <button class="action-btn-grey" (click)="openCashDepositModal(cashDepositModal)">
+      <i class="bi bi-arrow-up-circle"></i> Cash Deposit
+    </button>
+    <button class="action-btn-grey" (click)="openBankToBankModal(bankToBankModal)">
+      <i class="bi bi-arrow-left-right"></i> Bank Transfer
+    </button>
+    <button class="action-btn-grey" (click)="openPaymentInModal(paymentInModal)">
+      <i class="bi bi-check-circle"></i> Payment In
+    </button>
+    <button class="action-btn-grey" (click)="openPaymentOutModal(paymentOutModal)">
+      <i class="bi bi-arrow-right-circle"></i> Payment Out
+    </button>
+    <button class="action-btn-grey" (click)="openReconcile()">
+      <i class="bi bi-arrow-repeat"></i> Reconciliation
+    </button>
+  </div>
+
+  <!-- Tabs Section -->
+  <div class="tabs-container">
+    <div class="tabs-header">
+      <button 
+        class="tab-btn" 
+        [class.active]="selectedTab === 'bank'" 
+        (click)="selectTab('bank')">
+        <i class="bi bi-bank"></i> Bank Balance
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="selectedTab === 'cash'" 
+        (click)="selectTab('cash')">
+        <i class="bi bi-cash-coin"></i> Cash Balance
+      </button>
+    </div>
+
+    <div class="tabs-content">
+      <!-- Bank Balance Tab -->
+      <div class="tab-panel" *ngIf="selectedTab === 'bank'">
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>
+                  <i class="bi bi-bank"></i> BANK DETAILS
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-folder"></i> CURRENT BALANCE
+                </th>
+                <th class="text-center">
+                  <i class="bi bi-gear"></i> ACTIONS
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let bank of bankList">
+                <td>
+                  <div class="bank-info">
+                    <span class="bank-name">{{bank.bank_name}}</span>
+                    <span class="bank-account">IBAN: {{bank.account_no}}</span>
+                  </div>
+                </td>
+                <td class="text-end balance-amount">{{bank.bankTypeCode}} {{bank.current_balance}}</td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="action-btn btn-view" (click)="openViewBankModal(null, bank)" title="View">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="action-btn btn-edit" (click)="openEditBankModal(editBankModal, bank.id)" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="action-btn btn-delete" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="bankList.length === 0">
+                <td colspan="3" class="empty-state-cell">
+                  <div class="empty-state">
+                    <i class="bi bi-bank empty-icon"></i>
+                    <p class="empty-message">No banks found. Add your first bank account to get started.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cash Balance Tab -->
+      <div class="tab-panel" *ngIf="selectedTab === 'cash'">
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>
+                  <i class="bi bi-cash-coin"></i> CASH DETAILS
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-folder"></i> CURRENT BALANCE
+                </th>
+                <th class="text-center">
+                  <i class="bi bi-gear"></i> ACTIONS
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cash of cashList" [ngClass]="{'highlight-row': cash.id === 1}">
+                <td>
+                  <div class="cash-info">
+                    <span class="cash-name">{{cash.ledger_name}}</span>
+                  </div>
+                </td>
+                <td class="text-end balance-amount">{{cash.cashTypeCode}} {{cash.current_balance}}</td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="action-btn btn-view" (click)="openViewCashModal(null, cash)" title="View">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="action-btn btn-edit" (click)="openEditCashModal(editCashModal, cash.id)" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="action-btn btn-delete" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="cashList.length === 0">
+                <td colspan="3" class="empty-state-cell">
+                  <div class="empty-state">
+                    <i class="bi bi-cash-coin empty-icon"></i>
+                    <p class="empty-message">No cash ledgers found. Add your first cash ledger to get started.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Bank Modal Template -->
+<ng-template #addBankModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Add Bank</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-bank [mode]="'create'" [modalRef]="modalRef" (bankSaved)="onBankSaved($event)"></app-create-bank>
+  </div>
+</ng-template>
+
+<!-- Add Cash Ledger Modal Template -->
+<ng-template #addCashLedgerModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Add Cash Ledger</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-cash [modalRef]="modalRef"></app-create-cash>
+  </div>
+</ng-template>
+
+<!-- Cash Withdraw Modal Template -->
+<ng-template #cashWithdrawModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Cash Withdraw</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-cash-withdraw [modalRef]="modalRef"></app-cash-withdraw>
+  </div>
+</ng-template>
+
+<!-- Cash Deposit Modal Template -->
+<ng-template #cashDepositModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Cash Deposit</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-cash-deposit [modalRef]="modalRef"></app-cash-deposit>
+  </div>
+</ng-template>
+
+<!-- Bank To Bank Modal Template -->
+<ng-template #bankToBankModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Bank To Bank Transfer</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-bank-to-bank [modalRef]="modalRef"></app-bank-to-bank>
+  </div>
+</ng-template>
+
+<!-- Payment In Modal Template -->
+<ng-template #paymentInModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Payment In</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-payment-in [modalRef]="modalRef"></app-payment-in>
+  </div>
+</ng-template>
+
+<!-- Payment Out Modal Template -->
+<ng-template #paymentOutModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Payment Out</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-payment-out [modalRef]="modalRef"></app-payment-out>
+  </div>
+</ng-template>
+
+<!-- Edit Bank Modal Template -->
+<ng-template #editBankModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Edit Bank</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-bank [modalRef]="modalRef" (bankSaved)="onBankSaved($event)" [bankId]="editingBankId" [mode]="'edit'"></app-create-bank>
+  </div>
+</ng-template>
+
+<!-- Edit Cash Modal Template -->
+<ng-template #editCashModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Edit Cash Ledger</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-cash [modalRef]="modalRef" [cashId]="editingCashId" [mode]="'edit'"></app-create-cash>
+  </div>
+</ng-template>
+
+<!-- View Bank Modal Template -->
+<ng-template #viewBankModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Bank Details</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="filterForm" (ngSubmit)="onSubmit()" class="filter-form">
+      <div class="date-filters">
+        <div class="date-field">
+          <label for="start_date">Start Date <span class="required">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            id="start_date"
+            formControlName="start_date"
+            [class.is-invalid]="filterForm.get('start_date')?.invalid && filterForm.get('start_date')?.touched">
+          <div class="invalid-feedback" *ngIf="filterForm.get('start_date')?.invalid && filterForm.get('start_date')?.touched">
+            Start date is required
+          </div>
+        </div>
+        <div class="date-field">
+          <label for="end_date">End Date <span class="required">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            id="end_date"
+            formControlName="end_date"
+            [class.is-invalid]="filterForm.get('end_date')?.invalid && filterForm.get('end_date')?.touched">
+          <div class="invalid-feedback" *ngIf="filterForm.get('end_date')?.invalid && filterForm.get('end_date')?.touched">
+            End date is required
+          </div>
+        </div>
+        <div class="date-field">
+          <button type="submit" class="btn-apply-filter" [disabled]="filterForm.invalid">
+            Apply Filter
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Bank Ledger Data Table -->
+    <div class="ledger-section" *ngIf="bankLedgerData.length > 0 || openingBalance || isLoadingLedger">
+      <h6 class="ledger-title">Bank Ledger Details</h6>
+      
+      <!-- Loading Indicator -->
+      <div class="loading-indicator" *ngIf="isLoadingLedger">
+        <div class="spinner"></div>
+        <p>Loading bank ledger data...</p>
+      </div>
+
+      <!-- Opening Balance -->
+      <div class="opening-balance-card" *ngIf="openingBalance && !isLoadingLedger">
+        <strong>Opening Balance:</strong> {{openingBalance.bank_balance}}
+      </div>
+
+      <!-- Ledger Table -->
+      <div class="table-responsive" *ngIf="!isLoadingLedger">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Particular</th>
+              <th>Receipt No</th>
+              <th class="text-end">Debit</th>
+              <th class="text-end">Credit</th>
+              <th class="text-end">Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of bankLedgerData">
+              <td>{{item.date | date:'dd/MM/yyyy'}}</td>
+              <td>
+                <div class="particular-name">{{item.particular}}</div>
+                <small class="text-muted" *ngIf="item.narration">{{item.narration}}</small>
+              </td>
+              <td>{{item.receipt_no}}</td>
+              <td class="text-end debit-amount">{{item.debit || '-'}}</td>
+              <td class="text-end credit-amount">{{item.credit || '-'}}</td>
+              <td class="text-end balance-cell">{{item.balance_final}}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="action-btn btn-edit" (click)="openbankmodal(item)" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="action-btn btn-delete" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-section" *ngIf="!isLoadingLedger && totalPages > 1">
+        <div class="pagination-info">
+          Showing {{(currentPage - 1) * limit + 1}} to {{Math.min(currentPage * limit, totalData)}} of {{totalData}} entries
+        </div>
+        <nav class="pagination-nav">
+          <button class="page-btn" (click)="onPreviousPage()" [disabled]="!hasPreviousPage">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="page-numbers">
+            <button 
+              *ngFor="let page of getPageNumbers()" 
+              class="page-number"
+              [class.active]="page === currentPage"
+              (click)="onPageChange(page)"
+              type="button">
+              {{page}}
+            </button>
+          </div>
+          <button class="page-btn" (click)="onNextPage()" [disabled]="!hasNextPage">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn-secondary" (click)="modal.dismiss('Close click')">Close</button>
+  </div>
+</ng-template>
+
+<!-- View Cash Modal Template -->
+<ng-template #viewCashModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Cash Ledger Details</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="filterForm" (ngSubmit)="onSubmit()" class="filter-form">
+      <div class="date-filters">
+        <div class="date-field">
+          <label for="start_date">Start Date <span class="required">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            id="start_date"
+            formControlName="start_date"
+            [class.is-invalid]="filterForm.get('start_date')?.invalid && filterForm.get('start_date')?.touched">
+          <div class="invalid-feedback" *ngIf="filterForm.get('start_date')?.invalid && filterForm.get('start_date')?.touched">
+            Start date is required
+          </div>
+        </div>
+        <div class="date-field">
+          <label for="end_date">End Date <span class="required">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            id="end_date"
+            formControlName="end_date"
+            [class.is-invalid]="filterForm.get('end_date')?.invalid && filterForm.get('end_date')?.touched">
+          <div class="invalid-feedback" *ngIf="filterForm.get('end_date')?.invalid && filterForm.get('end_date')?.touched">
+            End date is required
+          </div>
+        </div>
+        <div class="date-field">
+          <button type="submit" class="btn-apply-filter" [disabled]="filterForm.invalid">
+            Apply Filter
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Cash Ledger Data Table -->
+    <div class="ledger-section" *ngIf="cashLedgerData.length > 0 || cashOpeningBalance || isLoadingCashLedger">
+      <h6 class="ledger-title">Cash Ledger Details</h6>
+      
+      <!-- Loading Indicator -->
+      <div class="loading-indicator" *ngIf="isLoadingCashLedger">
+        <div class="spinner"></div>
+        <p>Loading cash ledger data...</p>
+      </div>
+
+      <!-- Opening Balance -->
+      <div class="opening-balance-card" *ngIf="cashOpeningBalance && !isLoadingCashLedger">
+        <strong>Opening Balance:</strong> {{getOpeningBalanceDisplay()}}
+      </div>
+
+      <!-- Ledger Table -->
+      <div class="table-responsive" *ngIf="!isLoadingCashLedger">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Particular</th>
+              <th>Receipt No</th>
+              <th class="text-end">Debit</th>
+              <th class="text-end">Credit</th>
+              <th class="text-end">Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of cashLedgerData">
+              <td>{{formatDate(item.date)}}</td>
+              <td>
+                <div class="particular-name">{{item.particular}}</div>
+                <small class="text-muted" *ngIf="item.narration">{{item.narration}}</small>
+              </td>
+              <td>{{item.receipt_no}}</td>
+              <td class="text-end debit-amount">{{formatAmount(item.debit)}}</td>
+              <td class="text-end credit-amount">{{formatAmount(item.credit)}}</td>
+              <td class="text-end balance-cell" [ngClass]="getBalanceClass(item.balance_final)">{{item.balance_final}}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="action-btn btn-edit" (click)="editEntry(item)" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="action-btn btn-delete" (click)="deleteEntry(item)" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-section" *ngIf="!isLoadingCashLedger && totalPages > 1">
+        <div class="pagination-info">
+          Showing {{(currentPage - 1) * limit + 1}} to {{Math.min(currentPage * limit, totalData)}} of {{totalData}} entries
+        </div>
+        <nav class="pagination-nav">
+          <button class="page-btn" (click)="onPreviousPage()" [disabled]="!hasPreviousPage">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="page-numbers">
+            <button 
+              *ngFor="let page of getPageNumbers()" 
+              class="page-number"
+              [class.active]="page === currentPage"
+              (click)="onPageChange(page)"
+              type="button">
+              {{page}}
+            </button>
+          </div>
+          <button class="page-btn" (click)="onNextPage()" [disabled]="!hasNextPage">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </nav>
+      </div>
+
+      <!-- No Data Message -->
+      <div class="empty-state" *ngIf="!isLoadingCashLedger && cashLedgerData.length === 0">
+        <i class="bi bi-inbox"></i>
+        <p>No cash ledger entries found for the selected date range.</p>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn-secondary" (click)="modal.dismiss('Close click')">Close</button>
+  </div>
+</ng-template>

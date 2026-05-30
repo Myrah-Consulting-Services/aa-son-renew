@@ -1,0 +1,80 @@
+<div class="payroll-main-wrapper min-vh-100 bg-light" [ngClass]="{'sidebar-mode': isSidebarMode}">
+  <!-- Tab Layout (Default) -->
+  <div class="payroll-tabs-container" *ngIf="!isSidebarMode">
+    <div class="tabs-header">
+      <div class="d-flex flex-wrap gap-2">
+        <a
+          *ngFor="let item of navItems"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="payroll-tab-link px-3 py-2 rounded text-decoration-none"
+          [title]="item.label"
+        >
+          <i *ngIf="item.icon" [class]="'bi me-1 ' + item.icon"></i>
+          {{ item.label }}
+        </a>
+      </div>
+      <div class="layout-toggle">
+        <span class="toggle-label">
+          <i class="bi bi-list-ul me-1"></i>Sidebar
+        </span>
+        <label class="switch">
+          <input type="checkbox" [checked]="isSidebarMode" (change)="toggleLayout()">
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label">
+          <i class="bi bi-tabs me-1"></i>Tabs
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Layout -->
+  <div class="payroll-sidebar-container" *ngIf="isSidebarMode">
+    <div class="payroll-sidebar">
+      <div class="sidebar-header">
+        <h5 class="sidebar-title">
+          <i class="bi bi-wallet2 me-2"></i>Payroll
+        </h5>
+      </div>
+      <nav class="sidebar-nav">
+        <a
+          *ngFor="let item of navItems"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="sidebar-nav-item"
+          [title]="item.label"
+        >
+          <i *ngIf="item.icon" [class]="'bi me-2 ' + item.icon"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="layout-toggle">
+          <span class="toggle-label">
+            <i class="bi bi-list-ul me-1"></i>Sidebar
+          </span>
+          <label class="switch">
+            <input type="checkbox" [checked]="isSidebarMode" (change)="toggleLayout()">
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">
+            <i class="bi bi-tabs me-1"></i>Tabs
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="payroll-content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+
+  <!-- Content Area for Tab Layout -->
+  <div class="payroll-content-area" *ngIf="!isSidebarMode">
+    <div class="bg-white rounded shadow-sm">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

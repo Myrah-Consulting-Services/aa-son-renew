@@ -1,0 +1,330 @@
+<div class="offboarding-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="header-content">
+            <div class="page-title">
+              <div class="title-icon">
+                <i class="bi bi-person-x"></i>
+              </div>
+              <div class="title-text">
+                <h1>Employee Offboarding</h1>
+                <p>Manage employee exit process and documentation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="header-actions">
+            <button class="btn btn-primary" (click)="exportOffboardingData()">
+              <i class="bi bi-download"></i> Export Data
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Control Panel -->
+  <div class="control-panel">
+    <div class="container-fluid">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="control-card">
+            <div class="control-header">
+              <i class="bi bi-search text-primary"></i>
+              <h6>Search Employees</h6>
+            </div>
+            <div class="control-body">
+              <div class="input-group">
+                <input type="text" 
+                       class="form-control" 
+                       placeholder="Search by name, ID, or department..."
+                       [(ngModel)]="searchTerm"
+                                               (keyup.enter)="searchEmployees()" autocomplete="off">
+                <button class="btn btn-outline-primary" 
+                        type="button"
+                        (click)="searchEmployees()">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="control-card">
+            <div class="control-header">
+              <i class="bi bi-funnel text-success"></i>
+              <h6>Filter by Status</h6>
+            </div>
+            <div class="control-body">
+              <select class="form-select" 
+                      [(ngModel)]="filterStatus"
+                      (change)="filterByStatus(filterStatus)">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="control-card">
+            <div class="control-header">
+              <i class="bi bi-gear text-info"></i>
+              <h6>Actions</h6>
+            </div>
+            <div class="control-body">
+              <button class="btn btn-outline-secondary btn-sm w-100 mb-2" 
+                      (click)="clearFilters()">
+                <i class="bi bi-arrow-clockwise"></i> Clear Filters
+              </button>
+              <button class="btn btn-outline-primary btn-sm w-100" 
+                      (click)="downloadSampleFile()">
+                <i class="bi bi-file-earmark-excel"></i> Download Sample
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Dashboard -->
+  <div class="stats-dashboard">
+    <div class="container-fluid">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="stat-card pending-stat">
+            <div class="stat-icon">
+              <i class="bi bi-clock"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ pendingCount }}</div>
+              <div class="stat-label">Pending</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card progress-stat">
+            <div class="stat-icon">
+              <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ inProgressCount }}</div>
+              <div class="stat-label">In Progress</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card completed-stat">
+            <div class="stat-icon">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ completedCount }}</div>
+              <div class="stat-label">Completed</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card total-stat">
+            <div class="stat-icon">
+              <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ totalItems }}</div>
+              <div class="stat-label">Total</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Offboarding Table -->
+  <div class="offboarding-table-section">
+    <div class="container-fluid">
+      <div class="table-header">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <h5 class="table-title">
+              <i class="bi bi-table"></i> Offboarding List
+            </h5>
+            <p class="table-subtitle">Employee offboarding process and status</p>
+          </div>
+          <div class="col-md-6 text-end">
+            <div class="table-actions">
+              <span class="badge bg-primary">{{ offboardingEmployees.length }} Employees</span>
+              <span class="badge bg-info">{{ currentPage }} of {{ totalPages }} Pages</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover offboarding-table">
+            <thead class="table-light">
+              <tr>
+                <th>Employee Details</th>
+                <th>Department</th>
+                <th>Offboarding Date</th>
+                <th>Status</th>
+                <th>Exit Interview</th>
+                <th>Clearance</th>
+                <th>Handover</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let employee of offboardingEmployees" class="employee-row">
+                <td class="employee-info-cell">
+                  <div class="employee-details">
+                    <div class="employee-name">{{ employee.name }}</div>
+                    <div class="employee-meta">
+                      <span class="employee-id">ID: {{ employee.employee_id }}</span>
+                      <span class="employee-position">{{ employee.position }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="department-cell">
+                  <span class="department-badge">{{ employee.department }}</span>
+                </td>
+                <td class="date-cell">
+                  {{ employee.offboarding_date | date:'mediumDate' }}
+                </td>
+                <td class="status-cell">
+                  <span class="badge" [ngClass]="getStatusClass(employee.status)">
+                    {{ getStatusLabel(employee.status) }}
+                  </span>
+                </td>
+                <td class="interview-cell">
+                  <span class="badge" [ngClass]="employee.exit_interview_date ? 'bg-success' : 'bg-warning'">
+                    {{ employee.exit_interview_date ? (employee.exit_interview_date | date:'shortDate') : 'Pending' }}
+                  </span>
+                </td>
+                <td class="clearance-cell">
+                  <span class="badge" [ngClass]="employee.clearance_status === 'completed' ? 'bg-success' : 'bg-warning'">
+                    {{ employee.clearance_status === 'completed' ? 'Completed' : 'Pending' }}
+                  </span>
+                </td>
+                <td class="handover-cell">
+                  <span class="badge" [ngClass]="employee.handover_status === 'completed' ? 'bg-success' : 'bg-info'">
+                    {{ employee.handover_status === 'completed' ? 'Completed' : 'In Progress' }}
+                  </span>
+                </td>
+                <td class="actions-cell">
+                  <div class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary" 
+                            (click)="viewEmployeeDetails(employee)"
+                            title="View Details">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" 
+                            *ngIf="employee.status === 'pending'"
+                            (click)="startOffboarding(employee)"
+                            title="Start Process">
+                      <i class="bi bi-play"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" 
+                            *ngIf="employee.status === 'in_progress'"
+                            (click)="completeOffboarding(employee)"
+                            title="Complete Process">
+                      <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" 
+                            *ngIf="employee.status !== 'completed' && employee.status !== 'cancelled'"
+                            (click)="cancelOffboarding(employee)"
+                            title="Cancel Process">
+                      <i class="bi bi-x"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section" *ngIf="totalPages > 1">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="pagination-info">
+            <span class="info-text">
+              Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} employees
+            </span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="pagination-controls">
+            <div class="page-navigation">
+              <button class="btn btn-outline-secondary btn-sm" 
+                      [disabled]="currentPage === 1"
+                      (click)="onPageChange(currentPage - 1)">
+                <i class="bi bi-chevron-left"></i> Previous
+              </button>
+              
+              <div class="page-numbers">
+                <button class="btn btn-sm" 
+                        *ngFor="let page of paginationRange"
+                        [class]="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'"
+                        (click)="onPageChange(page)">
+                  {{ page }}
+                </button>
+              </div>
+              
+              <button class="btn btn-outline-secondary btn-sm" 
+                      [disabled]="currentPage === totalPages"
+                      (click)="onPageChange(currentPage + 1)">
+                Next <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="loading-overlay" *ngIf="isProcessing">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Download Sample File Button (Converted from pure HTML) -->
+<div class="sample-file-section">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="sample-file-card">
+          <div class="card-body">
+            <h6 class="card-title">
+              <i class="bi bi-file-earmark-excel text-success"></i>
+              Download Sample Offboarding File
+            </h6>
+            <p class="card-text">
+              Download the sample Excel file to understand the required format for bulk offboarding data import.
+            </p>
+            <button class="btn btn-secondary btn-sm" 
+                    style="border-radius: 26px; font-size: 12px;"
+                    (click)="downloadSampleFile()">
+              <i class="bi bi-file-earmark-spreadsheet"></i>
+              Download Sample File
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

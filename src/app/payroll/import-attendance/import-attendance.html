@@ -1,0 +1,93 @@
+<div class="row">
+    <!-- <div class="col-md-3">
+        <a href="Javascript:void(0)" style="font-size: 12px;" (click)="downloadXl()">Download Sample File</a>
+    </div> -->
+    <div class="col-md-3">
+        <form [formGroup]="attendanceForm">
+            <label>Select File To Upload (.xlsx):</label>
+            <input type="file" class="form-control" style="border-radius: 30px;
+            margin-top: 10px;" accept=".xlsx" (change)="handleFileInput($event)" name="file" required>
+        <a href="Javascript:void(0)" 
+        class="btn btn-sm btn-secondary" 
+        style="border-radius: 26px;
+                font-size: 12px;
+                margin-top: 11px;" 
+                 (click)="downloadXl()"><i class='bx bx-spreadsheet'></i>  Download Sample File</a>
+            
+        </form>
+    </div>
+    <div class="col-md-2" style="align-self: center;">
+        <button type="submit" (click)="uploadFile()" style="border-radius: 30px;" class="btn btn-outline-primary"
+        >Upload</button>
+    </div>
+</div>
+<div class="row">
+<!-- show the rejected list with button to submit and edit data in the input field-->
+ <div class="col-md-12" *ngIf="showRejectedList">
+    <div class="alert alert-warning" role="alert">
+        <strong>Warning!</strong> The following rows have been rejected due to invalid data:
+        <!-- <ul>
+            <li *ngFor="let item of rejected">{{item.rowNumber + 1}}</li>
+        </ul> -->
+    </div>
+    <!-- <div class="row">
+        <div class="col-md-12 text-center">
+            <button class="btn btn-primary" (click)="submitAndEdit()" style="border-radius: 20px;">Submit and Edit</button>
+        </div>
+    </div> -->
+ </div>
+ <div class="row table-responsive mt-2" *ngIf="showRejectedList && rejected.length > 0">
+    <div class="col-md-12">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Sr.No.</th>
+            <th>STAFF ID</th>
+            <th>DATE</th>
+            <th>IN TIME</th>
+            <th>OUT TIME</th>
+            <th>TOTAL WORKING Hrs</th>
+            <th>STATUS</th>
+            <th>Remark</th>
+            <th>Reason</th>
+          </tr>
+          <!-- {{ staff['date'] | date: 'yyyy-MM-dd' }} {{ staff['staff'] }}-->
+        </thead>
+        <tbody>
+          <tr *ngFor="let staff of rejected; let i = index" style="background: #f8ebbc; color: #000;">
+            <td>
+              <button class="btn btn-sm btn-primary" (click)="submitAndEdit(staff,i)">Submit</button>
+            </td>
+            <td>{{ i + 1 }}</td>
+            <td>
+                <input type="text" [(ngModel)]="staff['staff']">
+            </td>
+            <td>
+                <input type="date" [(ngModel)]="staff['date']">
+            </td>
+            <td>
+              <input type="time" [(ngModel)]="staff['clock_in']" (ngModelChange)="calculateWorkingHours(staff)">
+            </td>
+            <td>
+              <input type="time" [(ngModel)]="staff['clock_out']" (ngModelChange)="calculateWorkingHours(staff)">
+            </td>
+            <td>
+              <input type="text" [(ngModel)]="staff['total_working_hour']" readonly>
+            </td>
+            <td>
+              <select [(ngModel)]="staff['status']">
+                <option *ngFor="let s of statusData" [value]="s.id">{{s.value}}</option>
+              </select>
+            </td>
+            <td>
+              <input type="text" [(ngModel)]="staff.remarks">
+            </td>
+            <td>{{ staff.reason }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+</div>

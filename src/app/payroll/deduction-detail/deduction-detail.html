@@ -1,0 +1,61 @@
+<div class="card mb-4">
+  <div class="card-body">
+    <h6 class="fw-bold mb-3">Contribution Details</h6>
+    <div class="table-responsive">
+      <table class="table">
+        <thead class="table-light">
+          <tr>
+            <th>DEDUCTION NAME</th>
+            <th class="text-end">EMPLOYER'S CONTRIBUTION</th>
+            <th class="text-end">EMPLOYEES' CONTRIBUTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of contributions">
+            <td>{{ row.name }}</td>
+            <td class="text-end">{{ row.employer_amount != null ? ('AED' + (row.employer_amount | number:'1.2-2')) : '-' }}</td>
+            <td class="text-end">{{ row.employee_amount != null ? ('AED' + (row.employee_amount | number:'1.2-2')) : '-' }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Total</th>
+            <th class="text-end">AED{{ employerContributionTotal | number:'1.2-2' }}</th>
+            <th class="text-end">AED{{ employeeContributionTotal | number:'1.2-2' }}</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h6 class="fw-bold mb-3">Other Deductions</h6>
+    <div class="table-responsive">
+      <table class="table">
+        <thead class="table-light">
+          <tr>
+            <th>DEDUCTION NAME</th>
+            <th class="text-end">EMPLOYER'S CONTRIBUTION</th>
+            <th class="text-end">EMPLOYEES' CONTRIBUTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of otherDeductions">
+            <td>{{ row.name }}</td>
+            <td class="text-end">{{ row.employer_amount != null ? ('AED' + (row.employer_amount | number:'1.2-2')) : '-' }}</td>
+            <td class="text-end">{{ row.employee_amount != null ? ('AED' + (row.employee_amount | number:'1.2-2')) : '-' }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Total</th>
+            <th class="text-end">-</th>
+            <th class="text-end">AED{{ otherDeductionsEmployeeTotal | number:'1.2-2' }}</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,296 @@
+<div class="warehouse-performance-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse/reports">Reports</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Warehouse Performance</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="warehouse-performance-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="performance-logo">
+          <i class="bi bi-building"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Warehouse Performance Report</h1>
+          <p class="header-subtitle">Analyze warehouse efficiency and performance metrics</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary btn-sm" (click)="exportToCSV()">
+          <i class="bi bi-download me-1"></i>Export CSV
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section" *ngIf="filters.metric === 'overview' || filters.metric === 'activity'">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-building"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Warehouses</h3>
+          <p class="stat-number">{{ getActivitySummary().totalWarehouses }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-arrow-down-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Recent Inward</h3>
+          <p class="stat-number">{{ getActivitySummary().recentInward }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-arrow-up-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Recent Outward</h3>
+          <p class="stat-number">{{ getActivitySummary().recentOutward }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-arrows-move"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Relocations</h3>
+          <p class="stat-number">{{ getActivitySummary().recentRelocations }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Damages</h3>
+          <p class="stat-number">{{ getActivitySummary().recentDamages }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Items</h3>
+          <p class="stat-number">{{ getActivitySummary().totalItems }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <div class="filter-item">
+          <label class="form-label">Warehouse</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filters.warehouse" (change)="applyFilters()">
+            <option value="">All Warehouses</option>
+            <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name }}
+            </option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label class="form-label">Metric</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filters.metric" (change)="applyFilters()">
+            <option value="overview">Overview</option>
+            <option value="utilization">Location Utilization</option>
+            <option value="activity">Activity Summary</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label class="form-label">Start Date</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.startDate" (change)="applyFilters()">
+        </div>
+        <div class="filter-item">
+          <label class="form-label">End Date</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.endDate" (change)="applyFilters()">
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-secondary btn-sm w-100" (click)="clearFilters()" style="margin-top: 1.5rem;">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warehouse Performance Table -->
+    <div class="table-section" *ngIf="filters.metric === 'overview'">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-list-ul me-2"></i>Warehouse Performance Metrics
+          </h3>
+        </div>
+        <div class="table-body">
+          <table class="compact-table">
+            <thead>
+              <tr>
+                <th>Warehouse</th>
+                <th class="text-end">Total Stock</th>
+                <th class="text-end">Total Inward</th>
+                <th class="text-end">Total Outward</th>
+                <th class="text-end">Total Damages</th>
+                <th class="text-end">Efficiency %</th>
+                <th class="text-end">Utilization %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let perf of getWarehousePerformance()">
+                <td><strong>{{ perf.name }}</strong></td>
+                <td class="text-end">{{ perf.totalStock }}</td>
+                <td class="text-end">{{ perf.totalInward }}</td>
+                <td class="text-end">{{ perf.totalOutward }}</td>
+                <td class="text-end">{{ perf.totalDamages }}</td>
+                <td class="text-end">
+                  <span class="badge" 
+                    [class.bg-success]="perf.efficiency >= 90"
+                    [class.bg-warning]="perf.efficiency >= 70 && perf.efficiency < 90"
+                    [class.bg-danger]="perf.efficiency < 70">
+                    {{ perf.efficiency }}%
+                  </span>
+                </td>
+                <td class="text-end">
+                  <span class="badge" 
+                    [class.bg-success]="perf.utilization >= 80"
+                    [class.bg-warning]="perf.utilization >= 60 && perf.utilization < 80"
+                    [class.bg-danger]="perf.utilization < 60">
+                    {{ perf.utilization }}%
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Utilization Table -->
+    <div class="table-section" *ngIf="filters.metric === 'utilization'">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-list-ul me-2"></i>Location Utilization
+          </h3>
+        </div>
+        <div class="table-body">
+          <table class="compact-table">
+            <thead>
+              <tr>
+                <th>Warehouse</th>
+                <th class="text-end">Locations</th>
+                <th class="text-end">Utilization %</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let util of getLocationUtilization()">
+                <td><strong>{{ util.warehouse }}</strong></td>
+                <td class="text-end">{{ util.locations }}</td>
+                <td class="text-end">{{ util.utilization }}%</td>
+                <td>
+                  <div class="progress-bar-container">
+                    <div class="progress-bar" 
+                         [class.bg-success]="util.utilization >= 80"
+                         [class.bg-warning]="util.utilization >= 60 && util.utilization < 80"
+                         [class.bg-danger]="util.utilization < 60"
+                         [style.width.%]="util.utilization">
+                      {{ util.utilization }}%
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="analysis-section" *ngIf="filters.metric === 'overview'">
+      <div class="analysis-grid">
+        <div class="analysis-card">
+          <div class="analysis-header">
+            <h5 class="mb-0">
+              <i class="bi bi-pie-chart me-2"></i>Efficiency Comparison
+            </h5>
+          </div>
+          <div class="analysis-body">
+            <div class="analysis-list">
+              <div *ngFor="let perf of getWarehousePerformance()" class="analysis-item">
+                <span class="item-label">{{ perf.name }}</span>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress-bar-small">
+                    <div class="progress-bar-fill" 
+                         [class.bg-success]="perf.efficiency >= 90"
+                         [class.bg-warning]="perf.efficiency >= 70 && perf.efficiency < 90"
+                         [class.bg-danger]="perf.efficiency < 70"
+                         [style.width.%]="perf.efficiency">
+                    </div>
+                  </div>
+                  <span class="badge" 
+                    [class.bg-success]="perf.efficiency >= 90"
+                    [class.bg-warning]="perf.efficiency >= 70 && perf.efficiency < 90"
+                    [class.bg-danger]="perf.efficiency < 70">
+                    {{ perf.efficiency }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-header">
+            <h5 class="mb-0">
+              <i class="bi bi-bar-chart me-2"></i>Utilization Comparison
+            </h5>
+          </div>
+          <div class="analysis-body">
+            <div class="analysis-list">
+              <div *ngFor="let perf of getWarehousePerformance()" class="analysis-item">
+                <span class="item-label">{{ perf.name }}</span>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress-bar-small">
+                    <div class="progress-bar-fill" 
+                         [class.bg-success]="perf.utilization >= 80"
+                         [class.bg-warning]="perf.utilization >= 60 && perf.utilization < 80"
+                         [class.bg-danger]="perf.utilization < 60"
+                         [style.width.%]="perf.utilization">
+                    </div>
+                  </div>
+                  <span class="badge" 
+                    [class.bg-success]="perf.utilization >= 80"
+                    [class.bg-warning]="perf.utilization >= 60 && perf.utilization < 80"
+                    [class.bg-danger]="perf.utilization < 60">
+                    {{ perf.utilization }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div> 

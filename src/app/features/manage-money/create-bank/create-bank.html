@@ -1,0 +1,205 @@
+<!-- <button type="button" class="btn btn-sm btn-primary"  (click)="largeModal(largeDataModal)">Add Bank</button> -->
+<!-- Large Modal -->
+<form [formGroup]="bankForm" (ngSubmit)="onSubmit()" class="container-fluid p-4">
+    <div class="row g-4">
+        <!-- <div class="col-lg-12"> -->
+        <div class="form-group">
+            <div class="row g-3"> 
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Bank Name<span class="text-danger">*</span></label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="bank_name" 
+                           id="bank_name"
+                           placeholder="Enter bank name"
+                           [class.is-invalid]="bankForm.controls['bank_name'].touched && bankForm.controls['bank_name'].invalid"
+                           formControlName="bank_name">
+                    <div class="text-danger small mt-1" *ngIf="bankForm.controls['bank_name'].hasError('required')
+                                && (bankForm.controls['bank_name'].dirty || bankForm.controls['bank_name'].touched)">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Bank name is required
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Account Holder Name<span class="text-danger">*</span></label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="account_name"
+                           placeholder="Enter account holder name"
+                           [class.is-invalid]="bankForm.controls['user'].touched && bankForm.controls['user'].invalid"
+                           id="account_name" 
+                           formControlName="user">
+                    <div class="text-danger small mt-1" *ngIf="bankForm.controls['user'].hasError('required')
+                            && (bankForm.controls['user'].dirty || bankForm.controls['user'].touched)">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Name of account holder is required
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">IBAN<span class="text-danger">*</span></label>
+                    <div class="input-group mb-2">
+                        <input class="form-control border-end-0" 
+                               name="account_no" 
+                               type="text"
+                               placeholder="Enter IBAN number"
+                               [class.is-invalid]="bankForm.controls['account_no'].touched && bankForm.controls['account_no'].invalid"
+                               id="account_no" 
+                               formControlName="account_no">
+                                              <select class="form-select border-start" 
+                              formControlName="bank_type"
+                              style="max-width: 83px;">
+                          <option value="" disabled selected>Currency</option>
+                          <option *ngFor="let c of currencies" [value]="c.id">{{c.code}}</option>
+                      </select>
+                    </div>
+                    
+                    <!-- Error Messages -->
+                    <div class="error-messages">
+                        <div class="text-danger small" 
+                             *ngIf="bankForm.controls['account_no'].hasError('required')
+                             && (bankForm.controls['account_no'].dirty || bankForm.controls['account_no'].touched)">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            IBAN is required
+                        </div>
+                        <div class="text-danger small"
+                             *ngIf="bankForm.controls['account_no'].hasError('invalidIban') 
+                             && (bankForm.controls['account_no'].dirty || bankForm.controls['account_no'].touched)">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            Enter valid UAE IBAN (Format: AE + 2 digits + 4 letters + 16 digits)
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">BIC/SWIFT Code<span class="text-danger">*</span></label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="ifsc_Code" 
+                           id="ifsc_Code"
+                           placeholder="Enter BIC/SWIFT code"
+                           [class.is-invalid]="bankForm.controls['ifsc_code'].touched && bankForm.controls['ifsc_code'].invalid"
+                           formControlName="ifsc_code">
+                    <div class="text-danger small mt-1" *ngIf="bankForm.controls['ifsc_code'].hasError('required')
+                            && (bankForm.controls['ifsc_code'].dirty || bankForm.controls['ifsc_code'].touched)">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        BIC/SWIFT code is required
+                    </div>
+                    <div class="text-danger small mt-1"
+                        *ngIf="bankForm.controls['ifsc_code'].hasError('invalidBicSwift') && (bankForm.controls['ifsc_code'].dirty || bankForm.controls['ifsc_code'].touched)">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Enter valid BIC/SWIFT code (8-11 characters)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Address<span class="text-danger">*</span></label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="address" 
+                           id="address"
+                           placeholder="Enter bank address"
+                           [class.is-invalid]="bankForm.controls['address'].touched && bankForm.controls['address'].invalid"
+                           formControlName="address">
+                    <div class="text-danger small mt-1" *ngIf="bankForm.controls['address'].hasError('required')
+                            && (bankForm.controls['address'].dirty || bankForm.controls['address'].touched)">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Address is required
+                    </div>
+                </div>
+  
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Branch<span class="text-danger">*</span></label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="bank_branch"
+                           placeholder="Enter branch name"
+                           [class.is-invalid]="bankForm.controls['bank_branch'].touched && bankForm.controls['bank_branch'].invalid"
+                           id="bank_branch" 
+                           formControlName="bank_branch">
+                    <div class="text-danger small mt-1" *ngIf="bankForm.controls['bank_branch'].hasError('required')
+                            && (bankForm.controls['bank_branch'].dirty || bankForm.controls['bank_branch'].touched)">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Branch is required
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Ad Code</label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="ad_code" 
+                           placeholder="Enter ad code (optional)"
+                           formControlName="ad_code">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Swift Code</label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="swift_code"  
+                           placeholder="Enter swift code (optional)"
+                           formControlName="swift_code">
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Opening Balance<span class="text-danger">*</span></label>
+                    <input type="number" 
+                           class="form-control" 
+                           name="opening_balance"
+                           placeholder="Enter opening balance"
+                           [class.is-invalid]="bankForm.controls['opening_balance'].touched && bankForm.controls['opening_balance'].invalid"
+                           id="opening_balance" 
+                           formControlName="opening_balance">
+                    <div class="text-danger small mt-1" *ngIf="bankForm.controls['opening_balance'].hasError('required')
+                            && (bankForm.controls['opening_balance'].dirty || bankForm.controls['opening_balance'].touched)">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Opening balance is required
+                    </div>
+                    <div class="text-danger small mt-1"
+                        *ngIf="bankForm.controls['opening_balance'].hasError('invalidAmount')">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Invalid amount
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">As On<span class="text-danger">*</span></label>
+                    <input type="date" 
+                           class="form-control" 
+                           name="as_on" 
+                           id="as_on"
+                           [class.is-invalid]="bankForm.controls['as_on'].touched && bankForm.controls['as_on'].invalid"
+                           formControlName="as_on">
+                    <div class="text-danger small mt-1" *ngIf="bankForm.controls['as_on'].hasError('required')
+                             && (bankForm.controls['as_on'].dirty || bankForm.controls['as_on'].touched)">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        As on date is required
+                    </div>
+                    <div class="text-danger small mt-1" *ngIf="bankForm.get('as_on')?.hasError('dateError')">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Selected date cannot be earlier than the company's start date
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 text-center mt-4">
+            <button class="btn btn-primary px-4 py-2" 
+                    [disabled]="!bankForm.valid" 
+                    type="submit">
+                <i class="fas fa-save me-2"></i>
+                Submit
+            </button>
+        </div>
+        <!-- </div> -->
+    </div>
+  </form>

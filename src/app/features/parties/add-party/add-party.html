@@ -1,0 +1,163 @@
+<div class="parties-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Parties</h1>
+        <button class="btn-create-party" (click)="openPartyModal(partyModal)">
+            <i class="bi bi-plus-lg"></i> Create Party
+        </button>
+            </div>
+
+    <!-- Search Bar -->
+    <div class="search-section">
+        <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+            <input 
+                type="text" 
+                class="search-input" 
+                placeholder="Search by name, mobile, email..." 
+                [(ngModel)]="searchText" 
+                (ngModelChange)="onSearchChange()">
+            <button 
+                class="btn-clear" 
+                type="button" 
+                *ngIf="searchText" 
+                (click)="clearSearch()">
+                <i class="bi bi-x"></i>
+                </button>
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="filter-section">
+        <button 
+            class="filter-btn" 
+            [class.active]="selectedType === 0"
+            (click)="loadPartiesByType(0)">
+            <i class="bi bi-people-fill"></i> All
+        </button>
+        <button 
+            class="filter-btn" 
+            [class.active]="selectedType === 1"
+            (click)="loadPartiesByType(1)">
+            <i class="bi bi-person-check-fill"></i> Customer
+        </button>
+        <button 
+            class="filter-btn" 
+            [class.active]="selectedType === 2"
+            (click)="loadPartiesByType(2)">
+            <i class="bi bi-truck"></i> Vendor
+        </button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading-section" *ngIf="loading">
+        <div class="spinner"></div>
+        <p class="loading-text">Searching parties...</p>
+    </div>
+
+    <!-- Party List -->
+    <div class="parties-list-container" *ngIf="!loading">
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="!parties || parties.length === 0">
+            <div class="empty-content">
+                <i class="bi bi-inbox"></i>
+                <p>No parties found</p>
+                <button class="btn-empty-create" (click)="openPartyModal(partyModal)">
+                    Create Party
+                </button>
+                    </div>
+                </div>
+
+        <!-- Party Cards -->
+        <div class="parties-list">
+            <div 
+                *ngFor="let party of parties" 
+                class="party-card"
+                [ngClass]="{'selected': selectedParty && selectedParty.id === party.id}"
+                (click)="onAddParty(party)">
+                
+                <!-- Card Header with Actions -->
+                <div class="card-header">
+                    <div class="party-info">
+                        <h6 class="party-name">{{ party.partyName }}</h6>
+                        <div class="party-badges">
+                            <span class="badge-type" [ngClass]="{'customer': party.partyType === 1, 'vendor': party.partyType === 2}">
+                                {{ party.partyType === 1 ? 'Customer' : 'Vendor' }}
+                            </span>
+                            <span class="badge-trn" *ngIf="party.trn">
+                                <i class="bi bi-hash"></i>
+                                {{ party.trn }}
+                          </span>
+                        </div>
+                      </div>
+                    
+                    <!-- Action Icons -->
+                    <div class="action-icons">
+                        <button 
+                            class="icon-btn btn-edit" 
+                            (click)="openPartyModal(partyModal, party); $event.stopPropagation()" 
+                            title="Edit Party">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button 
+                            class="icon-btn btn-delete" 
+                            (click)="deleteParty(party.id); $event.stopPropagation()" 
+                            title="Delete Party">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="card-contact">
+                    <div class="contact-item">
+                        <i class="bi bi-telephone"></i>
+                        <span>{{ party.contact || 'N/A' }}</span>
+                    </div>
+                    <div class="contact-item" *ngIf="party.email">
+                        <i class="bi bi-envelope"></i>
+                        <span>{{ party.email }}</span>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Template -->
+<ng-template #partyModal>
+    <div class="modal-header">
+        <h5 class="modal-title">{{ modalMode === 'edit' ? 'Edit' : 'Create New' }} Party</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+    </div>
+    <div class="modal-body">
+        <app-party 
+            [partyData]="selectedParty"
+            [mode]="modalMode"
+            [ModalRef]="modalRef"
+            (onSubmit)="handlePartySubmit($event)">
+        </app-party>
+    </div>
+</ng-template>
+
+<ng-template #shortparty let-modal>
+  <div class="modal-header" style="padding-left: 28px; padding-bottom: 0px;">
+    <h5 class="modal-title mt-0" style="font-size: large; font-weight: 500;">
+      Quick Create Party
+    </h5>
+    <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')" aria-hidden="true"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3">
+      <label for="partyName">Party Name <i style="color: red;">*</i></label>
+      <input id="partyName" type="text" class="form-control" [(ngModel)]="partymodel.Party_name" required>
+    </div>
+    <div class="mb-3">
+      <label for="mobileNumber">Mobile Number</label>
+      <input id="mobileNumber" type="text" class="form-control" [(ngModel)]="partymodel.mobile_number">
+    </div>
+    <div class="text-center">
+      <button class="btn btn-sm btn-primary" (click)="createparty()">Create</button>
+    </div>
+  </div>
+</ng-template>

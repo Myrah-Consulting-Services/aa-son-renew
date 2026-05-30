@@ -1,0 +1,238 @@
+<div class="putaway-tasks-dashboard-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse/putaway-tasks">Putaway Tasks</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="putaway-dashboard-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="putaway-logo">
+          <i class="bi bi-arrow-up-right-square"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Putaway Tasks Dashboard</h1>
+          <p class="header-subtitle">Monitor and manage loading bay to rack putaway tasks</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" routerLink="../list">
+          <i class="bi bi-list me-1"></i>View All Tasks
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="autoAssignTasks()">
+          <i class="bi bi-magic me-1"></i>Auto Assign
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-task"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Tasks</h3>
+          <p class="stat-number">{{ stats.totalTasks }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Pending</h3>
+          <p class="stat-number">{{ stats.pendingTasks }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-play-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>In Progress</h3>
+          <p class="stat-number">{{ stats.inProgressTasks }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Completed</h3>
+          <p class="stat-number">{{ stats.completedTasks }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <div class="dashboard-grid">
+      <!-- Priority Tasks -->
+      <div class="dashboard-card">
+        <div class="card-header-section">
+          <h3 class="card-title">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            High Priority Tasks
+          </h3>
+        </div>
+        <div class="card-body-section">
+          <div class="table-container">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Task ID</th>
+                  <th>Item</th>
+                  <th>From → To</th>
+                  <th>Worker</th>
+                  <th>Due Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let task of priorityTasks" class="align-middle">
+                  <td>
+                    <div class="task-id">#{{ task.id }}</div>
+                    <small class="text-muted">{{ task.grnRef }}</small>
+                  </td>
+                  <td>
+                    <div class="item-name">{{ task.itemName }}</div>
+                    <small class="text-muted">Qty: {{ task.quantity }}</small>
+                  </td>
+                  <td>
+                    <div class="location-flow">
+                      <span class="badge bg-warning text-dark me-2">{{ task.fromLocation }}</span>
+                      <i class="bi bi-arrow-right me-2"></i>
+                      <span class="badge bg-info text-white">{{ task.toLocation }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="worker-info">
+                      <div class="worker-name">{{ task.workerName || 'Unassigned' }}</div>
+                      <small class="text-muted">{{ task.workerRole || '' }}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="due-time text-danger fw-medium">{{ task.dueTime | date:'shortTime' }}</div>
+                    <small class="text-muted">{{ task.estimatedTime }} min</small>
+                  </td>
+                  <td>
+                    <span class="badge" 
+                          [class.bg-warning]="task.status === 'pending'"
+                          [class.bg-info]="task.status === 'assigned'"
+                          [class.bg-primary]="task.status === 'in_progress'">
+                      {{ task.status | titlecase }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Cards -->
+      <div class="sidebar-cards">
+        <!-- Worker Performance -->
+        <div class="dashboard-card">
+          <div class="card-header-section">
+            <h3 class="card-title">
+              <i class="bi bi-people me-2"></i>
+              Worker Performance
+            </h3>
+          </div>
+          <div class="card-body-section">
+            <div *ngFor="let worker of workerPerformance" class="worker-performance-item">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                  <div class="worker-name">{{ worker.name }}</div>
+                  <small class="text-muted">{{ worker.designation }}</small>
+                </div>
+                <div class="text-end">
+                  <div class="completed-count text-success fw-bold">{{ worker.completedToday }}</div>
+                  <small class="text-muted">tasks today</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Bay Status -->
+        <div class="dashboard-card">
+          <div class="card-header-section">
+            <h3 class="card-title">
+              <i class="bi bi-truck-flatbed me-2"></i>
+              Loading Bay Status
+            </h3>
+          </div>
+          <div class="card-body-section">
+            <div *ngFor="let bay of loadingBays" class="loading-bay-item">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="bay-name fw-medium">{{ bay.name }}</span>
+                <span class="badge" 
+                      [class.bg-success]="bay.utilization < 70"
+                      [class.bg-warning]="bay.utilization >= 70 && bay.utilization < 90"
+                      [class.bg-danger]="bay.utilization >= 90">
+                  {{ bay.utilization }}%
+                </span>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar" 
+                     [class.bg-success]="bay.utilization < 70"
+                     [class.bg-warning]="bay.utilization >= 70 && bay.utilization < 90"
+                     [class.bg-danger]="bay.utilization >= 90"
+                     [style.width.%]="bay.utilization"></div>
+              </div>
+              <small class="text-muted">{{ bay.itemsCount }} items waiting</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dashboard-card">
+          <div class="card-header-section">
+            <h3 class="card-title">
+              <i class="bi bi-lightning me-2"></i>
+              Quick Actions
+            </h3>
+          </div>
+          <div class="card-body-section">
+            <div class="quick-actions-grid">
+              <button class="btn btn-primary btn-sm" (click)="createTask()">
+                <i class="bi bi-plus me-2"></i>Create Task
+              </button>
+              <button class="btn btn-secondary btn-sm" (click)="prioritizeUrgent()">
+                <i class="bi bi-exclamation-triangle me-2"></i>Prioritize Urgent
+              </button>
+              <button class="btn btn-secondary btn-sm" (click)="autoAssignTasks()">
+                <i class="bi bi-magic me-2"></i>Auto Assign
+              </button>
+              <button class="btn btn-secondary btn-sm" (click)="generateReport()">
+                <i class="bi bi-file-earmark-text me-2"></i>Generate Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+
+

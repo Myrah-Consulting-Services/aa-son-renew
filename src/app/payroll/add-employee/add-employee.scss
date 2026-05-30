@@ -1,0 +1,735 @@
+// Warm color palette
+$warm-orange: #41299b;
+$warm-amber: #f59e0b;
+$warm-brown: #92400e;
+$warm-terracotta: #c2410c;
+$warm-cream: #fef3c7;
+$warm-beige: #fef9e7;
+$warm-gray: #6b7280;
+$warm-dark: #1f2937;
+
+:host {
+  display: block;
+}
+
+// Container Styles
+.container-fluid {
+  padding: 0.75rem;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* Tab Styles */
+.step-tabs {
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
+  
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  .nav-link {
+    display: grid;
+    grid-template-columns: 28px auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    color: $warm-dark;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    
+    .step-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      
+      i {
+        color: $warm-gray;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        
+        &.bi-check-circle-fill {
+          color: #059669;
+          font-size: 1rem;
+        }
+      }
+    }
+    
+    .step-index {
+      width: 28px;
+      height: 28px;
+      line-height: 28px;
+      text-align: center;
+      border-radius: 50%;
+      background: rgba($warm-orange, 0.1);
+      color: $warm-gray;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+    
+    .step-title {
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+    
+    &:hover {
+      background: rgba($warm-orange, 0.05);
+      border-color: rgba($warm-orange, 0.3);
+      
+      .step-icon i:not(.bi-check-circle-fill) {
+        color: $warm-orange;
+      }
+    }
+  }
+  
+  .nav-link.active {
+    background: rgba($warm-orange, 0.1);
+    border-color: $warm-orange;
+    color: $warm-dark;
+    font-weight: 500;
+    
+    .step-icon i:not(.bi-check-circle-fill) {
+      color: $warm-orange;
+    }
+    
+    .step-index {
+      background: $warm-orange;
+      color: #fff;
+    }
+  }
+  
+  .nav-item.completed {
+    .nav-link {
+      .step-icon i.bi-check-circle-fill {
+        color: #059669;
+      }
+    }
+  }
+}
+
+// Tab Content
+.tab-content {
+  padding-top: 0.75rem;
+}
+
+// Progress Bar
+.progress {
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  margin-bottom: 0.75rem;
+  
+  .progress-bar {
+    background: $warm-orange;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+}
+
+// Card Styles
+.card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
+  
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-header {
+    padding: 1rem;
+    background: rgba($warm-orange, 0.05);
+    border-bottom: 1px solid rgba($warm-orange, 0.1);
+    border-radius: 8px 8px 0 0;
+    
+    h6 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: $warm-dark;
+      display: flex;
+      align-items: center;
+      
+      i {
+        color: $warm-orange;
+        margin-right: 0.5rem;
+      }
+    }
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: $warm-dark;
+  font-size: 0.875rem;
+}
+
+.form-text {
+  font-size: 0.8rem;
+  color: $warm-gray;
+}
+
+.form-control,
+.form-select {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    border-color: $warm-orange;
+    box-shadow: 0 0 0 0.2rem rgba($warm-orange, 0.1);
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 1rem;
+  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+// Button Styles
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  
+  &.btn-save,
+  &.btn-primary {
+    background-color: $warm-orange;
+    border-color: $warm-orange;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background-color: mix(black, $warm-orange, 10%);
+      border-color: mix(black, $warm-orange, 10%);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+  
+  &.btn-secondary {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: $warm-dark;
+    
+    &:hover:not(:disabled) {
+      border-color: $warm-orange;
+      color: $warm-orange;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+  
+  &.btn-outline-primary {
+    border-color: $warm-orange;
+    color: $warm-orange;
+    
+    &:hover:not(:disabled) {
+      background-color: $warm-orange;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+  }
+  
+  &.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+// Adjust checkbox layout
+.form-check {
+    display: flex;
+    align-items: center;
+}
+
+.form-check-label {
+    margin-left: 0.5rem;
+    font-weight: normal;
+}
+
+.form-check-input {
+    margin-top: 0;
+}
+
+/* Document Management Styles */
+.document-type-selection {
+  .file-upload-section {
+    padding: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: rgba($warm-orange, 0.03);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      border-color: rgba($warm-orange, 0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+
+.document-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  
+  .status-section {
+    .status-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba($warm-orange, 0.1);
+      color: $warm-dark;
+    }
+    
+    .document-list {
+      .document-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.625rem;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: rgba($warm-orange, 0.05);
+          border-color: rgba($warm-orange, 0.2);
+        }
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
+
+.upload-summary {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 1rem;
+  
+  .summary-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1rem;
+    
+    .stat-item {
+      text-align: center;
+      
+      .stat-number {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: $warm-orange;
+      }
+      
+      .stat-label {
+        font-size: 0.875rem;
+        color: $warm-gray;
+      }
+    }
+  }
+  
+  .summary-actions {
+    text-align: center;
+  }
+}
+
+/* UAE Payment Details Styles */
+.payment-details-container {
+  .payment-option {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+    background: white;
+    
+    &:hover {
+      border-color: $warm-orange;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    
+    .form-check-label {
+      cursor: pointer;
+      
+      strong {
+        color: $warm-dark;
+        font-size: 1rem;
+      }
+      
+      small {
+        color: $warm-gray;
+        font-size: 0.875rem;
+      }
+    }
+  }
+  
+  .card {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    
+    .card-title {
+      color: $warm-dark;
+      font-weight: 600;
+      
+      i {
+        color: $warm-orange;
+      }
+    }
+  }
+  
+  .alert-info {
+    border-left: 4px solid $warm-orange;
+    background-color: rgba($warm-orange, 0.05);
+    border-radius: 6px;
+    
+    .alert-heading {
+      color: $warm-dark;
+      font-weight: 600;
+      
+      i {
+        color: $warm-orange;
+      }
+    }
+    
+    ul {
+      padding-left: 1.2rem;
+      
+      li {
+        margin-bottom: 0.5rem;
+        color: $warm-dark;
+        
+        strong {
+          color: $warm-orange;
+        }
+      }
+    }
+  }
+}
+
+// Button secondary styles are already defined above in .btn.btn-secondary
+
+/* Documents Tab Styles - Compact & Professional */
+.documents-container {
+  .document-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    
+    .status-section {
+      .status-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba($warm-orange, 0.1);
+        color: $warm-dark;
+        
+        &.text-primary {
+          border-color: $warm-orange;
+        }
+        
+        &.text-secondary {
+          border-color: $warm-gray;
+        }
+        
+        .bi {
+          font-size: 0.875rem;
+          color: $warm-orange;
+        }
+      }
+      
+      .document-list {
+        .document-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.625rem;
+          margin-bottom: 0.5rem;
+          border-radius: 6px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: rgba($warm-orange, 0.05);
+            border-color: rgba($warm-orange, 0.2);
+          }
+          
+          &.complete {
+            background-color: rgba(#059669, 0.05);
+            border-left: 3px solid #059669;
+          }
+          
+          .document-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            
+            .bi {
+              font-size: 0.875rem;
+              
+              &.bi-check-circle-fill {
+                color: #059669 !important;
+              }
+              
+              &.bi-circle,
+              &.bi-dash-circle {
+                color: $warm-gray;
+              }
+            }
+            
+            .document-name {
+              font-size: 0.875rem;
+              color: $warm-dark;
+              font-weight: 500;
+            }
+          }
+          
+          .document-status {
+            .badge {
+              font-size: 0.75rem;
+              padding: 0.25rem 0.5rem;
+              border-radius: 6px;
+              font-weight: 500;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+.stepper-container {
+  .stepper-step {
+    position: relative;
+    min-width: 120px;
+  }
+  
+  .stepper-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba($warm-orange, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 1.2rem;
+    transition: all 0.2s ease;
+    
+    &.active {
+      border: 2px solid $warm-orange;
+      background: white;
+      color: $warm-orange;
+    }
+    
+    &.completed {
+      background: rgba(#059669, 0.1);
+      border: 2px solid #059669;
+      color: #059669;
+    }
+  }
+  
+  .stepper-line {
+    height: 4px;
+    background: rgba($warm-orange, 0.1);
+    margin: 0 8px;
+    align-self: center;
+    border-radius: 2px;
+  }
+  
+  .stepper-label {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    color: $warm-dark;
+  }
+}
+// Legacy nav step styles (keeping for backward compatibility)
+.add-employee-nav-step {
+  padding: 3px;
+  border-radius: 50%;
+  height: 28px;
+  width: 28px;
+  margin: auto;
+  border: 1px solid $warm-gray;
+  font-weight: 500 !important;
+  color: $warm-dark;
+  transition: all 0.2s ease;
+}
+
+.nav-item.active .add-employee-nav-step {
+  background-color: $warm-orange;
+  color: #fff;
+  border-color: $warm-orange;
+}
+
+.nav-item.completed .add-employee-nav-step {
+  background-color: #059669;
+  color: #fff;
+  border-color: #059669;
+}
+
+.add-employee-nav-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  margin-top: 14px;
+  transition: all 0.2s ease;
+  color: $warm-dark;
+}
+
+.nav-item.active .add-employee-nav-text {
+  color: $warm-orange;
+}
+
+.nav-item.completed .add-employee-nav-text {
+  color: #059669;
+}
+
+.nav-item {
+  flex: 1;
+}
+.employee-document {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.employee-document .upload-document {
+  background: rgba($warm-orange, 0.03);
+  border: 1px dashed rgba($warm-orange, 0.3);
+  font-size: 0.875rem;
+  height: 40px;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.employee-document .upload-document:hover {
+  background: rgba($warm-orange, 0.05);
+  border-color: $warm-orange;
+}
+
+.employee-document .upload-document svg {
+  fill: $warm-orange;
+}
+
+.employee-document .btn-group-sm .btn {
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+}
+
+.employee-document .btn-outline-secondary {
+  background: white;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: $warm-dark;
+}
+
+.employee-document .btn-outline-secondary:hover {
+  background: rgba($warm-orange, 0.05);
+  color: $warm-orange;
+  border-color: $warm-orange;
+}
+
+.employee-document .dropdown-menu {
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.file-upload {
+  overflow: hidden !important;
+}
+
+.file-upload input {
+  z-index: 8;
+  opacity: 0;
+  position: absolute;
+  overflow: hidden;
+  cursor: pointer;
+  width: 100%;
+}
+
+.note {
+  padding: 0.75rem 1rem;
+  background-color: rgba($warm-orange, 0.05);
+  border-left: 3px solid $warm-orange;
+  border-radius: 6px;
+  margin: 0.75rem 0;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 0.5rem;
+  }
+  
+  .step-tabs {
+    padding: 0.5rem;
+    gap: 0.25rem;
+    
+    .nav-link {
+      padding: 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+  
+  .document-status-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .card {
+    .card-header,
+    .card-body {
+      padding: 0.75rem;
+    }
+  }
+}

@@ -1,0 +1,184 @@
+<div class="items-page-container">
+  <!-- Compact Header -->
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <a routerLink="/items/item-list" class="breadcrumb-link active">
+        <i class="bi bi-box"></i>
+        <span>Items</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Compact Two Column Layout -->
+  <div class="items-layout">
+    <!-- Left Panel: Items List -->
+    <div class="left-panel">
+      <app-add-item 
+        [showAddButton]="false" 
+        (addItem)="onAddItem($event)" 
+        [selectedItem]="selectedItem">
+      </app-add-item>
+    </div>
+
+    <!-- Right Panel: Item Details -->
+    <div class="right-panel">
+      <!-- Compact Item Details -->
+      <div class="item-details-section" *ngIf="itemData">
+        <div class="item-header">
+          <div class="item-title-group">
+            <h2 class="item-name">{{ itemData?.name || 'N/A' }}</h2>
+            <div class="item-meta">
+              <span class="item-id">
+                #{{ itemData?.item_code || 'N/A' }}
+              </span>
+              <span class="item-type" [ngClass]="{'product': itemData?.item_type === 1, 'service': itemData?.item_type === 2}">
+                <i class="bi bi-box" *ngIf="itemData?.item_type === 1"></i>
+                <i class="bi bi-tools" *ngIf="itemData?.item_type === 2"></i>
+                {{ itemData?.item_type === 1 ? 'Product' : itemData?.item_type === 2 ? 'Service' : 'N/A' }}
+              </span>
+            </div>
+          </div>
+          <div class="header-actions-inline">
+            <button class="action-btn-inline" routerLink="/items/item-master">
+              <i class="bi bi-list-ul"></i> Item Master
+            </button>
+            <button class="action-btn-inline" (click)="exportItems()">
+              <i class="bi bi-download"></i> Export
+            </button>
+            <button class="action-btn-inline" (click)="openImportModal()">
+              <i class="bi bi-upload"></i> Import
+            </button>
+          </div>
+        </div>
+
+        <!-- Compact Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">SALE PRICE</div>
+            <div class="metric-value sale-price-value">{{ getCurrency() }} {{ itemData?.sales_price || '0.000' }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">PURCHASE PRICE</div>
+            <div class="metric-value purchase-price-value">{{ getCurrency() }} {{ itemData?.purchase_price || '0.000' }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">CURRENT STOCK</div>
+            <div class="metric-value">{{ itemData?.current_stock || itemData?.stock || '0.000' }} {{ itemData?.unit || 'BAG' }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">LAST UPDATED</div>
+            <div class="metric-value">{{ formatDate(itemData?.updated_at) || '-' }}</div>
+          </div>
+          </div>
+
+        <!-- Compact Description -->
+        <div class="description-section">
+          <label class="description-label">DESCRIPTION</label>
+          <div class="description-content">
+            {{ itemData?.item_description || 'No description available for this item.' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact Empty State -->
+      <div class="empty-state" *ngIf="!itemData">
+        <i class="bi bi-inbox"></i>
+        <p>Select an item from the list to view details</p>
+      </div>
+
+      <!-- Item Ledger Report -->
+      <app-item-ledgers [itemId]="itemData?.id"></app-item-ledgers>
+    </div>
+  </div>
+</div>
+
+<!-- Import Items Modal -->
+<ng-template #importModal>
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <i class="bi bi-upload me-2"></i> Import Items
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="closeImportModal()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="import-content">
+      <!-- Download Sample Section -->
+      <div class="sample-download-section">
+        <div class="sample-info">
+          <i class="bi bi-info-circle"></i>
+          <p>Download the sample file to see the required format for importing items.</p>
+        </div>
+        <button class="btn-download-sample" (click)="downloadSampleFile()">
+          <i class="bi bi-download"></i> Download Sample File
+        </button>
+      </div>
+
+      <!-- Upload Section -->
+      <div class="upload-section">
+        <label class="upload-label">Select File to Upload</label>
+        <div class="file-upload-area" 
+             [class.dragover]="isDragging"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event)">
+          <input 
+            type="file" 
+            #fileInput
+            class="file-input" 
+            accept=".xlsx,.xls,.csv"
+            (change)="onFileSelected($event)"
+            style="display: none;">
+          
+          <div class="upload-content" *ngIf="!selectedFile">
+            <i class="bi bi-cloud-upload"></i>
+            <p class="upload-text">Drag and drop your file here</p>
+            <p class="upload-subtext">or</p>
+            <button class="btn-browse" (click)="fileInput.click()">
+              Browse Files
+            </button>
+            <p class="file-types">Supported formats: .xlsx, .xls, .csv</p>
+          </div>
+
+          <div class="file-selected" *ngIf="selectedFile">
+            <i class="bi bi-file-earmark-excel"></i>
+            <div class="file-info">
+              <p class="file-name">{{ selectedFile.name }}</p>
+              <p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+            </div>
+            <button class="btn-remove" (click)="removeFile()">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="upload-progress" *ngIf="isUploading">
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar" [style.width.%]="uploadProgress"></div>
+        </div>
+        <p class="progress-text">Uploading... {{ uploadProgress }}%</p>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeImportModal()">Cancel</button>
+    <button 
+      type="button" 
+      class="btn btn-primary" 
+      [disabled]="!selectedFile || isUploading"
+      (click)="uploadFile()">
+      <span *ngIf="!isUploading">
+        <i class="bi bi-upload me-1"></i> Upload
+      </span>
+      <span *ngIf="isUploading">
+        <span class="spinner-border spinner-border-sm me-2"></span> Uploading...
+      </span>
+    </button>
+  </div>
+</ng-template>

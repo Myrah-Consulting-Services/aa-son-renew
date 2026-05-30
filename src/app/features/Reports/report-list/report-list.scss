@@ -1,0 +1,455 @@
+// Minimalist Color Palette (consistent with other components)
+$primary: #41299b;
+$primary-hover: #35208a;
+$primary-light: #ede9fe;
+$text-primary: #1f2937;
+$text-secondary: #6b7280;
+$text-muted: #9ca3af;
+$bg-page: #ffffff;
+$bg-secondary: #f8f9fa;
+$border-color: #e5e7eb;
+$border-light: #f3f4f6;
+$success: #10b981;
+$danger: #ef4444;
+$info: #3b82f6;
+
+.reports-page-container {
+  padding: 1rem 1.25rem;
+  background: $bg-page;
+  min-height: 100vh;
+}
+
+.page-header-card {
+  background: $bg-page;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 0.625rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    margin: 0;
+
+    .breadcrumb-link {
+  display: flex;
+  align-items: center;
+      gap: 0.375rem;
+      color: $text-secondary;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      margin: -0.25rem -0.5rem;
+
+      i {
+        font-size: 0.875rem;
+        color: $text-muted;
+      }
+
+      span {
+        color: $text-secondary;
+      }
+
+      &:hover {
+        color: $primary;
+        background: $primary-light;
+
+        i {
+          color: $primary;
+        }
+
+        span {
+          color: $primary;
+        }
+      }
+
+      &.active {
+        color: $text-primary;
+        font-weight: 500;
+        cursor: default;
+
+        i {
+          color: $primary;
+        }
+
+        span {
+          color: $text-primary;
+        }
+
+        &:hover {
+          background: transparent;
+        }
+      }
+}
+
+    .separator {
+      color: $text-muted;
+      margin: 0 0.125rem;
+      user-select: none;
+    }
+  }
+}
+
+.reports-content-card {
+  background: $bg-page;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.reports-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid $border-light;
+
+  .header-left {
+    .page-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: $text-primary;
+      margin: 0 0 0.125rem 0;
+    }
+
+    .page-subtitle {
+      font-size: 0.8125rem;
+      color: $text-secondary;
+      margin: 0;
+    }
+  }
+}
+
+.reports-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+// Sidebar
+.reports-sidebar {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-color;
+    border-radius: 10px;
+
+    &:hover {
+      background: $text-secondary;
+    }
+  }
+}
+
+.sidebar-card {
+  background: $bg-secondary;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 0.875rem;
+}
+
+.search-section {
+  margin-bottom: 1rem;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    color: $text-muted;
+    font-size: 0.875rem;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+    border: 1px solid $border-color;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    background: $bg-page;
+    color: $text-primary;
+    transition: all 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba(65, 41, 155, 0.1);
+}
+
+    &::placeholder {
+      color: $text-muted;
+    }
+  }
+
+  .btn-clear {
+    position: absolute;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    color: $text-muted;
+    cursor: pointer;
+    padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    width: 20px;
+    height: 20px;
+
+    i {
+      font-size: 0.875rem;
+    }
+
+    &:hover {
+      background: $border-color;
+      color: $text-primary;
+    }
+  }
+}
+
+.categories-section {
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+
+    i {
+      font-size: 0.8125rem;
+      color: $text-muted;
+    }
+  }
+
+  .categories-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .category-item {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: $text-primary;
+    background: transparent;
+
+    i {
+      font-size: 0.875rem;
+      color: $text-muted;
+      flex-shrink: 0;
+    }
+
+    span {
+      flex: 1;
+    }
+
+    &:hover {
+      background: $bg-page;
+      color: $primary;
+
+      i {
+        color: $primary;
+      }
+    }
+
+    &.active {
+      background: $primary-light;
+      color: $primary;
+      font-weight: 500;
+
+      i {
+        color: $primary;
+      }
+    }
+  }
+}
+
+// Main Content
+.reports-main {
+  min-width: 0;
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.report-card {
+  background: $bg-page;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &:hover {
+    border-color: $primary;
+    box-shadow: 0 2px 8px rgba(65, 41, 155, 0.1);
+    transform: translateY(-2px);
+}
+
+  .report-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    .report-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: $primary-light;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      i {
+        font-size: 1.125rem;
+        color: $primary;
+      }
+    }
+
+    .report-title {
+      font-size: 0.9375rem;
+  font-weight: 600;
+      color: $text-primary;
+      margin: 0;
+      line-height: 1.4;
+      flex: 1;
+    }
+  }
+
+  .report-description {
+    font-size: 0.8125rem;
+    color: $text-secondary;
+    margin: 0;
+    line-height: 1.5;
+}
+
+  .btn-view-report {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    background: transparent;
+    border: 1.5px solid $primary;
+    color: $primary;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    margin-top: auto;
+    width: fit-content;
+
+    i {
+      font-size: 0.875rem;
+    }
+
+    &:hover {
+      background: $primary;
+      color: white;
+      transform: translateX(2px);
+  }
+  }
+}
+
+// Empty State
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  background: $bg-secondary;
+  border-radius: 8px;
+  border: 1px solid $border-color;
+
+  i {
+    font-size: 3rem;
+    color: $text-muted;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  p {
+    font-size: 0.875rem;
+    color: $text-primary;
+    font-weight: 500;
+    margin: 0 0 0.5rem 0;
+  }
+
+  small {
+    font-size: 0.75rem;
+    color: $text-secondary;
+  }
+}
+
+// Responsive Design
+@media (max-width: 992px) {
+  .reports-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .reports-sidebar {
+    position: static;
+    max-height: none;
+  }
+  
+  .reports-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .reports-page-container {
+    padding: 1rem;
+  }
+  
+  .reports-content-card {
+    padding: 1rem;
+  }
+
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+}

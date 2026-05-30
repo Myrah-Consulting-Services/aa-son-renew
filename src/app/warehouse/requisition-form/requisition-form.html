@@ -1,0 +1,299 @@
+<div class="requisition-modal">
+  
+
+ 
+
+  <!-- Success Toast -->
+  
+
+  <div class="modal-body">
+    <form [formGroup]="requisitionForm"  class="requisition-form">
+      <!-- Header Information -->
+      <div class="form-section header-section">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="warehouseId">Requested From:</label>
+            <select 
+              id="warehouseId" 
+              formControlName="warehouseId" 
+              class="form-control"
+              [class.invalid]="requisitionForm.get('warehouseId')?.invalid && requisitionForm.get('warehouseId')?.touched">
+              <option value="">Select Warehouse</option>
+              <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">{{ warehouse.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="invoiceNo">Invoice No:</label>
+            <input 
+              type="text" 
+              id="invoiceNo" 
+              formControlName="invoiceNo" 
+              class="form-control">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="to_warehouse">Requested To:</label>
+            <select 
+              id="to_warehouse" 
+              formControlName="to_warehouse" 
+              class="form-control"
+              [class.invalid]="requisitionForm.get('to_warehouse')?.invalid && requisitionForm.get('to_warehouse')?.touched">
+              <option value="">Select Warehouse</option>
+              <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">{{ warehouse.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="date">Date:</label>
+            <input 
+              type="date" 
+              id="date" 
+              formControlName="date" 
+              class="form-control"
+              [class.invalid]="requisitionForm.get('date')?.invalid && requisitionForm.get('date')?.touched">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pick_start_time">Pick Start Time:</label>
+            <input 
+              type="time" 
+              id="pick_start_time" 
+              formControlName="pick_start_time" 
+              class="form-control"
+              [class.invalid]="requisitionForm.get('pick_start_time')?.invalid && requisitionForm.get('pick_start_time')?.touched">
+          </div>
+          <div class="form-group">
+            <label for="pick_completed_time">Pick Completed Time:</label>
+            <input 
+              type="time" 
+              id="pick_completed_time" 
+              formControlName="pick_completed_time" 
+              class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      <div class="form-section items-section">
+        <div class="section-header">
+          <h3>Items</h3>
+          <button *ngIf="isCreateMode" type="button" class="btn-secondary" (click)="addItem()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Item
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th *ngIf="isCreateMode">Search Item</th>
+                <th>Item ID</th>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Barcode</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th *ngIf="isCreateMode">Action</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="items">
+              <tr *ngFor="let item of itemsArray.controls; let i = index" [formGroupName]="i">
+                <td>{{ i + 1 }}</td>
+                <td *ngIf="isCreateMode" class="search-cell">
+                  <div class="search-container">
+                    <input
+                      type="text"
+                      class="form-control table-input"
+                      [value]="itemSearchTerms[i] || ''"
+                      placeholder="Search items..."
+                      (input)="onSearchInput($event, i)"
+                      (focus)="onSearchFocus(i)"
+                      (blur)="onSearchBlur()">
+
+                    <div class="search-results" *ngIf="shouldShowSearchResults(i)">
+                      <button
+                        type="button"
+                        class="search-result-item"
+                        *ngFor="let result of searchResults"
+                        (mousedown)="selectItem(result, i)">
+                        <span>{{ result.name }}</span>
+                        <small>{{ result.item_code }}</small>
+                      </button>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <input 
+                    type="number" 
+                    formControlName="itemId" 
+                    class="form-control table-input"
+                    placeholder="Item ID"
+                    [class.invalid]="item.get('itemId')?.invalid && item.get('itemId')?.touched"
+                    readonly>
+                </td>
+                <td>
+                  <input 
+                    type="text" 
+                    formControlName="item_code" 
+                    class="form-control table-input"
+                    placeholder="Item Code"
+                    [class.invalid]="item.get('item_code')?.invalid && item.get('item_code')?.touched"
+                    readonly>
+                </td>
+                <td>
+                  <input 
+                    type="text" 
+                    formControlName="item_name" 
+                    class="form-control table-input"
+                    placeholder="Item Name"
+                    [class.invalid]="item.get('item_name')?.invalid && item.get('item_name')?.touched"
+                    readonly>
+                </td>
+                <td>
+                  <input 
+                    type="text" 
+                    formControlName="barcode" 
+                    class="form-control table-input"
+                    placeholder="Barcode"
+                    readonly>
+                </td>
+                <td>
+                  <input 
+                    type="number" 
+                    formControlName="quantity" 
+                    class="form-control table-input"
+                    min="1"
+                    [class.invalid]="item.get('quantity')?.invalid && item.get('quantity')?.touched"
+                    [readonly]="!isCreateMode">
+                </td>
+                <td>
+                  <select
+                    formControlName="unit" 
+                    class="form-control table-input"
+                    [class.invalid]="item.get('unit')?.invalid && item.get('unit')?.touched">
+                    <option readonly value="">Select Unit</option>
+                    <option readonly *ngFor="let unit of itemUnits[i] || units" [value]="unit.id">{{ unit.name }}</option>
+                  </select>
+                </td>
+                <td *ngIf="isCreateMode">
+                  <button 
+                    type="button" 
+                    class="btn-danger btn-sm" 
+                    (click)="removeItem(i)"
+                    [disabled]="itemsArray.length === 1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3,6 5,6 21,6"></polyline>
+                      <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="total-section">
+          <div class="total-item">
+            <span class="total-label">Total Quantity:</span>
+            <span class="total-value">{{ getTotalQuantity() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Information -->
+      <div class="form-section footer-section">
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="remarks">Remarks:</label>
+            <textarea 
+              id="remarks" 
+              formControlName="remarks" 
+              class="form-control"
+              rows="3"
+              placeholder="Enter any additional remarks..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="created_by_user">Created By:</label>
+            <input 
+              type="text" 
+              id="created_by_user" 
+              formControlName="created_by_user" 
+              class="form-control"
+              placeholder="User name"
+              readonly
+              [class.invalid]="requisitionForm.get('created_by_user')?.invalid && requisitionForm.get('created_by_user')?.touched">
+          </div>
+          <div class="form-group" *ngIf="isApproveMode">
+            <label for="inwardType">Assign To</label>
+            <select class="form-control form-select" id="worker" formControlName="assignedWorker" required >
+              <option value="">Select Worker</option>
+              <option *ngFor="let worker of workers" [value]="worker.id">
+                {{ worker.first_name }} {{ worker.last_name }}
+              </option>
+            </select>
+            <div *ngIf="requisitionForm.get('assignedWorker')?.touched && requisitionForm.get('assignedWorker')?.invalid" class="text-danger small mt-1">
+              Assign To is required.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions" *ngIf="!isViewMode">
+        <ng-container *ngIf="isApproveMode">
+        <button type="button" class="btn btn-danger" (click)="onSubmit(4)">
+          Reject
+        </button>
+        <button type="submit" class="btn-primary btn-success" (click)="onSubmit(2)">
+         Approved
+        </button>
+        </ng-container>
+
+        <ng-container *ngIf="isCreateMode">
+          <button type="button" class="btn btn-secondary" (click)="modalRef?.dismiss('cancel')">
+            Cancel
+          </button>
+          <button type="button" class="btn-primary btn-success" (click)="createRequisition()">
+            Create Requisition
+          </button>
+        </ng-container>
+        
+        <!-- Success Actions -->
+        <div class="success-actions" *ngIf="showSuccessActions">
+          <button type="button" class="btn-success" (click)="printRequisition()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6,9 6,2 18,2 18,9"></polyline>
+              <path d="M6,18H4a2,2 0 0,1 -2,-2V11a2,2 0 0,1 2,-2H20a2,2 0 0,1 2,2v5a2,2 0 0,1 -2,2H18"></path>
+              <polyline points="6,14 6,18 18,18 18,14"></polyline>
+            </svg>
+            Print
+          </button>
+          <button type="button" class="btn-info" (click)="downloadPDF()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14,2 14,8 20,8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10,9 9,9 8,9"></polyline>
+            </svg>
+            Download PDF
+          </button>
+          <button type="button" class="btn-secondary" (click)="onCancel()">
+            Close
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div> 

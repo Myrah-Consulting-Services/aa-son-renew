@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tax Invoice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      margin: 30px 40px;
+      color: #000;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .header .logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 8px;
+    }
+    .company-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+    .company-info {
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+    .trn {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 2px;
+    }
+    .invoice-header-box {
+      width: 100%;
+      border: 1.5px solid #000;
+      margin-bottom: 0;
+      padding: 0;
+      border-radius: 0;
+      border-bottom: none;
+    }
+    .tax-invoice-title {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      border-bottom: 1.5px solid #000;
+      margin: 0;
+      padding: 8px 0 8px 0;
+      background: #fff;
+    }
+    .details-table {
+      width: 100%;
+      border: none;
+      border-collapse: collapse;
+      margin-bottom: 0;
+      font-size: 0.97rem;
+    }
+    /* .details-table tr {
+      /* No border-bottom */
+    /* } */ 
+    .details-table td {
+      border: none;
+      padding: 3px 6px;
+      vertical-align: top;
+      text-align: left;
+    }
+    .details-table td:first-child {
+      border-right: 1.5px solid #000;
+    }
+    .details-table .label {
+      font-weight: bold;
+    }
+    .details-table .value {
+      font-weight: normal;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0;
+      font-size: 0.97rem;
+      border: 1.5px solid #000;
+    }
+    .items-table th, .items-table td {
+      border: 1px solid #000;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    .items-table th {
+      background: #f0f0f0;
+      font-weight: bold;
+      font-size: 0.98rem;
+    }
+    .items-table td.text-left {
+      text-align: left;
+    }
+    .totals-table {
+      width: 350px;
+      float: right;
+      margin-top: 10px;
+      border-collapse: collapse;
+      font-size: 0.97rem;
+    }
+    .totals-table td {
+      padding: 3px 8px;
+      border: none;
+    }
+    .totals-table .label {
+      text-align: right;
+      font-weight: bold;
+      width: 60%;
+    }
+    .totals-table .value {
+      text-align: left;
+      width: 40%;
+    }
+    .amount-words {
+      margin-top: 16px;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    .remarks-table {
+      width: 100%;
+      border: 1px solid #444;
+      border-collapse: collapse;
+      margin: 16px 0 8px 0;
+      font-size: 0.97rem;
+    }
+    .remarks-table td {
+      border: none;
+      padding: 6px 10px;
+      vertical-align: top;
+    }
+    .remarks-table .label {
+      font-weight: bold;
+      width: 90px;
+    }
+    .remarks-table .value {
+      font-weight: normal;
+    }
+    .footer-signature {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 18px;
+      font-size: 1rem;
+    }
+    .for-company .company-name {
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .signature-section {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.97rem;
+    }
+    .signature-block {
+      text-align: center;
+      width: 30%;
+    }
+    .signature-line {
+      border-top: 1px solid #000;
+      margin: 0 0 4px 0;
+      height: 18px;
+    }
+    .footer-info {
+      margin-top: 18px;
+      font-size: 0.92rem;
+      text-align: left;
+      color: #444;
+    }
+    .footer-info span {
+      margin-right: 18px;
+    }
+  </style>
+</head>
+<body>
+    <button (click)="previewPDF()">Preview PDF</button>
+<button (click)="downloadPDF()">Download PDF</button>
+  <div class="header">
+    <img src="/assets/images/aasons.jpg" alt="Company Logo" class="logo" />
+    <div class="company-name">AHMAD ABDULRAHMAN &amp; SONS GENERAL TRADING (LLC)</div>
+    <div class="company-info">POST BOX NO. 4713, DUBAI, U.A.E. TEL: 04-3536699 FAX: 04-3536611 Email: raisem&#64;eim.ae</div>
+    <div class="trn">TRN : 100033732700003</div>
+  </div>
+
+  <div class="invoice-header-box">
+    <div class="tax-invoice-title">TAX INVOICE</div>
+    <table class="details-table">
+      <tr>
+        <td><span class="label">Vendor</span> : <span class="value">CASH SALES - JOHNSON ACCOUNT</span></td>
+        <td><span class="label">Doc No</span> : <span class="value">INV-202404937</span></td>
+      </tr>
+      <tr>
+        <td><span class="label">Address</span> : <span class="value"></span></td>
+        <td><span class="label">Doc Date</span> : <span class="value">25/09/2024</span></td>
+      </tr>
+      <tr>
+        <td><span class="label">Tel No</span> : <span class="value"></span></td>
+        <td><span class="label">Customer Code</span> : <span class="value">540.Z128</span></td>
+      </tr>
+      <tr>
+        <td><span class="label">Fax No</span> : <span class="value"></span></td>
+        <td><span class="label">LPO No</span> : <span class="value"></span></td>
+      </tr>
+      <tr>
+        <td><span class="label">TRN</span> : <span class="value"></span></td>
+        <td><span class="label">Payment Terms</span> : <span class="value">CASH</span></td>
+      </tr>
+      <tr>
+        <td><span class="label">Branch</span> : <span class="value">Head Office</span></td>
+        <td><span class="label">Salesman</span> : <span class="value">JOHNSON</span></td>
+      </tr>
+    </table>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th>Item Code</th>
+          <th>Description</th>
+          <th>Un. Name</th>
+          <th>Qty</th>
+          <th>Rate</th>
+          <th>Gross</th>
+          <th>VAT %</th>
+          <th>VAT Value</th>
+          <th>Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Example static rows, replace with *ngFor for dynamic data -->
+        <tr><td>1</td><td>BR 1395 67</td><td class="text-left">IRON TABLE 110X30 SIR MORNING BREEZE</td><td>EA</td><td>1</td><td>135.00</td><td>135.00</td><td>5</td><td>6.75</td><td>141.75</td></tr>
+        <tr><td>2</td><td>PMR0021055</td><td class="text-left">PREMIER SUPER G MIXER GRINDER - 230 V - KM501 C2 (CE) (COC)(UK PLUG)</td><td>EA</td><td>1</td><td>149.00</td><td>149.00</td><td>5</td><td>7.45</td><td>156.45</td></tr>
+        <tr><td>3</td><td>ANI-BR 4791 68</td><td class="text-left">MC RETROBIN-20L ALMOND SLIMLINE</td><td>EA</td><td>1</td><td>60.00</td><td>60.00</td><td>5</td><td>3.00</td><td>63.00</td></tr>
+        <tr><td>4</td><td>BR 1499 00</td><td class="text-left">NEWICON PEDALBIN-5L Soft Beige</td><td>EA</td><td>2</td><td>85.00</td><td>170.00</td><td>5</td><td>8.50</td><td>178.50</td></tr>
+        <tr><td>5</td><td>BR 3501 84</td><td class="text-left">DRYINGRACK-20M T-MODEL GREY</td><td>EA</td><td>1</td><td>149.00</td><td>149.00</td><td>5</td><td>7.45</td><td>156.45</td></tr>
+        <tr><td>6</td><td>130-95STGBG</td><td class="text-left">95PC D/SET F.C STINGRAY BEIGE FINE CHINA</td><td>EA</td><td>1</td><td>300.00</td><td>300.00</td><td>5</td><td>15.00</td><td>315.00</td></tr>
+        <tr><td>7</td><td>PMR00546</td><td class="text-left">S.S. PRESSURE COOKER - COMFORT - 3 LTRS.</td><td>EA</td><td>1</td><td>79.00</td><td>79.00</td><td>5</td><td>3.95</td><td>82.95</td></tr>
+        <tr><td>8</td><td>ANI-BR 1131 47</td><td class="text-left">NEWICON PEDALBIN-3L BRILLIANT STEEL</td><td>EA</td><td>2</td><td>30.00</td><td>60.00</td><td>5</td><td>3.00</td><td>63.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <table class="totals-table">
+    <tr>
+      <td class="label">Gross :</td>
+      <td class="value">1,102.00</td>
+    </tr>
+    <tr>
+      <td class="label">Discount Amt :</td>
+      <td class="value">0.00</td>
+    </tr>
+    <tr>
+      <td class="label">Taxable Amt :</td>
+      <td class="value">1,102.00</td>
+    </tr>
+    <tr>
+      <td class="label">VAT :</td>
+      <td class="value">55.10</td>
+    </tr>
+    <tr>
+      <td class="label">TOTAL :</td>
+      <td class="value">1,157.10</td>
+    </tr>
+  </table>
+
+  <div style="clear: both;"></div>
+
+  <div class="amount-words">
+    <span class="label">AMOUNT IN WORDS</span> : AED One Thousand One Hundred Fifty Seven And Ten Fils Only
+  </div>
+  <table class="remarks-table">
+    <tr>
+      <td class="label">Remarks</td>
+      <td class="value">: LULU GIFT</td>
+    </tr>
+  </table>
+  <div class="footer-signature">
+    <div class="for-company">
+      For <span class="company-name">AHMAD ABDULRAHMAN &amp; SONS GENERAL TRADING (LLC)</span>
+    </div>
+    <div class="received">Received the above goods in good conditions</div>
+  </div>
+
+  <div class="signature-section">
+    <div class="signature-block">
+      <div class="signature-line"></div>
+      Approved By
+    </div>
+    <div class="signature-block">
+      <div class="signature-line"></div>
+      Checked By
+    </div>
+    <div class="signature-block">
+      <div class="signature-line"></div>
+      Received By
+    </div>
+  </div>
+
+  <div class="footer-info">
+    <span>Print Date &amp; Time : 6/25/2025 2:59 PM</span>
+    <span>User : Pitchai</span>
+    <span>Page No : 1</span>
+  </div>
+</body>
+</html>

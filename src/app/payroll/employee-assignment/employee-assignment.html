@@ -1,0 +1,481 @@
+<div class="employee-assignment-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Employee Salary Assignment</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="employee-assignment-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="employee-assignment-logo">
+          <i class="bi bi-briefcase"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Employee Salary Assignment</h1>
+          <p class="header-subtitle">Assign salary structures to employees and manage individual overrides</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Employees</h3>
+          <p class="stat-number">{{ employees.length }}</p>
+          <p class="stat-change positive">Active employees</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Assigned Structures</h3>
+          <p class="stat-number">{{ getAssignedStructuresCount() }}</p>
+          <p class="stat-change positive">Structures assigned</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Components</h3>
+          <p class="stat-number">{{ getTotalComponentsCount() }}</p>
+          <p class="stat-change positive">Salary components</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Overridden Components</h3>
+          <p class="stat-number">{{ getOverriddenComponentsCount() }}</p>
+          <p class="stat-change negative">Overrides active</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Employees List -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title"><i class="bi bi-people me-2"></i>Employee Salary Assignments</h3>
+          <span class="badge">{{ employees.length }} employees</span>
+        </div>
+        <div class="table-body">
+          <table class="compact-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Designation</th>
+                <th>Assigned Structure</th>
+                <th>Salary Breakdown</th>
+                <th>Overrides</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let employee of employees">
+                <td>
+                  <div>
+                    <strong>{{ employee.name }}</strong>
+                    <br>
+                    <small class="text-muted">{{ employee.employeeId }}</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge">{{ employee.department }}</span>
+                </td>
+                <td>{{ employee.designation }}</td>
+                <td>
+                  <div *ngIf="employee.currentStructure; else noStructure">
+                    <span class="badge completed">{{ employee.currentStructure.name }}</span>
+                    <br>
+                    <small class="text-muted">{{ employee.currentStructure.payFrequency }}</small>
+                  </div>
+                  <ng-template #noStructure>
+                    <span class="badge">Not Assigned</span>
+                  </ng-template>
+                </td>
+                <td>
+                  <div *ngIf="employee.salaryComponents.length > 0; else noComponents">
+                    <div class="d-flex flex-column">
+                      <small>
+                        <strong>Gross:</strong> {{ getTotalSalary(employee) | currency:'AED' }}
+                      </small>
+                      <small>
+                        <strong>Deductions:</strong> {{ getTotalDeductions(employee) | currency:'AED' }}
+                      </small>
+                      <small class="text-primary fw-bold">
+                        <strong>Net:</strong> {{ getNetSalary(employee) | currency:'AED' }}
+                      </small>
+                    </div>
+                  </div>
+                  <ng-template #noComponents>
+                    <span class="text-muted">No components</span>
+                  </ng-template>
+                </td>
+                <td>
+                  <span *ngIf="getOverriddenComponents(employee).length > 0" 
+                        class="badge">
+                    {{ getOverriddenComponents(employee).length }} overrides
+                  </span>
+                  <span *ngIf="getOverriddenComponents(employee).length === 0" 
+                        class="text-muted">
+                    None
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" 
+                        [class]="employee.isActive ? 'completed' : ''">
+                    {{ employee.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="actions">
+                    <button class="btn-action-icon edit" 
+                            (click)="openAssignmentModal(employee)"
+                            title="Assign Structure">
+                      <i class="bi bi-gear"></i>
+                    </button>
+                    <button class="btn-action-icon delete" 
+                            *ngIf="employee.currentStructure"
+                            (click)="removeAssignment(employee)"
+                            title="Remove Assignment">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Components Details -->
+    <div class="components-section" *ngFor="let employee of employees">
+      <div class="table-container" *ngIf="employee.salaryComponents.length > 0">
+        <div class="table-header">
+          <h3 class="table-title"><i class="bi bi-list-check me-2"></i>{{ employee.name }} - Salary Components</h3>
+          <div>
+            <span class="badge me-2">{{ employee.salaryComponents.length }} components</span>
+            <span class="badge" *ngIf="getOverriddenComponents(employee).length > 0">
+              {{ getOverriddenComponents(employee).length }} overrides
+            </span>
+          </div>
+        </div>
+        <div class="table-body">
+          <table class="compact-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Type</th>
+                <th>Calculation</th>
+                <th>Value</th>
+                <th>Original Value</th>
+                <th>Override Status</th>
+                <th>Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let component of employee.salaryComponents">
+                <td>
+                  <strong>{{ component.componentName }}</strong>
+                </td>
+                <td>
+                  <span class="badge" 
+                        [class]="component.componentType === 'Earning' ? 'completed' : component.componentType === 'Deduction' ? 'negative' : ''">
+                    {{ component.componentType }}
+                  </span>
+                </td>
+                <td>{{ component.calculationType }}</td>
+                <td>
+                  <span class="fw-bold" 
+                        [class]="component.isOverridden ? 'text-warning' : ''">
+                    {{ component.calculationValue }}
+                    <span *ngIf="component.calculationType === 'Percentage'">%</span>
+                    <span *ngIf="component.calculationType === 'Fixed'">AED</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="text-muted">
+                    {{ component.originalValue }}
+                    <span *ngIf="component.calculationType === 'Percentage'">%</span>
+                    <span *ngIf="component.calculationType === 'Fixed'">AED</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" 
+                        [class]="component.isOverridden ? 'negative' : ''">
+                    {{ component.isOverridden ? 'Overridden' : 'Default' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" 
+                        [class]="component.isActive ? 'completed' : ''">
+                    {{ component.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn-action-icon edit" 
+                          (click)="openOverrideModal(employee, component)"
+                          title="Override Component">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Assignment Modal -->
+<div class="modal fade" [class.show]="showAssignmentModal" [style.display]="showAssignmentModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Assign Salary Structure</h5>
+        <button type="button" class="btn-close" (click)="closeAssignmentModal()"></button>
+      </div>
+      
+      <form [formGroup]="assignmentForm" (ngSubmit)="assignStructure()">
+        <div class="modal-body">
+          <div class="row">
+            <!-- Employee Info -->
+            <div class="col-12 mb-3">
+              <div class="alert alert-warning">
+                <strong>Employee:</strong> {{ selectedEmployee?.name }} ({{ selectedEmployee?.employeeId }})
+                <br>
+                <strong>Department:</strong> {{ selectedEmployee?.department }} | 
+                <strong>Designation:</strong> {{ selectedEmployee?.designation }}
+              </div>
+            </div>
+            
+            <!-- Structure Selection -->
+            <div class="col-md-6 mb-3">
+              <label for="structureId" class="form-label">Salary Structure <span class="text-danger">*</span></label>
+              <select 
+                class="form-select" 
+                id="structureId"
+                formControlName="structureId"
+                (change)="onStructureChange()"
+                [class.is-invalid]="assignmentForm.get('structureId')?.invalid && assignmentForm.get('structureId')?.touched">
+                <option value="">Select Structure</option>
+                <option *ngFor="let structure of getActiveStructures()" [value]="structure.id">
+                  {{ structure.name }} ({{ structure.payFrequency }})
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="getErrorMessage(assignmentForm, 'structureId')">
+                {{ getErrorMessage(assignmentForm, 'structureId') }}
+              </div>
+            </div>
+            
+            <!-- Effective Date -->
+            <div class="col-md-6 mb-3">
+              <label for="effectiveDate" class="form-label">Effective Date <span class="text-danger">*</span></label>
+              <input 
+                type="date" 
+                class="form-control" 
+                id="effectiveDate"
+                formControlName="effectiveDate"
+                [class.is-invalid]="assignmentForm.get('effectiveDate')?.invalid && assignmentForm.get('effectiveDate')?.touched">
+              <div class="invalid-feedback" *ngIf="getErrorMessage(assignmentForm, 'effectiveDate')">
+                {{ getErrorMessage(assignmentForm, 'effectiveDate') }}
+              </div>
+            </div>
+            
+            <!-- Structure Details -->
+            <div class="col-12 mb-3" *ngIf="selectedStructure">
+              <div class="card">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0">Selected Structure Details</h6>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <p><strong>Name:</strong> {{ selectedStructure.name }}</p>
+                      <p><strong>Description:</strong> {{ selectedStructure.description }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <p><strong>Pay Frequency:</strong> {{ selectedStructure.payFrequency }}</p>
+                      <p><strong>Components:</strong> {{ selectedStructure.components.length }}</p>
+                    </div>
+                  </div>
+                  
+                  <!-- Components Preview -->
+                  <div class="mt-3">
+                    <h6>Components Preview:</h6>
+                    <div class="table-responsive">
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Component</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Default</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let comp of selectedStructure.components">
+                            <td>{{ comp.componentName }}</td>
+                            <td>
+                              <span class="badge" 
+                                    [class]="comp.componentType === 'Earning' ? 'completed' : comp.componentType === 'Deduction' ? 'negative' : ''">
+                                {{ comp.componentType }}
+                              </span>
+                            </td>
+                            <td>
+                              {{ comp.calculationValue }}
+                              <span *ngIf="comp.calculationType === 'Percentage'">%</span>
+                              <span *ngIf="comp.calculationType === 'Fixed'">AED</span>
+                            </td>
+                            <td>
+                              <span class="badge" 
+                                    [class]="comp.isDefault ? 'completed' : ''">
+                                {{ comp.isDefault ? 'Default' : 'Optional' }}
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Notes -->
+            <div class="col-12 mb-3">
+              <label for="notes" class="form-label">Notes</label>
+              <textarea 
+                class="form-control" 
+                id="notes"
+                formControlName="notes"
+                rows="3"
+                placeholder="Add any notes about this assignment..."></textarea>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeAssignmentModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="assignmentForm.invalid">
+            Assign Structure
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Override Modal -->
+<div class="modal fade" [class.show]="showOverrideModal" [style.display]="showOverrideModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Override Component</h5>
+        <button type="button" class="btn-close" (click)="closeOverrideModal()"></button>
+      </div>
+      
+      <form [formGroup]="overrideForm" (ngSubmit)="saveOverride()">
+        <div class="modal-body">
+          <!-- Component Info -->
+          <div class="mb-3">
+            <div class="alert alert-warning">
+              <strong>Employee:</strong> {{ selectedEmployee?.name }}
+              <br>
+              <strong>Component:</strong> {{ selectedComponent?.componentName }}
+              <br>
+              <strong>Original Value:</strong> {{ selectedComponent?.originalValue }}
+              <span *ngIf="selectedComponent?.calculationType === 'Percentage'">%</span>
+              <span *ngIf="selectedComponent?.calculationType === 'Fixed'">AED</span>
+            </div>
+          </div>
+          
+          <!-- Override Value -->
+          <div class="mb-3">
+            <label for="overrideValue" class="form-label">Override Value <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                class="form-control" 
+                id="overrideValue"
+                formControlName="calculationValue"
+                [class.is-invalid]="overrideForm.get('calculationValue')?.invalid && overrideForm.get('calculationValue')?.touched"
+                placeholder="0">
+              <span class="input-group-text" *ngIf="selectedComponent?.calculationType === 'Fixed'">AED</span>
+              <span class="input-group-text" *ngIf="selectedComponent?.calculationType === 'Percentage'">%</span>
+            </div>
+            <div class="invalid-feedback" *ngIf="getErrorMessage(overrideForm, 'calculationValue')">
+              {{ getErrorMessage(overrideForm, 'calculationValue') }}
+            </div>
+          </div>
+          
+          <!-- Active Status -->
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="isActiveOverride" formControlName="isActive">
+              <label class="form-check-label" for="isActiveOverride">
+                Keep this component active
+              </label>
+            </div>
+          </div>
+          
+          <!-- Override Reason -->
+          <div class="mb-3">
+            <label for="overrideReason" class="form-label">Override Reason <span class="text-danger">*</span></label>
+            <textarea 
+              class="form-control" 
+              id="overrideReason"
+              formControlName="overrideReason"
+              [class.is-invalid]="overrideForm.get('overrideReason')?.invalid && overrideForm.get('overrideReason')?.touched"
+              rows="3"
+              placeholder="Explain why this override is necessary..."></textarea>
+            <div class="invalid-feedback" *ngIf="getErrorMessage(overrideForm, 'overrideReason')">
+              {{ getErrorMessage(overrideForm, 'overrideReason') }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeOverrideModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="overrideForm.invalid">
+            Save Override
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showAssignmentModal || showOverrideModal"></div>

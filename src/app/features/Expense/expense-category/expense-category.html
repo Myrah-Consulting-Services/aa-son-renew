@@ -1,0 +1,45 @@
+<div class="expense-category-form">
+  
+
+  <form [formGroup]="expenseCategoryForm" (ngSubmit)="onSubmit()">
+    <div class="form-group mb-4">
+      <label for="category" class="form-label">
+        Category Name
+        <span class="required-indicator">*</span>
+      </label>
+      <input 
+        type="text" 
+        id="category" 
+        class="form-control" 
+        formControlName="category" 
+        placeholder="Enter category name"
+        [class.is-invalid]="expenseCategoryForm.get('category')?.touched && expenseCategoryForm.get('category')?.invalid"
+        required
+      >
+      <div 
+        class="invalid-feedback" 
+        *ngIf="expenseCategoryForm.get('category')?.touched && expenseCategoryForm.get('category')?.invalid"
+      >
+        Category name is required
+      </div>
+    </div>
+    
+    <div class="form-actions">
+      <button 
+        type="button" 
+        class="btn btn-outline-secondary me-2" 
+        (click)="onCancel()"
+      >
+        Cancel
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        [disabled]="expenseCategoryForm.invalid || isLoading"
+      >
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+        {{ isLoading ? 'Saving...' : 'Save Category' }}
+      </button>
+    </div>
+  </form>
+</div>

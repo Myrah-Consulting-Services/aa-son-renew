@@ -1,0 +1,647 @@
+<div class="loan-management-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Loan Management</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="loan-management-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="loan-management-logo">
+          <i class="bi bi-bank2"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Loan Management</h1>
+          <p class="header-subtitle">Manage employee loans and track repayments</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" (click)="openCreateForm(loanFormTpl)">
+          <i class="bi bi-plus-circle me-2"></i>Create Loan
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Tabs Navigation -->
+    <ul class="nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab==='loans'" (click)="setActiveTab('loans')">
+          <i class="bi bi-card-checklist me-2"></i>Loans
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab==='ledger'" (click)="setActiveTab('ledger')">
+          <i class="bi bi-journal-text me-2"></i>Loan Ledger
+        </a>
+      </li>
+    </ul>
+
+    <!-- Loans Tab Content -->
+    <div *ngIf="activeTab==='loans'" class="tab-content">
+      <!-- Table Section -->
+      <div class="table-section">
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">
+              <i class="bi bi-card-checklist me-2"></i>All Loan Requests
+            </h3>
+          </div>
+          <div class="table-body">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Loan Type</th>
+                  <th>Principal Amount</th>
+                  <th>EMI Amount</th>
+                  <th>Tenure (Months)</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let loan of loans">
+                  <td>{{ loan.employee_details?.first_name }} {{ loan.employee_details?.last_name }}</td>
+                  <td>{{ loan.loan_type_details?.name }}</td>
+                  <td>{{ getcurrency() }} {{ toMoney(loan.principal_amount) | number:'1.2-2' }}</td>
+                  <td>{{ getcurrency() }} {{ toMoney(loan.emi_amount) | number:'1.2-2' }}</td>
+                  <td>{{ loan.tenure_months }}</td>
+                  <td>
+                    <span class="badge" [class]="loan.status == '2' ? 'completed' : loan.status == '1' ? 'pending' : loan.status == '3' ? 'rejected' : 'inactive'">
+                      {{ loan.status_label}}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn-action-icon view" (click)="openLoanView(loanViewTpl, loan)" title="View Details">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn-action-icon edit" (click)="openEditForm(loanFormTpl, loan)" title="Edit Loan">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn-action-icon delete" (click)="deleteLoan(loan.id)" title="Delete Loan">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="loans.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No loans found.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination Section -->
+      <div class="pagination-section">
+        <div class="pagination-bar">
+          <div class="page-info">
+            <small class="text-muted">
+              Showing {{ (currentPage * pageSize) + 1 }} to {{ Math.min((currentPage + 1) * pageSize, totalData) }} of
+              {{ totalData }} entries
+            </small>
+          </div>
+          <div class="pagination-controls">
+            <div class="page-size-selector">
+              <label class="page-size-label">Show:</label>
+              <select class="form-select form-select-sm page-size-select" 
+                      [(ngModel)]="pageSize" 
+                      (change)="onPageChange({pageIndex: 0, pageSize: pageSize})">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div class="page-navigation">
+              <button class="btn-page" 
+                      [disabled]="currentPage == 0"
+                      (click)="onPageChange({pageIndex: currentPage - 1, pageSize: pageSize})">
+                <i class="bi bi-chevron-left"></i> Previous
+              </button>
+              <span class="page-info">
+                Page {{ currentPage + 1 }} of {{ Math.ceil(totalData / pageSize) }}
+              </span>
+              <button class="btn-page" 
+                      [disabled]="(currentPage + 1) * pageSize >= totalData"
+                      (click)="onPageChange({pageIndex: currentPage + 1, pageSize: pageSize})">
+                Next <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loan Ledger Tab Content -->
+    <div *ngIf="activeTab==='ledger'" class="tab-content">
+      <!-- Filters Section -->
+      <div class="filters-section">
+        <div class="filters-bar">
+          <div class="filter-item">
+            <label for="employeeSelect" class="form-label">Employee</label>
+            <select class="form-select form-select-sm" id="employeeSelect" [(ngModel)]="selectedEmployeeId" (change)="loadLoanLedgers(selectedEmployeeId)">
+              <option value="">All Employees</option>
+              <option *ngFor="let employee of employees" [value]="employee.id">
+                {{ employee.first_name }} {{ employee.last_name }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Section -->
+      <section class="kpi-section" *ngIf="summary">
+        <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Loan Summary</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="bi bi-list-check"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Total Loans</h3>
+              <p class="stat-number">{{ summary.total_loans }}</p>
+              <p class="stat-change positive">All loans</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Active Loans</h3>
+              <p class="stat-number">{{ summary.active_loans }}</p>
+              <p class="stat-change positive">Currently active</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="bi bi-check2-all"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Paid Loans</h3>
+              <p class="stat-number">{{ summary.paid_loans }}</p>
+              <p class="stat-change positive">Fully paid</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Total Principal</h3>
+              <p class="stat-number">{{ getcurrency() }} {{ summary.total_principal | number:'1.0-0' }}</p>
+              <p class="stat-change positive">Principal amount</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="bi bi-wallet2"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Total Paid</h3>
+              <p class="stat-number">{{ getcurrency() }} {{ summary.total_paid | number:'1.0-0' }}</p>
+              <p class="stat-change positive">Amount paid</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="bi bi-arrow-down-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Outstanding</h3>
+              <p class="stat-number">{{ getcurrency() }} {{ summary.total_outstanding | number:'1.0-0' }}</p>
+              <p class="stat-change negative">Remaining</p>
+            </div>
+          </div>
+        </div>
+        <div class="progress-section" *ngIf="summary.payment_progress">
+          <div class="progress" role="progressbar" [attr.aria-valuenow]="summary.payment_progress" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" [style.width.%]="summary.payment_progress">
+              {{ summary.payment_progress | number:'1.0-2' }}%
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Table Section -->
+      <div class="table-section">
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">
+              <i class="bi bi-journal-text me-2"></i>Loan Ledger
+            </h3>
+          </div>
+          <div class="table-body">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Loan Type</th>
+                  <th>Principal</th>
+                  <th>Total Paid</th>
+                  <th>Total With Interest</th>
+                  <th>Outstanding</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let ledger of loanLedgers">
+                  <td>{{ ledger.employee_name }}</td>
+                  <td>{{ ledger.loan_type }}</td>
+                  <td>{{ getcurrency() }} {{ ledger.principal_amount | number:'1.0-0' }}</td>
+                  <td>{{ getcurrency() }} {{ ledger.total_amount_paid | number:'1.0-0' }}</td>
+                  <td>{{ getcurrency() }} {{ ledger.total_amount_with_interest | number:'1.0-0' }}</td>
+                  <td>{{ getcurrency() }} {{ ledger.outstanding | number:'1.0-0' }}</td>
+                  <td>
+                    <button class="btn-action-icon view" (click)="openPaymentHistory(paymentHistoryTpl, ledger)" title="View Repayments">
+                      <i class="bi bi-clock-history"></i>
+                    </button>
+                    <button class="btn-primary btn-sm" (click)="openRecordRepayment(recordRepaymentTpl, ledger)" title="Record Repayment">
+                      <i class="bi bi-plus-circle me-1"></i>Record Repayment
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="loanLedgers?.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No loan ledgers found for the selected employee.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Create/Edit Loan Modal -->
+<ng-template #loanFormTpl let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title d-flex align-items-center">
+        <i class="bi bi-file-earmark-plus me-2"></i>
+        {{ editingLoanId ? 'Edit Loan' : 'Create Loan' }}
+      </h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="loanForm" (ngSubmit)="saveLoan()">
+        <!-- Row 1: Loan Name -->
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-md-6 col-lg-8">
+            <label class="form-label">Loan Type<span class="text-danger">*</span></label>
+            <select class="form-select form-select-sm" formControlName="loan_type">
+              <option value="">Select Loan Type</option>
+              <option *ngFor="let lt of loanTypes" [value]="lt.id">
+                {{ lt.name }}
+              </option>
+              <option value="" (click)="openTypeForm()">Create Loan Type</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Employee and Amount -->
+        <div class="row g-2 mt-2">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Employee Name<span class="text-danger">*</span></label>
+            <select class="form-select form-select-sm" formControlName="employee_id">
+              <option value="">Select Employee</option>
+              <option *ngFor="let e of employees" [value]="e.id">
+                {{ e.first_name }} {{ e.last_name }} ({{ e.employee_code || e.id }})
+              </option>
+            </select> 
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Loan Amount<span class="text-danger">*</span></label>
+            <div class="input-group input-group-sm">
+              <select class="form-select form-select-sm" style="max-width: 100px" formControlName="currency">
+                <option *ngFor="let c of currencies" [value]="c">{{ c }}</option>
+              </select>
+              <input type="number" min="0"  class="form-control form-control-sm text-end" formControlName="principal_amount" (input)="useCalculatedEmi()">
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Interest Rate</label>
+            <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end" formControlName="interest_rate" placeholder="0.00" (input)="useCalculatedEmi()">
+          </div>
+          <div class="col-12 col-md-6">
+              <label class="form-label">Tenure (Months)<span class="text-danger">*</span></label>
+              <input type="number" min="1" class="form-control form-control-sm text-end" formControlName="tenure_months" (input)="useCalculatedEmi()">
+          </div>
+        </div>
+
+        <!-- Row 3: Disbursement date and Paid through account -->
+        <div class="row g-2 mt-2">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Disbursement Date<span class="text-danger">*</span></label>
+            <input type="date" class="form-control form-control-sm" formControlName="disbursement_date">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Paid Through Account<span class="text-danger">*</span></label>
+            <select class="form-select form-select-sm" formControlName="paid_through_account">
+              <option *ngFor="let a of paidThroughAccounts" [value]="a">{{ a }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 4: Reference Number -->
+        <div class="row g-2 mt-2">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Reference Number</label>
+            <input type="text" class="form-control form-control-sm" formControlName="reference_number" placeholder="Optional">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Status<span class="text-danger">*</span></label>
+            <select class="form-select form-select-sm" formControlName="status">
+              <option value="">Select Status</option>
+              <option value="1">Pending</option>
+              <option value="2">Approved</option>
+              <option value="3">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 5: Reason -->
+        <div class="row g-2 mt-2">
+          <div class="col-12">
+            <label class="form-label">Reason<span class="text-danger">*</span></label>
+            <textarea rows="2" class="form-control form-control-sm" formControlName="reason" placeholder="Enter reason"></textarea>
+          </div>
+        </div>
+        
+        <hr class="my-3">
+          <h6 class="mb-2 d-flex align-items-center">
+            <i class="bi bi-arrow-repeat me-2"></i>
+            Repayments
+          </h6>
+
+        <!-- Row 6: EMI Start and Installment Amount -->
+        <div class="row g-2">
+          <div class="col-12 col-md-6">
+            <label class="form-label">EMI Deduction Start Date<span class="text-danger">*</span></label>
+            <input type="date" class="form-control form-control-sm" formControlName="emi_start_date">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Installment Amount<small class="text-muted">(Auto-calculated)</small><span class="text-danger">*</span></label>
+            <div class="input-group input-group-sm">
+              <select class="form-select form-select-sm" style="max-width: 100px" disabled>
+                <option>{{ getcurrency() }}</option>
+              </select>
+              <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end" formControlName="emi_amount" placeholder="0.00" readonly>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info note -->
+        <div class="alert alert-light border mt-3" *ngIf="totalInstallments > 0">
+          <i class="bi bi-info-circle me-2"></i>
+          This loan will be fully paid off in {{ totalInstallments }} installments ({{ tenureMonths }} months). The first deduction for this loan will be on
+          {{ firstDeductionDate | date:'mediumDate' }}.
+        </div>
+
+          <!-- Calculations Preview -->
+          <div class="row g-2 mt-2">
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body py-2">
+                  <div class="small text-muted">Calculated EMI</div>
+                  <div class="h6 mb-0">{{ getcurrency() }} {{ calculatedEmi | number:'1.2-2' }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body py-2">
+                  <div class="small text-muted">Total Payable</div>
+                  <div class="h6 mb-0">{{ getcurrency() }} {{ calculatedTotalPayable | number:'1.2-2' }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light">
+                <div class="card-body py-2">
+                  <div class="small text-muted">Total Interest</div>
+                  <div class="h6 mb-0">{{ getcurrency() }} {{ calculatedTotalInterest | number:'1.2-2' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-2 d-flex gap-2">
+            <button type="submit" class="btn-primary" [disabled]="loanForm.invalid">
+              <i class="bi bi-save me-1"></i> Save
+            </button>
+            <button type="button" class="btn-secondary" (click)="loanForm.reset()">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+            </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Payment History Modal (NgbModal) -->
+<ng-template #paymentHistoryTpl let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Payment History - {{ getSelectedLoan()?.employee_details?.first_name }} {{ getSelectedLoan()?.employee_details?.last_name }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="table-responsive">
+      <table class="compact-table">
+          <thead>
+            <tr>
+              <th>Payment Date</th>
+              <th>Amount Deducted</th>
+              <th>Month</th>
+              <th>Status</th>
+              <th>Remarks</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+        <tbody>
+          <tr *ngFor="let payment of repayment_history">
+            <td>{{ payment.deduction_date | date:'mediumDate' }}</td>
+            <td>{{ getcurrency() }} {{ payment.amount_deducted | number:'1.0-0' }}</td>
+            <td>{{ payment.month }}</td>
+            <td>
+              <span class="badge" [class]="payment.status_code === 'paid' ? 'completed' : 'pending'">
+                {{ payment.status }}
+              </span>
+            </td>
+            <td>{{ payment.remarks || '-' }}</td>
+            <td>
+              <button class="btn-action-icon edit" (click)="openUpdateRepayment(recordRepaymentTpl, payment)" title="Update Repayment">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn-action-icon delete" (click)="deleteRepayment(payment.repayment_id)" title="Delete Repayment">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="repayment_history?.length === 0">
+            <td colspan="6" class="text-center">No data found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn-secondary" (click)="modal.close()">Close</button>
+  </div>
+</ng-template>
+
+<!-- Record/Update Repayment Modal -->
+<ng-template #recordRepaymentTpl let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <i class="bi bi-credit-card me-2"></i>
+      {{ isUpdateMode ? 'Update Repayment' : 'Record Repayment' }}
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <app-loan-repayment 
+      [selectedEmployee]="selectedLoanForRepayment"
+      [mode]="isUpdateMode ? 'update' : 'create'"
+      [repaymentData]="selectedRepaymentForUpdate"
+      [modalRef]="modalRef">
+    </app-loan-repayment>
+  </div>
+</ng-template>
+
+<!-- Loan Detailed View Modal -->
+<ng-template #loanViewTpl let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">{{ selectedLoanForView?.loan_number || ('LOAN-' + (selectedLoanForView?.id || '')) }}
+      <span class="badge ms-2" [class]="selectedLoanForView?.status == '5' ? 'completed' : selectedLoanForView?.status == '1' ? 'rejected' : 'inactive'">
+        {{ selectedLoanForView?.status == '5' ? 'OPEN' : selectedLoanForView?.status == '1' ? 'PENDING' : 'CLOSED' }}
+      </span>
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="row g-3 align-items-center mb-2">
+      <div class="col-md-3">
+        <div class="card bg-light h-100">
+          <div class="card-body py-3">
+            <div class="small text-muted">Loan Type</div>
+            <div class="h6 mb-0">{{ selectedLoanForView?.loan_type_details?.name || selectedLoanForView?.loan_type?.name }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light h-100">
+          <div class="card-body py-3">
+            <div class="small text-muted">Amount</div>
+            <div class="h6 mb-0">{{ getcurrency() }} {{ selectedLoanForView?.principal_amount | number:'1.0-0' }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light h-100">
+          <div class="card-body py-3">
+            <div class="small text-muted">Installment Amount</div>
+            <div class="h6 mb-0">{{ getcurrency() }} {{ selectedLoanForView?.emi_amount | number:'1.0-0' }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light h-100">
+          <div class="card-body py-3">
+            <div class="small text-muted">Status</div>
+            <div class="h6 mb-0">{{ selectedLoanForView?.status == '5' ? 'Open' : selectedLoanForView?.status == '1' ? 'Rejected' : 'Closed' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+    <h6 class="mb-2">Other Details</h6>
+    <div class="row g-2 mb-3">
+      <div class="col-md-3">
+        <div class="small text-muted">Disbursement Date</div>
+        <div>{{ selectedLoanForView?.disbursement_date | date:'mediumDate' }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="small text-muted">Loan Closing Date</div>
+        <div>{{ getLoanClosingDate(selectedLoanForView) | date:'mediumDate' }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="small text-muted">Reason</div>
+        <div>{{ selectedLoanForView?.reason || '-' }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="small text-muted">Paid Through</div>
+        <div>{{ selectedLoanForView?.paid_through_account }}</div>
+      </div>
+    </div>
+
+    <h6 class="mb-2">Loan Repayment Summary</h6>
+    <div class="card mb-2">
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-3">
+            <div class="small text-muted">Amount Repaid</div>
+            <div class="h6 mb-0">{{ getcurrency() }} {{ (selectedLoanForView?.total_amount_paid || 0) | number:'1.0-0' }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="small text-muted">Remaining Amount</div>
+            <div class="h6 mb-0">{{ getcurrency() }} {{ getRemainingAmount(selectedLoanForView) | number:'1.0-0' }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="small text-muted">Installment(s) Remaining</div>
+            <div class="h6 mb-0">{{ getInstallmentsRemaining(selectedLoanForView) }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="small text-muted">Tenure (Months)</div>
+            <div class="h6 mb-0">{{ selectedLoanForView?.tenure_months }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="compact-table">
+        <thead>
+          <tr>
+            <th>Installment Start Date</th>
+            <th>EMI</th>
+            <th>Total Amount Repaid</th>
+            <th>Remaining Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ selectedLoanForView?.start_date | date:'mediumDate' || '-' }}</td>
+            <td>{{ getcurrency() }} {{ selectedLoanForView?.emi_amount | number:'1.0-0' }}</td>
+            <td>{{ getcurrency() }} {{ (selectedLoanForView?.total_amount_paid || 0) | number:'1.0-0' }}</td>
+            <td>{{ getcurrency() }} {{ getRemainingAmount(selectedLoanForView) | number:'1.0-0' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn-primary" (click)="openRecordRepayment(recordRepaymentTpl, selectedLoanForView)">
+      <i class="bi bi-plus-circle me-1"></i> Record Repayment
+    </button>
+    <button type="button" class="btn-secondary" (click)="modal.close()">Close</button>
+  </div>
+</ng-template>

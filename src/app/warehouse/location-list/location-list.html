@@ -1,0 +1,233 @@
+<div class="location-list-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Locations</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="location-list-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="location-logo">
+          <i class="bi bi-geo-alt"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Locations</h1>
+          <p class="header-subtitle">Manage warehouse locations and storage areas</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" (click)="refreshData()" [disabled]="loading">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="openForm()">
+          <i class="bi bi-plus-lg me-1"></i>New Location
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-geo-alt"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Locations</h3>
+          <p class="stat-number">{{ locations.length }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-building"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Warehouses</h3>
+          <p class="stat-number">{{ warehouses.length }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Active</h3>
+          <p class="stat-number">{{ activeLocationsCount }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-x-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Inactive</h3>
+          <p class="stat-number">{{ inactiveLocationsCount }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <div class="filter-item">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search locations..." 
+              [(ngModel)]="searchText"
+              (input)="onSearch()"
+            >
+          </div>
+        </div>
+        <div class="filter-item">
+          <select 
+            class="form-select form-select-sm" 
+            [(ngModel)]="selectedWarehouse"
+            (change)="onWarehouseFilter()"
+          >
+            <option value="">All Warehouses</option>
+            <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name }}
+            </option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <button 
+            class="btn btn-secondary btn-sm w-100" 
+            (click)="clearFilters()"
+            [disabled]="loading || (!selectedWarehouse && !searchText)"
+          >
+            <i class="bi bi-x-lg me-1"></i>Clear Filters
+          </button>
+        </div>
+        <div class="filter-item">
+          <div class="results-summary">
+            <small class="text-muted">
+              Showing {{ filteredLocations.length }} of {{ locations.length }} locations
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-list-ul me-2"></i>Location List
+          </h3>
+        </div>
+        <div class="table-body">
+          <!-- Loading State -->
+          <div *ngIf="loading" class="loading-state">
+            <i class="bi bi-arrow-repeat spinner"></i>
+            <p>Loading locations...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loading && filteredLocations.length === 0" class="empty-state">
+            <i class="bi bi-geo-alt"></i>
+            <h6>No locations found</h6>
+            <p>
+              {{ searchText || selectedWarehouse ? 'Try adjusting your filters' : 'Create your first warehouse location' }}
+            </p>
+            <button 
+              *ngIf="!searchText && !selectedWarehouse"
+              class="btn btn-primary btn-sm" 
+              (click)="openForm()"
+            >
+              <i class="bi bi-plus-lg me-1"></i>Create Location
+            </button>
+          </div>
+
+          <!-- Table -->
+          <table *ngIf="!loading && filteredLocations.length > 0" class="compact-table">
+            <thead>
+              <tr>
+                <th>Location Details</th>
+                <th>Warehouse</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let location of filteredLocations">
+                <td>
+                  <div class="location-info">
+                    <div class="location-icon">
+                      <i class="bi bi-geo-alt"></i>
+                    </div>
+                    <div class="location-details">
+                      <div class="location-name">{{ location.name }}</div>
+                      <small class="location-id">#{{ location.id }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="warehouse-info">
+                    <i class="bi bi-building"></i>
+                    <span>{{ getWarehouseName(location.warehouse || location.warehouseId) }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="description-text" *ngIf="location.description; else noDescription">
+                    {{ location.description }}
+                  </div>
+                  <ng-template #noDescription>
+                    <span class="text-muted small">No description</span>
+                  </ng-template>
+                </td>
+                <td>
+                  <span 
+                    class="badge" 
+                    [class.bg-success]="location.is_active" 
+                    [class.bg-secondary]="!location.is_active"
+                  >
+                    {{ location.is_active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <button 
+                      class="btn-action-icon edit" 
+                      (click)="openForm(location.id)"
+                      title="Edit Location"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                      class="btn-action-icon delete" 
+                      (click)="delete(location.id)"
+                      title="Delete Location"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

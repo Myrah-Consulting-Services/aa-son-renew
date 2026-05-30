@@ -1,0 +1,241 @@
+<div class="employee-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Employee Management</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="employee-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="employee-logo">
+          <i class="bi bi-people"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Employee Management</h1>
+          <p class="header-subtitle">Manage your workforce efficiently</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="prepareForAction(null,addEmployeeModal)">
+        <i class="bi bi-plus-lg"></i>
+        Add Employee
+      </button>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Employees</h3>
+          <p class="stat-number">{{ totalData || 0 }}</p>
+          <p class="stat-change positive">Active employees</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-building"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Departments</h3>
+          <p class="stat-number">{{ departments?.length || 0 }}</p>
+          <p class="stat-change positive">Active departments</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-briefcase"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Designations</h3>
+          <p class="stat-number">{{ designationList?.length || 0 }}</p>
+          <p class="stat-change positive">Job roles</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Showing</h3>
+          <p class="stat-number">{{ employees?.length || 0 }}</p>
+          <p class="stat-change positive">Current view</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <div class="search-wrapper">
+          <i class="bi bi-search"></i>
+          <input 
+            type="text" 
+            class="search-input" 
+            placeholder="Search employees..."
+            [(ngModel)]="search"
+            (input)="getEmployeeList()">
+        </div>
+        
+        <select class="filter-select" [(ngModel)]="department" (change)="getEmployeeList()">
+          <option value="">All Departments</option>
+          <option [value]="d.id" *ngFor="let d of departments">{{d.department_name}}</option>
+        </select>
+
+        <select class="filter-select" [(ngModel)]="designation" (change)="getEmployeeList()">
+          <option value="">All Designations</option>
+          <option [value]="d.id" *ngFor="let d of designationList">{{d.designation_name}}</option>
+        </select>
+
+        <button class="btn-icon" (click)="getEmployeeList()" title="Refresh">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+
+        <button class="btn-secondary" title="Export">
+          <i class="bi bi-download"></i>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <table class="employee-table compact-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>ID</th>
+              <th>Department</th>
+              <th>Designation</th>
+              <th>Joining Date</th>
+              <th>Email</th>
+              <th width="100">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="!employees || employees.length === 0">
+              <td colspan="7" class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <span>No employees found</span>
+              </td>
+            </tr>
+            <tr *ngFor="let employee of employees">
+              <td>
+                <a [routerLink]="['/payroll/employee', employee.id]" class="employee-link">
+                  {{ employee.first_name }} {{ employee.last_name }}
+                </a>
+              </td>
+              <td><span class="emp-id">{{ employee.emp_id }}</span></td>
+              <td><span class="badge">{{ employee.department_name }}</span></td>
+              <td>{{ employee.designation_name }}</td>
+              <td>{{ employee.joining_date }}</td>
+              <td class="email-col">{{ employee.work_email }}</td>
+              <td>
+                <div class="actions">
+                  <button 
+                    class="btn-action-icon edit" 
+                    (click)="prepareForAction(employee.id, addEmployeeModal)" 
+                    title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button 
+                    class="btn-action-icon delete" 
+                    (click)="deleteEmployee(employee, deleteConfirmationModal)" 
+                    title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Compact Pagination -->
+        <div class="pagination-bar">
+          <div class="pagination-info">
+            Showing {{ (currentPage * pageSize) + 1 }}-{{ Math.min((currentPage + 1) * pageSize, totalData) }} of {{ totalData }}
+          </div>
+          
+          <div class="pagination-controls">
+            <select 
+              class="page-size" 
+              [(ngModel)]="pageSize" 
+              (change)="onPageChange({pageIndex: 0, pageSize: pageSize})">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+
+            <button 
+              class="btn-page" 
+              [disabled]="currentPage == 0"
+              (click)="onPageChange({pageIndex: currentPage - 1, pageSize: pageSize})">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            
+            <span class="page-number">{{ currentPage + 1 }} / {{ Math.ceil(totalData / pageSize) || 1 }}</span>
+            
+            <button 
+              class="btn-page" 
+              [disabled]="(currentPage + 1) * pageSize >= totalData"
+              (click)="onPageChange({pageIndex: currentPage + 1, pageSize: pageSize})">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Add/Edit Modal -->
+<ng-template #addEmployeeModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">{{ selectedEmployee ? 'Edit Employee' : 'Add New Employee' }}</h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <app-add-employee [employeeToEdit]="selectedEmployee"></app-add-employee>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Delete Confirmation Modal -->
+<ng-template #deleteConfirmationModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Confirm Deletion</h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body" *ngIf="selectedEmployee">
+      <p>Are you sure you want to delete <strong>{{ selectedEmployee.first_name }} {{ selectedEmployee.last_name }}</strong>?</p>
+      <div class="alert alert-warning mt-3">
+        <i class="bi bi-exclamation-triangle"></i>
+        This action cannot be undone.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancel</button>
+      <button type="button" class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</ng-template>

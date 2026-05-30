@@ -1,0 +1,1189 @@
+.invoice-setting-form {
+  max-width: 400px;
+  margin: 32px auto 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(65,41,155,0.07);
+  padding: 24px 18px 18px 18px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #41299b;
+}
+
+.form-control {
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e0e4f4;
+  margin-top: 2px;
+}
+
+select.form-control {
+  background: #f8f9fa;
+  color: #2d2d2d;
+}
+
+.invoice-preview {
+  max-width: 400px;
+  margin: 24px auto 0 auto;
+}
+
+.preview-box {
+  background: #f0f0fa;
+  border: 1.5px solid #e0e4f4;
+  border-radius: 8px;
+  padding: 16px 12px;
+  margin-top: 4px;
+  min-height: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preview-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d2d2d;
+  letter-spacing: 1px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #fff;
+}
+.badge-primary { background: #41299b; }
+
+.ms-2 { margin-left: 8px; }
+
+.setting-form-compact {
+  // width: 100%;
+  // max-width: 700px;
+  margin: 0 auto;
+}
+
+.setting-form-compact.beautiful-bg {
+  background: linear-gradient(120deg, #f8fafd 60%, #e9e6fa 100%);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(65,41,155,0.07);
+  padding: 18px 0 18px 0;
+}
+
+.setting-section {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 8px rgba(65,41,155,0.06);
+  padding: 14px 18px 10px 18px;
+  margin-bottom: 0;
+  border-left-width: 6px !important;
+}
+
+.invoice-section { border-left-color: #6f42c1 !important; }
+.discount-section { border-left-color: #43a047 !important; }
+.currency-section { border-left-color: #17a2b8 !important; }
+
+.section-title {
+  font-size: 1.13rem;
+  font-weight: 700;
+  color: #41299b;
+  margin-bottom: 8px;
+  letter-spacing: 0.2px;
+}
+
+.section-icon {
+  font-size: 1.5rem;
+  vertical-align: middle;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.form-label,
+.form-label-sm {
+  font-size: 0.97rem;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 2px;
+}
+
+.form-control,
+.form-control-sm {
+  font-size: 0.97rem;
+  border-radius: 6px;
+  border: 1px solid #e0e4f4;
+  padding: 4px 8px;
+  min-height: 30px;
+  background: #f8fafd;
+}
+
+.preview-panel {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.preview-label,
+.preview-label-sm {
+  font-size: 0.92rem;
+  color: #666;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+.preview-output-compact.preview-output-beautiful {
+  width: 100%;
+  background: linear-gradient(90deg, #e9e6fa 60%, #f8fafd 100%);
+  border: 2px solid #bcb6e7;
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 28px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #41299b;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(65,41,155,0.08);
+  transition: box-shadow 0.2s, border 0.2s;
+}
+
+.preview-text-compact {
+  font-size: 1.13rem;
+  font-weight: 700;
+  color: #41299b;
+  letter-spacing: 0.5px;
+}
+
+.btn-save-setting.beautiful-btn {
+  font-size: 1.08rem;
+  font-weight: 700;
+  padding: 10px 0;
+  border-radius: 8px;
+  margin-top: 10px;
+  box-shadow: 0 2px 8px rgba(65,41,155,0.10);
+  background: linear-gradient(90deg, #6f42c1 60%, #41299b 100%);
+  border: none;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.12s;
+}
+.btn-save-setting.beautiful-btn:hover {
+  background: linear-gradient(90deg, #41299b 60%, #6f42c1 100%);
+  box-shadow: 0 4px 16px rgba(65,41,155,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+
+hr.my-2 {
+  margin: 10px 0 10px 0;
+  border-color: #e0e4f4;
+}
+
+@media (max-width: 700px) {
+  .setting-form-compact.beautiful-bg {
+    padding: 0 2px;
+  }
+  .setting-section {
+    padding: 8px 2px 6px 2px;
+    border-radius: 8px;
+  }
+  .section-title {
+    font-size: 1.01rem;
+  }
+  .preview-output-compact.preview-output-beautiful {
+    font-size: 0.98rem;
+    padding: 7px 6px;
+  }
+}
+
+// Professional Currency Conversion Styles
+.currency-toggle-section {
+  padding: 12px 0;
+}
+
+.currency-toggle-section .form-check {
+  margin: 0;
+}
+
+.currency-toggle-section .form-check-input {
+  margin-right: 8px;
+}
+
+.currency-toggle-section .form-check-label {
+  font-weight: 500;
+  color: #495057;
+  cursor: pointer;
+}
+
+.currency-settings {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 20px;
+  margin-top: 12px;
+}
+
+.settings-header {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 12px;
+}
+
+.settings-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0;
+}
+
+.settings-content {
+  padding-top: 8px;
+}
+
+.field-group-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.date-range-section {
+  margin-bottom: 20px;
+}
+
+.date-range-section .form-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 6px;
+}
+
+.date-range-section .form-control {
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.date-range-section .form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.exchange-rate-section {
+  margin-top: 16px;
+}
+
+.exchange-rate-form {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.exchange-rate-form .input-group {
+  margin-bottom: 8px;
+}
+
+.exchange-rate-form .input-group-text {
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  color: #495057;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.exchange-rate-form .form-control {
+  border: 1px solid #ced4da;
+  border-radius: 0;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.exchange-rate-form .form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.exchange-rate-form .form-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin: 0;
+  text-align: center;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .currency-settings {
+    padding: 16px;
+    margin: 8px -4px 0 -4px;
+  }
+  
+  .settings-content {
+    padding-top: 4px;
+  }
+  
+  .exchange-rate-form {
+    padding: 12px;
+  }
+  
+  .exchange-rate-form .input-group-text {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+  }
+  
+  .exchange-rate-form .form-control {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+// Currency Selection Styles
+.currency-dropdown {
+  position: relative;
+}
+
+.currency-dropdown .dropdown-menu {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1050;
+  min-width: 300px;
+}
+
+.currency-dropdown .dropdown-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.currency-dropdown .dropdown-header .btn {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.currency-dropdown .dropdown-item {
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.currency-dropdown .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.currency-dropdown .dropdown-item:first-child {
+  border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.currency-dropdown .dropdown-item span {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.currency-dropdown .form-check-input {
+  margin-right: 8px;
+  cursor: pointer;
+  margin-top: 0;
+}
+
+.currency-dropdown .form-check-label {
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.currency-chips {
+  margin-top: 8px;
+}
+
+.currency-chips .badge {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  margin: 2px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #6f42c1 60%, #41299b 100%);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.currency-chips .badge .btn-close {
+  font-size: 0.6rem;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  color: white;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.currency-chips .badge .btn-close:hover {
+  opacity: 1;
+}
+
+.currency-search-input {
+  border: 1px solid #e0e4f4;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  background: #f8fafd;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.currency-search-input:focus {
+  border-color: #6f42c1;
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+  outline: none;
+}
+
+// Responsive currency dropdown
+@media (max-width: 576px) {
+  .currency-dropdown .dropdown-menu {
+    max-height: 250px;
+  }
+  
+  .currency-chips .badge {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+}
+
+// Side Tabs Styles - Simple Professional Design
+.settings-container {
+  display: flex;
+  gap: 0;
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 0;
+}
+
+.side-tabs {
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  max-width: 240px;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  padding: 1.5rem 0;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  border-radius: 0;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin: 0.2rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  
+  &:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #111827;
+  }
+  
+  &.active {
+    background: #f0f9ff;
+    color: #1e40af;
+    font-weight: 600;
+    border-color: #3b82f6;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  }
+  
+  i {
+    font-size: 1.1rem;
+    margin-right: 0.6rem;
+    width: 16px;
+    text-align: center;
+  }
+}
+
+.tab-content {
+  flex: 1;
+  background: white;
+  border-radius: 0 12px 12px 0;
+  box-shadow: -1px 0 10px rgba(0, 0, 0, 0.04);
+  padding: 2rem;
+  margin: 0.75rem 0.75rem 0.75rem 0;
+}
+
+.tab-pane {
+  display: none;
+  
+  &.active {
+    display: block;
+  }
+}
+
+.tab-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.025em;
+}
+
+.tab-description {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.tab-body {
+  min-height: 400px;
+}
+
+.company-settings-placeholder {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  
+  p {
+    margin: 0;
+    font-weight: 500;
+  }
+  
+  &::before {
+    content: '🏢';
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 1rem;
+  }
+}
+
+// Condensed Professional Form Styling
+.setting-form-compact {
+  .setting-section {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #f3f4f6;
+      
+      .section-icon {
+        font-size: 1rem;
+        margin-right: 0.5rem;
+        opacity: 0.8;
+      }
+      
+      .section-title {
+        color: #1f2937;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: -0.025em;
+        text-transform: uppercase;
+      }
+    }
+  }
+  
+  .invoice-section {
+    border-left: 3px solid #8b5cf6;
+  }
+  
+  .currency-section {
+    border-left: 3px solid #06b6d4;
+  }
+  
+  .business-section {
+    border-left: 3px solid #10b981;
+  }
+  
+  .address-section {
+    border-left: 3px solid #f59e0b;
+  }
+  
+  .license-section {
+    border-left: 3px solid #8b5cf6;
+  }
+  
+  .owner-section {
+    border-left: 3px solid #ef4444;
+  }
+  
+  .tax-section {
+    border-left: 3px solid #06b6d4;
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    
+    &.full-width {
+      grid-template-columns: 1fr;
+    }
+    
+    &.three-columns {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    &.four-columns {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+  }
+  
+  .form-group {
+    .form-label {
+      display: block;
+      color: #374151;
+      font-weight: 500;
+      font-size: 0.8rem;
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.025em;
+      text-transform: uppercase;
+      
+      .required {
+        color: #ef4444;
+        margin-left: 0.15rem;
+      }
+    }
+    
+    .form-control {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 3px;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.8rem;
+      background: white;
+      transition: all 0.15s ease;
+      min-height: 32px;
+      
+      &:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        outline: none;
+      }
+      
+      &::placeholder {
+        color: #9ca3af;
+        font-size: 0.75rem;
+      }
+    }
+    
+    .error-message {
+      color: #ef4444;
+      font-size: 0.7rem;
+      margin-top: 0.2rem;
+    }
+  }
+  
+  .preview-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    padding: 0.5rem;
+    margin-top: 0.4rem;
+    
+    .preview-label {
+      display: block;
+      color: #64748b;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .preview-output {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 2px;
+      padding: 0.4rem;
+      
+      .preview-text {
+        color: #1e293b;
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+    }
+  }
+  
+  .currency-dropdown {
+    margin-bottom: 0.75rem;
+    
+    .currency-search-input {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      
+      &:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      }
+    }
+    
+    .dropdown-menu {
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      margin-top: 0.3rem;
+      
+      .dropdown-item {
+        padding: 0.5rem 0.75rem;
+        color: #374151;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.875rem;
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        &:hover {
+          background: #f8fafc;
+        }
+      }
+    }
+  }
+  
+  .form-check {
+    margin-bottom: 0.75rem;
+    
+    .form-check-input {
+      border: 1px solid #d1d5db;
+      width: 1rem;
+      height: 1rem;
+      margin-top: 0.1rem;
+      
+      &:checked {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+      }
+    }
+    
+    .form-check-label {
+      color: #374151;
+      font-weight: 500;
+      font-size: 0.875rem;
+      margin-left: 0.5rem;
+      line-height: 1.4;
+    }
+  }
+  
+  .btn-save-setting {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: -0.025em;
+    
+    &:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  .save-button-container {
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+  
+  .sub-section-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    
+    .sub-section-title {
+      color: #374151;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin: 0;
+      letter-spacing: -0.025em;
+    }
+  }
+  
+  .history-link {
+    color: #3b82f6;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.15s ease;
+    
+    &:hover {
+      color: #2563eb;
+    }
+    
+    i {
+      margin-right: 0.4rem;
+    }
+  }
+  
+  .exchange-rate-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    .rate-prefix,
+    .rate-suffix {
+      color: #6b7280;
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .form-control {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+}
+
+// Logo Management Styles
+.logo-section {
+  .logo-group {
+    .logo-container {
+      text-align: center;
+      margin-bottom: 0.75rem;
+      padding: 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: #f9fafb;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+      }
+    }
+    
+    .logo-preview {
+      .logo-image {
+        max-width: 60px;
+        max-height: 60px;
+        border-radius: 4px;
+        object-fit: contain;
+      }
+    }
+    
+    .logo-placeholder {
+      i {
+        color: #9ca3af;
+        font-size: 1.5rem;
+      }
+    }
+    
+    .logo-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      
+      .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        border-radius: 4px;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+  
+  .signature-group {
+    .signature-container {
+      text-align: center;
+      margin-bottom: 0.75rem;
+      padding: 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: #f9fafb;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+      }
+    }
+    
+    .signature-preview {
+      .signature-image {
+        max-width: 60px;
+        max-height: 60px;
+        border-radius: 4px;
+        object-fit: contain;
+      }
+    }
+    
+    .signature-placeholder {
+      i {
+        color: #9ca3af;
+        font-size: 1.5rem;
+      }
+    }
+    
+    .signature-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      
+      .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        border-radius: 4px;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+}
+
+// Responsive design for mobile devices
+@media (max-width: 768px) {
+  .settings-container {
+    flex-direction: column;
+    background: #f8fafc;
+  }
+  
+  .side-tabs {
+    min-width: auto;
+    height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 1rem;
+    background: white;
+    border-radius: 0;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .tab-item {
+    white-space: nowrap;
+    min-width: 180px;
+    justify-content: center;
+    margin: 0 0.5rem;
+    padding: 1rem 1.5rem;
+  }
+  
+  .tab-content {
+    padding: 2rem 1.5rem;
+    margin: 1rem;
+    border-radius: 16px;
+  }
+  
+  .tab-title {
+    font-size: 1.8rem;
+  }
+  
+  .tab-description {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .side-tabs {
+    padding: 0.75rem;
+  }
+  
+  .tab-item {
+    min-width: 150px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    
+    i {
+      font-size: 1.2rem;
+      margin-right: 0.5rem;
+    }
+  }
+  
+  .tab-content {
+    padding: 1.5rem 1rem;
+    margin: 0.5rem;
+  }
+  
+  .tab-title {
+    font-size: 1.6rem;
+  }
+}
+
+
+
+// Simple Currency Dropdown Styles
+.currency-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.simple-currency-select {
+  position: relative;
+  flex: 1;
+}
+
+.simple-currency-select input {
+  padding-right: 40px;
+}
+
+.default-currency-toggle {
+  flex-shrink: 0;
+  min-width: 150px;
+}
+
+.default-currency-toggle .form-check {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.default-currency-toggle .form-check-input {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.default-currency-toggle .form-check-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  margin: 0;
+}
+
+.clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-btn:hover {
+  color: #333;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 2px;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.currency-text {
+  flex: 1;
+  font-size: 14px;
+}

@@ -1,0 +1,88 @@
+<div class="trial-balance-page-container">
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <a routerLink="/reports/report-list" class="breadcrumb-link">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Reports</span>
+      </a>
+      <span class="separator">/</span>
+      <span class="breadcrumb-link active">
+        <i class="bi bi-bank"></i>
+        <span>Trial Balance</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="trial-balance-content-card">
+    <div class="trial-balance-header">
+      <div class="header-left">
+        <h1 class="page-title">Trial Balance</h1>
+        <p class="page-subtitle">As of {{ reportDate | date:'longDate' }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn btn-secondary" (click)="exportReport()">
+          <i class="bi bi-download"></i>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-card">
+      <div class="row g-3 align-items-end mb-0">
+        <div class="col-md-3">
+          <label for="reportDate" class="form-label fw-semibold small">As of Date</label>
+          <input type="date" class="form-control" id="reportDate" [(ngModel)]="reportDate" (change)="onDateChange()">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" (click)="generateReport()" [disabled]="isLoading">
+            <i class="bi bi-arrow-repeat me-1" [class.spinner-border]="isLoading" [class.spinner-border-sm]="isLoading"></i>
+            {{isLoading ? 'Loading...' : 'Refresh'}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Generating Trial Balance...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!isLoading">
+      <table class="table table-bordered table-hover">
+        <thead class="table-light text-center">
+          <tr>
+            <th class="text-start">Account Code</th>
+            <th class="text-start">Account Name</th>
+            <th>Debit</th>
+            <th>Credit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of reportData">
+            <td class="text-center">{{item.account_code}}</td>
+            <td>{{item.account_name}}</td>
+            <td class="text-end">{{item.debit || 0 | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            <td class="text-end">{{item.credit || 0 | currency:currencyCode:'symbol':'1.2-2'}}</td>
+          </tr>
+          <tr *ngIf="reportData.length === 0">
+            <td colspan="4" class="text-center text-muted p-4">No accounts found for the selected date.</td>
+          </tr>
+        </tbody>
+        <tfoot class="table-group-divider fw-bold bg-primary-subtle fs-5">
+            <tr>
+              <td colspan="2" class="text-end">Total</td>
+              <td class="text-end">{{totals.debit | currency:currencyCode:'symbol':'1.2-2'}}</td>
+              <td class="text-end">{{totals.credit | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>

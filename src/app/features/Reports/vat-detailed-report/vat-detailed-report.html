@@ -1,0 +1,223 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-receipt me-2"></i>VAT Detailed Report
+      </h3>
+      <div class="d-flex gap-2">
+        <!-- <button class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-printer me-1"></i>Print
+        </button> -->
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-md-2">
+        <label class="form-label">From Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFrom">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">To Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateTo">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Type</label>
+        <select class="form-select" [(ngModel)]="selectedType" (change)="generateReport()">
+          <option value="All">All Types</option>
+          <option value="Sale">Sales</option>
+          <option value="Purchase">Purchases</option>
+        </select>
+      </div>
+      
+      <div class="col-md-3">
+        <label class="form-label">Search</label>
+        <input type="text" class="form-control" placeholder="Invoice, Party, TRN..." 
+               [(ngModel)]="searchTerm" (input)="generateReport()">
+      </div>
+      <div class="col-md-1 d-flex align-items-end">
+        <button class="btn btn-primary" (click)="generateReport()">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4" *ngIf="summary">
+      <div class="col-md-3">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <h6 class="card-title">Total Taxable Amount</h6>
+            <h4 class="mb-0">{{ summary.total_taxable_amount | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <h6 class="card-title">Total VAT Amount</h6>
+            <h4 class="mb-0">{{ summary.total_vat_amount | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <h6 class="card-title">Output VAT (Sales)</h6>
+            <h4 class="mb-0">{{ summary.output_vat_sales | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+          <div class="card-body">
+            <h6 class="card-title">Input VAT (Purchases)</h6>
+            <h4 class="mb-0">{{ summary.input_vat_purchases | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-primary">
+          <tr>
+            <th>Invoice No</th>
+            <th>Date</th>
+            <th>Party Name</th>
+            <th>TRN</th>
+            <th>Type</th>
+            <th>Emirate</th>
+            <th class="text-end">Taxable Amount</th>
+            <th class="text-end">VAT Amount</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let transaction of transactions">
+            <td class="fw-semibold text-primary">{{ transaction.invoice_no }}</td>
+            <td>{{ transaction.date }}</td>
+            <td>{{ transaction.party_name }}</td>
+            <td class="font-monospace">{{ transaction.party_trn || 'N/A' }}</td>
+            <td>
+              <span class="badge" [ngClass]="getTypeClass(transaction.type)">
+                {{ transaction.type }}
+              </span>
+            </td>
+            <!-- <td>
+              <span class="badge" [ngClass]="getCategoryClass(transaction.vat_category)">
+                {{ transaction.vat_category }}
+              </span>
+            </td> -->
+            <td>{{ transaction.emirate || 'N/A' }}</td>
+            <td class="text-end fw-semibold">{{ transaction.taxable_amount | number:'1.2-2' }}</td>
+            <!-- <td class="text-end">{{ transaction.vat_rate }}%</td> -->
+            <td class="text-end fw-bold" [ngClass]="{'text-success': transaction.type == 'Sale', 'text-danger': transaction.type == 'Purchase'}">
+              {{ transaction.vat_amount | number:'1.2-2' }}
+            </td>
+            <td class="text-muted small">{{ transaction.description }}</td>
+          </tr>
+          <tr *ngIf="transactions.length === 0">
+            <td colspan="11" class="text-center text-muted py-4">
+              <i class="bi bi-search fs-1 d-block mb-2"></i>
+              No VAT transactions found matching your criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row" *ngIf="isLoading">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-center align-items-center" style="height: 100px;"> 
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="!isLoading && pagination.total_pages >= 1">
+        <div class="d-flex align-items-center gap-2">
+          <label class="form-label mb-0 me-2">Page Size:</label>
+          <select class="form-select form-select-sm" style="width: auto;" (change)="onPageSizeChange(+$event.target.value)">
+            <option [value]="10" [selected]="page_size === 10">10</option>
+            <option [value]="25" [selected]="page_size === 25">25</option>
+            <option [value]="50" [selected]="page_size === 50">50</option>
+            <option [value]="100" [selected]="page_size === 100">100</option>
+          </select>
+          <small class="text-muted ms-2">
+            Showing {{ showingFrom }} to {{ showingTo }} of {{ pagination.total_count || 0 }} entries
+          </small>
+        </div>
+        
+        <nav aria-label="Purchase register pagination">
+          <ul class="pagination pagination-sm mb-0">
+            <!-- First Page -->
+            <li class="page-item" [class.disabled]="pagination.page_number == 1">
+              <button class="page-link" (click)="onPageChange(1)" [disabled]="pagination.page_number == 1">
+                <i class="bi bi-chevron-double-left"></i>
+              </button>
+            </li>
+            
+            <!-- Previous Page -->
+            <li class="page-item" [class.disabled]="pagination.page_number == 1">
+              <button class="page-link" (click)="onPageChange(pagination.page_number - 1)" [disabled]="pagination.page_number == 1">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            </li>
+            
+            <!-- Page Numbers -->
+            <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === pagination.page_number">
+              <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+            </li>
+            
+            <!-- Next Page -->
+            <li class="page-item" [class.disabled]="pagination.page_number == pagination.total_pages">
+              <button class="page-link" (click)="onPageChange(pagination.page_number + 1)" [disabled]="pagination.page_number == pagination.total_pages">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </li>
+            
+            <!-- Last Page -->
+            <li class="page-item" [class.disabled]="pagination.page_number == pagination.total_pages">
+              <button class="page-link" (click)="onPageChange(pagination.total_pages)" [disabled]="pagination.page_number == pagination.total_pages">
+                <i class="bi bi-chevron-double-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>  
+    <!-- Net VAT Summary -->
+    <div class="row mt-4" *ngIf="netVatSummary">
+      <div class="col-md-6 offset-md-6">
+        <div class="card border-primary">
+          <div class="card-header bg-primary text-white">
+            <h6 class="mb-0">Net VAT Summary</h6>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span>Output VAT (Sales):</span>
+              <span class="fw-bold text-success">{{ netVatSummary.output_vat_sales | number:'1.2-2' }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Input VAT (Purchases):</span>
+              <span class="fw-bold text-danger">-{{ netVatSummary.input_vat_purchases | number:'1.2-2' }}</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between">
+              <span class="fw-bold">Net VAT Due:</span>
+              <span class="fw-bold" [ngClass]="{'text-success': (netVatSummary.output_vat_sales - netVatSummary.input_vat_purchases) >= 0, 'text-danger': (netVatSummary.output_vat_sales - netVatSummary.input_vat_purchases) < 0}">
+                {{ (netVatSummary.net_vat) | number:'1.2-2' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,86 @@
+<!-- when open for edit -->
+<div *ngIf="isModal" class="modal-header">
+    <h5 class="modal-title">
+        <i class="bi bi-cash-coin me-2"></i>
+        Edit Bank To Bank
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+</div>
+<div class="container">
+
+    <form [formGroup]="bankToForm" (ngSubmit)="onClick()">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-6"></div>
+                <div class="col-md-6" style="align-self: end;text-align: end;">
+                    <button type="button" class="btn btn-sm btn-primary"  (click)="largeModalbank(largeDataModalbank)">Add New Bank</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="">From Bank</label>
+                    <select class="form-control" name="bank" required 
+                    [class.is-invalid]="bankToForm.controls['bank'].touched && bankToForm.controls['bank'].invalid"
+                     id="" formControlName="bank" placeholder="Select Bank">
+                        <option value="">Select Bank</option>
+                        <option *ngFor="let b of bankData" [value]='b.id'>{{b.bank_name}}-{{b.bankTypeCode}}</option>  
+                    </select>
+                    <span class="text-danger"
+                        *ngIf="bankToForm.controls['bank'].hasError('required') && (bankToForm.controls['bank'].dirty || bankToForm.controls['bank'].touched)">
+                        Select Bank</span>
+                </div>
+                <div class="col-md-6">
+                    <label for="">To Bank</label>
+                    <select class="form-control" required name="to_bank" id="" formControlName="to_bank"
+                    placeholder="Select Bank"
+                    [class.is-invalid]="bankToForm.controls['to_bank'].touched && bankToForm.controls['to_bank'].invalid">
+                    <option value="">Select Bank</option>
+                    <option *ngFor="let b of bankData" [value]='b.id'>{{b.bank_name}}-{{b.bankTypeCode}}</option>  
+                    </select>
+                    <span class="text-danger"
+                        *ngIf="bankToForm.controls['to_bank'].hasError('required') && (bankToForm.controls['to_bank'].dirty || bankToForm.controls['bank'].touched)">
+                        Select Bank</span>
+                </div>
+
+            </div>
+        
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="">Amount</label>
+                    <input class="form-control" type="number" name="amount" id="" formControlName="amount" (keypress)="onKeyPress($event)"
+                    [class.is-invalid]="bankToForm.controls['amount'].touched && bankToForm.controls['amount'].invalid">
+                    <span class="text-danger"
+                        *ngIf="bankToForm.controls['amount'].hasError('required') && (bankToForm.controls['amount'].dirty || bankToForm.controls['amount'].touched)">
+                        Enter Amount</span>
+                </div>
+                <div class="col-md-6">
+                    <label for="">Date</label>
+                    <input class="form-control" type="date" name="date" id="" formControlName="date"
+                    [class.is-invalid]="bankToForm.controls['date'].touched && bankToForm.controls['date'].invalid">
+                    <span class="text-danger"
+                    *ngIf="bankToForm.controls['date'].hasError('required') && (bankToForm.controls['date'].dirty || bankToForm.controls['date'].touched)">
+                    Enter Date</span>
+                    <div *ngIf="bankToForm.get('date')?.hasError('dateError')">
+                        <p class="text-danger">Selected date cannot be earlier than the company's start date.</p>
+                      </div>
+                </div>
+            </div>
+           
+            <div class="mt-2 text-center">
+                    <button type="submit" [disabled]="!bankToForm.valid" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+        <ng-template #largeDataModalbank let-modal>
+            <div class="modal-header" style="padding-left: 28px;
+            padding-bottom: 0px;"  >
+                <h5 class="modal-title mt-0 " style="font-size: large;
+                  font-weight: 500;" >Add New Bank</h5>
+                <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+        
+            </div>
+            <div class="modal-body">
+              <app-create-bank [modalRef]="modalRef1"></app-create-bank>
+          </div>
+          </ng-template>
+    </form>
+</div>

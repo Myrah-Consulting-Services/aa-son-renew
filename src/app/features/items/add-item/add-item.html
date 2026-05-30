@@ -1,0 +1,157 @@
+<div class="items-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Items</h1>
+        <button class="btn-create-item" (click)="openCreateItemModal()">
+            <i class="bi bi-plus-lg"></i> Create Item
+        </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-section">
+        <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+            <input 
+                type="text" 
+                class="search-input" 
+                placeholder="Search by name, code, category..." 
+                [(ngModel)]="searchText" 
+                (ngModelChange)="onSearchChange()">
+            <button 
+                class="btn-clear" 
+                type="button" 
+                *ngIf="searchText" 
+                (click)="clearSearch()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="filter-section">
+        <button 
+            class="filter-btn" 
+            [class.active]="filterType === 'all'"
+            (click)="filterType = 'all'">
+            <i class="bi bi-grid"></i> All
+        </button>
+        <button 
+            class="filter-btn" 
+            [class.active]="filterType === 'product'"
+            (click)="filterType = 'product'">
+            <i class="bi bi-box"></i> Products
+        </button>
+        <button 
+            class="filter-btn" 
+            [class.active]="filterType === 'service'"
+            (click)="filterType = 'service'">
+            <i class="bi bi-tools"></i> Services
+        </button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading-section" *ngIf="loading">
+        <div class="spinner"></div>
+        <p class="loading-text">Searching items...</p>
+    </div>
+
+    <!-- Item List -->
+    <div class="items-list-container" *ngIf="!loading">
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="!items || items.length === 0">
+            <div class="empty-content">
+                <i class="bi bi-inbox"></i>
+                <p>No items found</p>
+                <button class="btn-empty-create" (click)="openCreateItemModal()">
+                    Create Item
+                </button>
+            </div>
+        </div>
+
+        <!-- Item Cards -->
+        <div class="items-list">
+            <div 
+                *ngFor="let item of getFilteredItems()" 
+                class="item-card"
+                [ngClass]="{'selected': selectedItem && selectedItem.id === item.id}"
+                (click)="onSelectItem(item)">
+                
+                <!-- Card Header with Actions -->
+                <div class="card-header">
+                    <div class="item-info">
+                        <h6 class="item-name">{{ item.name }}</h6>
+                        <div class="item-badges">
+                            <span class="badge-type" [ngClass]="{'product': item.item_type === 1, 'service': item.item_type === 2}">
+                                {{ item.item_type === 1 ? 'Product' : 'Service' }}
+                            </span>
+                            <span class="badge-code">
+                                <i class="bi bi-diamond"></i>
+                                {{ item.item_code }}
+                            </span>
+                            <span 
+                                class="badge-stock" 
+                                [ngClass]="{'has-stock': item.current_stock > 0, 'zero-stock': item.current_stock === 0}">
+                                <i class="bi bi-box"></i>
+                                Stock: {{ item.current_stock | number:'1.3-3' }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Icons -->
+                    <div class="action-icons">
+                        <button 
+                            class="icon-btn btn-edit" 
+                            (click)="editItem(item); $event.stopPropagation()" 
+                            title="Edit Item">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button 
+                            class="icon-btn btn-delete" 
+                            (click)="deleteItem(item); $event.stopPropagation()" 
+                            title="Delete Item">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prices -->
+                <div class="card-prices">
+                    <div class="price-box sale-price">
+                        <div class="price-label">SALE</div>
+                        <div class="price-value">{{getcurrency()}} {{ item.sales_price | number:'1.3-3' }}</div>
+                    </div>
+                    <div class="price-box purchase-price">
+                        <div class="price-label">PURCHASE</div>
+                        <div class="price-value">{{getcurrency()}} {{ item.purchase_price | number:'1.3-3' }}</div>
+                    </div>
+                </div>
+                <div class="item-card-footer" *ngIf="showAddButton">
+                  <div class="quantity-group" *ngIf="item.item_type == 1">
+                    <button type="button" class="qty-btn" (click)="decrement(item); $event.stopPropagation()" aria-label="Decrease quantity">
+                      <i class="bi bi-dash"></i>
+                    </button>
+                    <span class="qty-value">{{ item.qty }}</span>
+                    <button type="button" class="qty-btn" (click)="increment(item); $event.stopPropagation()" aria-label="Increase quantity">
+                      <i class="bi bi-plus"></i>
+                    </button>
+                  </div>
+                  <button type="button" class="btn btn-success btn-add" (click)="addToCart(item); $event.stopPropagation()">
+                    <i class="bi bi-cart-plus"></i>
+                    Add
+                  </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Create/Edit Item -->
+<ng-template #createItemModal>
+    <div class="modal-header">
+        <h5 class="modal-title">{{ modalMode === 'edit' ? 'Edit' : 'Create New' }} Item</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+    </div>
+    <div class="modal-body">
+        <app-create-item [itemId]="itemId" (addItem)="handleItemSubmit($event)" [modalRef]="modalRef" (close)="closeModal()"></app-create-item>
+    </div>
+</ng-template>

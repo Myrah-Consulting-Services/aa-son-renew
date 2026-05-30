@@ -1,0 +1,344 @@
+<div class="final-settlement-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Final Settlement</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="final-settlement-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="final-settlement-logo">
+          <i class="bi bi-calculator-fill"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Final Settlement Processing</h1>
+          <p class="header-subtitle">UAE Labour Law Compliant EOSB Calculation</p>
+        </div>
+        <span class="badge completed">
+          <i class="bi bi-shield-check me-1"></i>UAE Law Compliant
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Employee Selection Card -->
+    <div class="tab-section-card mb-3">
+      <h3 class="tab-section-title">
+        <i class="bi bi-person me-2"></i>Employee Selection
+      </h3>
+      <form [formGroup]="employeeForm">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-9">
+            <label class="form-label">
+              <i class="bi bi-person me-1"></i>Select Employee
+            </label>
+            <select class="form-select form-select-sm" formControlName="employeeId" (change)="onEmployeeSelect()">
+              <option value="">Choose employee...</option>
+              <option *ngFor="let emp of employees" [value]="emp.id">
+                {{ emp.first_name }} {{ emp.last_name }} - {{ emp.designation_name }} 
+              </option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-calendar me-1"></i>Calculation Date
+            </label>
+            <input type="date" class="form-control form-control-sm" formControlName="calculation_date">
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Settlement Form & Results -->
+    <div class="row g-3" *ngIf="selectedEmployee">
+      <!-- Left: Form Details -->
+      <div class="col-lg-7">
+        <div class="tab-section-card">
+          <h3 class="tab-section-title">
+            <i class="bi bi-file-text me-2"></i>Settlement Details
+          </h3>
+          <form [formGroup]="settlementForm">
+            <!-- Employment Info -->
+            <div class="info-section mb-3">
+              <div class="section-label">Employment Information</div>
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label">Basic Salary</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">{{ getcurrency() }}</span>
+                    <input type="number" class="form-control" formControlName="basic_salary" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Gross Salary</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">{{ getcurrency() }}</span>
+                    <input type="number" class="form-control" formControlName="gross_salary" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Joining Date</label>
+                  <input type="date" class="form-control form-control-sm" formControlName="joining_date" readonly>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Last Working Date</label>
+                  <input type="date" class="form-control form-control-sm" formControlName="last_working_date">
+                </div>
+              </div>
+            </div>
+
+            <!-- Separation Details -->
+            <div class="info-section mb-3">
+              <div class="section-label">Separation Details</div>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <label class="form-label">Reason for Leaving</label>
+                  <select class="form-select form-select-sm" formControlName="reason_for_leaving">
+                    <option value="">Select reason...</option>
+                    <option *ngFor="let reason of reasonOptions" [value]="reason.id">
+                      {{ reason.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Notice Period</label>
+                  <select class="form-select form-select-sm" formControlName="notice_period_days" (change)="onNoticePeriodChange()">
+                    <option *ngFor="let option of noticePeriodOptions" [value]="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Days Served</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="notice_period_served" 
+                         (input)="onNoticePeriodChange()" placeholder="0">
+                </div>
+              </div>
+            </div>
+
+            <!-- Leave & Pay Details -->
+            <div class="info-section mb-3">
+              <div class="section-label">Leave & Pay Details</div>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <label class="form-label">Notice Pay</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">{{ getcurrency() }}</span>
+                    <input type="number" class="form-control" formControlName="notice_period_pay" readonly>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Pending Leave</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" class="form-control" formControlName="pending_leave_days" readonly>
+                    <span class="input-group-text">days</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Leave Encashment</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">{{ getcurrency() }}</span>
+                    <input type="number" class="form-control" formControlName="leave_encashment_amount" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Allowances & Deductions -->
+            <div class="info-section mb-3">
+              <div class="section-label">Allowances & Deductions</div>
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label text-success">Airfare</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">{{ getcurrency() }}</span>
+                    <input type="number" class="form-control" formControlName="airfare_allowance" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-success">Other Allowances</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">{{ getcurrency() }}</span>
+                    <input type="number" class="form-control" formControlName="other_allowances" placeholder="0">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-danger">Outstanding Loans</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">{{ getcurrency() }}</span>
+                    <input type="number" class="form-control" formControlName="outstanding_loans" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-danger">Other Deductions</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">{{ getcurrency() }}</span>
+                    <input type="number" class="form-control" formControlName="other_deductions" placeholder="0">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Authorization -->
+            <div class="info-section mb-3">
+              <div class="section-label">Authorization</div>
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label">Unpaid Leave Days</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="unpaid_leave_days" readonly>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Authorized By</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="authorized_by" placeholder="Name">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Authorization Date</label>
+                  <input type="date" class="form-control form-control-sm" formControlName="authorization_date">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Remarks</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="remarks" placeholder="Notes">
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 mt-3">
+              <button type="button" 
+                      class="btn-primary flex-fill" 
+                      (click)="calculateFinalSettlement()"
+                      [disabled]="settlementForm.invalid || isCalculating">
+                <i class="bi bi-calculator me-1"></i> 
+                {{ isCalculating ? 'Calculating...' : 'Calculate' }}
+              </button>
+              <button type="button" 
+                      class="btn-primary flex-fill" 
+                      (click)="processFinalSettlement()"
+                      [disabled]="!showResults || isProcessing">
+                <i class="bi bi-check-circle me-1"></i> 
+                {{ isProcessing ? 'Processing...' : 'Process Settlement' }}
+              </button>
+              <button type="button" 
+                      class="btn-secondary" 
+                      (click)="exportSettlementReport()"
+                      *ngIf="showResults"
+                      [disabled]="!showResults">
+                <i class="bi bi-download"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right: Results Summary -->
+      <div class="col-lg-5">
+        <!-- Summary Card -->
+        <div class="tab-section-card" *ngIf="showResults && settlementCalculations.length > 0">
+          <h3 class="tab-section-title">
+            <i class="bi bi-calculator me-2"></i>Settlement Summary
+          </h3>
+          <div *ngFor="let calc of settlementCalculations">
+            <!-- Employee Badge -->
+            <div class="employee-badge mb-3">
+              <div class="fw-bold">{{ calc.employee.first_name }} {{ calc.employee.last_name }}</div>
+              <small class="text-muted">{{ calc.employee.designation_name }}</small>
+            </div>
+
+            <!-- EOSB Section -->
+            <div class="summary-block mb-3">
+              <div class="summary-header">EOSB Calculation</div>
+              <div class="summary-row">
+                <span>Service Period</span>
+                <span class="fw-semibold">{{ calc.gratuityCalculation.serviceYears.toFixed(2) }} years</span>
+              </div>
+              <div class="summary-row">
+                <span>Adjusted Period</span>
+                <span class="fw-semibold">{{ calc.gratuityCalculation.adjustedServiceYears.toFixed(2) }} years</span>
+              </div>
+              <div class="summary-row highlight">
+                <span>Gratuity Amount</span>
+                <span class="fw-bold text-primary">{{ getCurrencyFormat(calc.gratuityCalculation.gratuityAmount) }}</span>
+              </div>
+            </div>
+
+            <!-- Earnings Section -->
+            <div class="summary-block mb-3">
+              <div class="summary-header text-success">Earnings</div>
+              <div class="summary-row">
+                <span>Gratuity</span>
+                <span>{{ getCurrencyFormat(calc.gratuityCalculation.gratuityAmount) }}</span>
+              </div>
+              <div class="summary-row">
+                <span>Notice Pay</span>
+                <span>{{ getCurrencyFormat(settlementForm.get('notice_period_pay')?.value || 0) }}</span>
+              </div>
+              <div class="summary-row">
+                <span>Leave Encashment</span>
+                <span>{{ getCurrencyFormat(settlementForm.get('leave_encashment_amount')?.value || 0) }}</span>
+              </div>
+              <div class="summary-row">
+                <span>Allowances</span>
+                <span>{{ getCurrencyFormat((settlementForm.get('airfare_allowance')?.value || 0) + (settlementForm.get('other_allowances')?.value || 0)) }}</span>
+              </div>
+              <div class="summary-row total">
+                <span class="fw-bold">Total Earnings</span>
+                <span class="fw-bold text-success">{{ getCurrencyFormat(calc.totalEarnings) }}</span>
+              </div>
+            </div>
+
+            <!-- Deductions Section -->
+            <div class="summary-block mb-3">
+              <div class="summary-header text-danger">Deductions</div>
+              <div class="summary-row">
+                <span>Outstanding Loans</span>
+                <span>{{ getCurrencyFormat(settlementForm.get('outstanding_loans')?.value || 0) }}</span>
+              </div>
+              <div class="summary-row">
+                <span>Other Deductions</span>
+                <span>{{ getCurrencyFormat(settlementForm.get('other_deductions')?.value || 0) }}</span>
+              </div>
+              <div class="summary-row total">
+                <span class="fw-bold">Total Deductions</span>
+                <span class="fw-bold text-danger">{{ getCurrencyFormat(calc.totalDeductions) }}</span>
+              </div>
+            </div>
+
+            <!-- Net Settlement -->
+            <div class="net-settlement">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Net Settlement</span>
+                <span class="net-amount">{{ getCurrencyFormat(calc.netSettlement) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instructions Card -->
+        <div class="tab-section-card" *ngIf="!showResults">
+          <h3 class="tab-section-title">
+            <i class="bi bi-info-circle me-2"></i>Quick Guide
+          </h3>
+          <ol class="instruction-list mb-0">
+            <li>Select employee and calculation date</li>
+            <li>Review auto-filled employment details</li>
+            <li>Set last working date & reason</li>
+            <li>Configure notice period details</li>
+            <li>Review leave encashment</li>
+            <li>Add allowances & deductions</li>
+            <li>Provide authorization details</li>
+            <li>Calculate and process settlement</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

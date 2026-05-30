@@ -1,0 +1,97 @@
+<form [formGroup]="repaymentForm" (ngSubmit)="recordRepayment()">
+    <!-- Repayment Amount -->
+    <div class="mb-3">
+      <label class="form-label">Repayment Amount<span class="text-danger">*</span></label>
+      <div class="input-group">
+        <span class="input-group-text">AED</span>
+        <input type="number" 
+               class="form-control" 
+               formControlName="repayment_amount"
+               placeholder="0.00"
+               step="0.01"
+               min="0">
+      </div>
+    </div>
+
+    <!-- Repayment Date -->
+    <div class="mb-3">
+      <label class="form-label">Repayment Date<span class="text-danger">*</span></label>
+      <input type="date" 
+             class="form-control" 
+             formControlName="repayment_date"
+             [value]="getCurrentDate()">
+    </div>
+
+    <!-- Payment Mode -->
+    <div class="mb-3">
+      <label class="form-label">Payment Mode<span class="text-danger">*</span></label>
+      <select class="form-select" formControlName="payment_type_id">
+        <option value="">Select</option>
+        <option value="1">Cash</option>
+        <option value="2">Bank Transfer</option>
+        <option value="3">Cheque</option>
+        <option value="4">Online</option>
+      </select>
+    </div>
+
+    <!-- Deposit To Account -->
+    <div class="mb-3">
+      <label class="form-label">Deposit To Account<span class="text-danger">*</span></label>
+      <select class="form-select" formControlName="bank_account_id">
+        <option value="">Select</option>
+        <option *ngFor="let bank of bankList" [value]="bank.id">
+          {{ bank.bank_name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Reference Number -->
+    <div class="mb-3">
+      <label class="form-label">Reference Number</label>
+      <input type="text" 
+             class="form-control" 
+             formControlName="reference_number"
+             placeholder="Optional">
+    </div>
+
+    <!-- Remarks -->
+    <div class="mb-3">
+      <label class="form-label">Remarks</label>
+      <textarea class="form-control" 
+                formControlName="remarks"
+                rows="2"
+                placeholder="Optional remarks about the repayment"></textarea>
+    </div>
+
+    <!-- Remaining Amount (Read-only) -->
+    <div class="mb-3">
+      <label class="form-label">Remaining Amount After Repayment</label>
+      <div class="input-group">
+        <span class="input-group-text">AED</span>
+        <input type="text" 
+               class="form-control" 
+               [class]="calculatedRemainingAmount === 0 ? 'text-success fw-bold' : 'text-warning'"
+               [value]="calculatedRemainingAmount | number:'1.2-2'"
+               readonly>
+      </div>
+      <small class="text-muted">
+        Current outstanding: {{ getRemainingAmount(selectedEmployee) | currency:'AED':'symbol':'1.2-2' }}
+        <span *ngIf="calculatedRemainingAmount === 0" class="text-success ms-2">
+          <i class="bi bi-check-circle"></i> Loan will be fully paid!
+        </span>
+      </small>
+    </div>
+        <button type="button" class="btn btn-secondary me-1" (click)="modalRef.dismiss()">Cancel</button>
+    <button type="button" 
+            class="btn btn-primary" 
+            (click)="recordRepayment()"
+            [disabled]="repaymentForm.invalid || isRecordingRepayment">
+      <span *ngIf="!isRecordingRepayment">Record Repayment</span>
+      <span *ngIf="isRecordingRepayment">Recording...</span>
+    </button>
+    <!-- Mandatory fields note -->
+    <div class="text-end">
+      <small class="text-danger">* indicates mandatory fields</small>
+    </div>
+
+  </form>

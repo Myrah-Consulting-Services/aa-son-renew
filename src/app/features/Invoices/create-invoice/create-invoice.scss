@@ -1,0 +1,515 @@
+// Minimalist Color Palette (consistent with other components)
+$primary: #41299b;
+$primary-hover: #35208a;
+$primary-light: #ede9fe;
+$text-primary: #1f2937;
+$text-secondary: #6b7280;
+$text-muted: #9ca3af;
+$bg-page: #ffffff;
+$bg-secondary: #f8f9fa;
+$border-color: #e5e7eb;
+$border-light: #f3f4f6;
+$success: #10b981;
+$danger: #ef4444;
+$danger-light: #fee2e2;
+$info: #3b82f6;
+$warning: #f59e0b;
+
+// Modal Header
+.modal-header {
+  border-bottom: 1px solid $border-light;
+  padding: 0.875rem 1rem;
+  background: $bg-page;
+
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0;
+    display: flex;
+    align-items: center;
+
+    i {
+      color: $primary;
+      font-size: 0.9375rem;
+      margin-right: 0.5rem;
+    }
+  }
+
+  .btn-close {
+    padding: 0.375rem;
+    margin: -0.375rem -0.375rem -0.375rem auto;
+  }
+}
+
+// Container
+.container-fluid {
+  padding: 1rem;
+  background: $bg-page;
+}
+
+// Sidebar
+.col-md-3.bg-light {
+  background: $bg-secondary !important;
+  border-right: 1px solid $border-color;
+  padding: 0.875rem !important;
+
+  .btn {
+    padding: 0.4375rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-radius: 6px;
+  }
+}
+
+// Invoice Card
+.invoice-card {
+  background: $bg-page;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+// Header Section
+.row.g-3.align-items-start {
+  margin-bottom: 1rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid $border-light;
+}
+
+// Company Section
+.company-logo {
+  img {
+    border: 1px solid $border-color;
+    border-radius: 6px;
+    max-height: 60px;
+    object-fit: cover;
+  }
+}
+
+.company-details {
+  .fw-bold.fs-4 {
+    font-size: 1.125rem !important;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 0.25rem;
+  }
+
+  .text-muted {
+    font-size: 0.8125rem;
+    color: $text-secondary;
+    margin-bottom: 0.125rem;
+  }
+}
+
+// Bill To Section
+.bill-to-section {
+  background: $bg-secondary;
+  border-radius: 6px;
+  padding: 0.75rem;
+  border-left: 3px solid $primary;
+  margin-top: 0.75rem;
+
+  .fw-semibold {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 0.5rem;
+  }
+
+  .bill-to-details {
+    .fw-bold {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: $text-primary;
+      margin-bottom: 0.25rem;
+    }
+
+    .text-muted {
+      font-size: 0.8125rem;
+      color: $text-secondary;
+      margin-bottom: 0.125rem;
+    }
+  }
+}
+
+// Invoice Details Card
+.invoice-details-card {
+  background: $bg-secondary;
+  border-radius: 6px;
+  padding: 0.875rem;
+  border: 1px solid $border-color;
+
+  h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-color;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .form-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: $text-primary;
+    margin-bottom: 0.3125rem;
+  }
+
+  .form-control,
+  .form-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid $border-color;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    background: $bg-page;
+    color: $text-primary;
+    transition: all 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba(65, 41, 155, 0.1);
+    }
+  }
+}
+
+// Buttons
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  border: none;
+  padding: 0.4375rem 0.875rem;
+  font-size: 0.8125rem;
+
+  &.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  &.btn-success {
+    background: $success;
+    color: white;
+
+    &:hover {
+      background: darken($success, 5%);
+    }
+  }
+
+  &.btn-outline-primary {
+    border: 1px solid $primary;
+    color: $primary;
+    background: $bg-page;
+
+    &:hover {
+      background: $primary-light;
+      border-color: $primary;
+    }
+  }
+
+  &.btn-outline-secondary {
+    border: 1px solid $border-color;
+    color: $text-primary;
+    background: $bg-page;
+
+    &:hover {
+      background: $bg-secondary;
+    }
+  }
+
+  &.btn-outline-danger {
+    border: 1px solid $danger;
+    color: $danger;
+    background: $bg-page;
+
+    &:hover {
+      background: $danger-light;
+    }
+  }
+}
+
+.uae-btn {
+  background: $primary;
+  color: white;
+  border: none;
+
+  &:hover {
+    background: $primary-hover;
+  }
+}
+
+// Table
+.invoice-table {
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid $border-color;
+  font-size: 0.8125rem;
+
+  thead {
+    background: $bg-secondary;
+    border-bottom: 1px solid $border-color;
+
+    th {
+      border: none;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.3px;
+      padding: 0.625rem 0.75rem;
+      color: $text-primary;
+    }
+  }
+
+  tbody {
+    tr {
+      transition: background 0.15s ease;
+      border-bottom: 1px solid $border-light;
+
+      &:hover {
+        background: $bg-secondary;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      td {
+        padding: 0.625rem 0.75rem;
+        vertical-align: middle;
+        border-color: $border-light;
+      }
+    }
+  }
+}
+
+// Input Groups
+.input-group {
+  .input-group-text {
+    background: $bg-secondary;
+    border-color: $border-color;
+    color: $text-secondary;
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .form-control {
+    border-left: none;
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.75rem;
+
+    &:focus {
+      border-left: none;
+    }
+  }
+}
+
+// Summary Card
+.summary-card {
+  background: $bg-secondary;
+  border-radius: 6px;
+  padding: 0.875rem;
+  border: 1px solid $border-color;
+
+  h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-color;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0.375rem 0;
+
+    .summary-label {
+      font-weight: 500;
+      color: $text-primary;
+      font-size: 0.8125rem;
+      flex: 1;
+    }
+
+    .input-group {
+      flex: 1;
+      max-width: 180px;
+    }
+
+    &.total-item {
+      border-top: 1px solid $border-color;
+      padding-top: 0.75rem;
+      margin-top: 0.75rem;
+
+      .summary-label {
+        color: $text-primary;
+        font-size: 0.9375rem;
+        font-weight: 600;
+      }
+
+      .form-control {
+        font-weight: 600;
+        color: $text-primary;
+      }
+    }
+  }
+
+  .extra-charges-section {
+    margin: 0.75rem 0;
+
+    .extra-charge-item {
+      margin-bottom: 0.375rem;
+
+      .input-group {
+        .btn-outline-danger {
+          padding: 0.375rem 0.5rem;
+        }
+      }
+    }
+  }
+
+  hr {
+    border-color: $border-color;
+    margin: 0.75rem 0;
+  }
+}
+
+// Additional Details Card
+.additional-details-card {
+  background: $bg-secondary;
+  border-radius: 6px;
+  padding: 0.875rem;
+  border: 1px solid $border-color;
+
+  h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-color;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .form-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: $text-primary;
+    margin-bottom: 0.3125rem;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+// Form Controls
+.form-control,
+.form-select {
+  border-radius: 6px;
+  border: 1px solid $border-color;
+  transition: all 0.15s ease;
+  font-size: 0.8125rem;
+
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(65, 41, 155, 0.1);
+  }
+
+  &.form-control-sm {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
+  }
+}
+
+// Checkboxes
+.form-check-input {
+  &:checked {
+    background-color: $primary;
+    border-color: $primary;
+  }
+
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(65, 41, 155, 0.1);
+  }
+}
+
+// Badges
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+// Clickable Invoice
+.clickable-invoice {
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: $primary !important;
+    text-decoration: underline;
+  }
+}
+
+// Invoice Status Labels
+.invoice-status-labels {
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
+    border-radius: 20px;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 0.75rem;
+  }
+
+  .invoice-card {
+    padding: 0.75rem;
+  }
+
+  .summary-item {
+    flex-direction: column;
+    align-items: flex-start !important;
+
+    .input-group {
+      max-width: 100%;
+      margin-top: 0.375rem;
+    }
+  }
+
+  .table-responsive {
+    font-size: 0.75rem;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: 0.375rem;
+  }
+}
+
+// Print Styles
+@media print {
+  .btn,
+  .sidebar {
+    display: none !important;
+  }
+
+  .invoice-card {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}

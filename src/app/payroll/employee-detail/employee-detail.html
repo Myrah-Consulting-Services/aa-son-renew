@@ -1,0 +1,187 @@
+<div class="employee-detail-container">
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="employee-detail-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="employee-detail-logo">
+          <i class="bi bi-calendar-check"></i>
+        </span>
+        <div>
+          <h1 class="header-title">{{ for_emit.employee_info?.employee_name }}</h1>
+          <p class="header-subtitle">Employee Code: {{ for_emit.employee_info?.employee_code }}</p>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted" style="font-size: 0.95rem;">Month:</span>
+        <input type="month"
+          class="form-control form-control-sm w-auto"
+          [(ngModel)]="currentMonth"
+          (change)="onMonthChange(currentMonth)" />
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Attendance Summary</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Present</h3>
+          <p class="stat-number">{{ attendanceSummary?.totalPresent || 0 }}</p>
+          <p class="stat-change positive">Days</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-x-circle-fill"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Absent</h3>
+          <p class="stat-number">{{ attendanceSummary?.totalAbsent || 0 }}</p>
+          <p class="stat-change negative">Days</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-thermometer-half"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Sick Leave</h3>
+          <p class="stat-number">{{ attendanceSummary?.totalSickLeave || 0 }}</p>
+          <p class="stat-change positive">Days</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-cup-straw"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Casual Leave</h3>
+          <p class="stat-number">{{ attendanceSummary?.totalCausalLeave || 0 }}</p>
+          <p class="stat-change positive">Days</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Late</h3>
+          <p class="stat-number">{{ attendanceSummary?.totalLate || 0 }}</p>
+          <p class="stat-change negative">Days</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-week"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Week Off</h3>
+          <p class="stat-number">{{ attendanceSummary?.totalWeekOff || 0 }}</p>
+          <p class="stat-change positive">Days</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-arrow-repeat"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Comp Off</h3>
+          <p class="stat-number">{{ attendanceSummary?.totalCompensatoryOff || 0 }}</p>
+          <p class="stat-change positive">Days</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-circle-half"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Half Day</h3>
+          <p class="stat-number">{{ attendanceSummary?.totalHalfDay || 0 }}</p>
+          <p class="stat-change positive">Days</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <table class="compact-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Day</th>
+              <th>Status</th>
+              <th>In Time</th>
+              <th>Out Time</th>
+              <th>Total Working Hours</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="!attendanceData || attendanceData.length === 0">
+              <td colspan="7" class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <span>No attendance data available.</span>
+              </td>
+            </tr>
+            <tr *ngFor="let element of attendanceData | slice:(currentPage-1)*pageSize:(currentPage)*pageSize">
+              <td>{{ element.date }}</td>
+              <td>{{ element.day_name }}</td>
+              <td>
+                <span class="badge" [ngClass]="getStatusBadgeClass(element.attendance_type_code)">
+                  {{ element.attendance_type_code? element.attendance_type_code : '-' }}
+                </span>
+              </td>
+              <td>{{ element.check_in || '-' }}</td>
+              <td>{{ element.check_out || '-' }}</td>
+              <td>{{ element.total_working_hours || '-' }}</td>
+              <td>{{ element.remarks || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-bar">
+          <div class="pagination-info">
+            <label for="pageSizeSelect" class="me-2">Rows per page:</label>
+            <select id="pageSizeSelect" class="page-size"
+              [(ngModel)]="pageSize"
+              (change)="currentPage = 1">
+              <option *ngFor="let size of [5, 10, 20, 50, 100]" [value]="size">{{ size }}</option>
+            </select>
+          </div>
+          <div class="pagination-controls">
+            <button 
+              class="btn-page" 
+              [disabled]="currentPage === 1"
+              (click)="currentPage = currentPage - 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="page-number">{{ currentPage }} / {{ Math.ceil(attendanceData.length / pageSize) || 1 }}</span>
+            <button 
+              class="btn-page" 
+              [disabled]="currentPage === Math.ceil(attendanceData.length / pageSize)"
+              (click)="currentPage = currentPage + 1">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

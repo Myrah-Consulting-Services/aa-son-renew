@@ -1,0 +1,226 @@
+<div>
+    <!-- Settings Cards -->
+    <div class="row g-3">
+        <div class="col-md-4" *ngFor="let benefit of social_securities">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-cash-coin me-2"></i>{{benefit.name}}</span>
+                    <i class="bi bi-pencil cursor-pointer" (click)="openEdit(benefit.id)"></i>
+                </div>
+                <!-- ✅ Special layout only for GPSSA (id=1) -->
+                <div class="card-body" *ngIf="benefit.id === 1; else defaultLayout">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Pension Details</th>
+                            <th>
+                              Old Pension
+                              <i class="bi bi-info-circle" [title]="benefit.schemes[0].notes"></i>
+                            </th>
+                            <th>New Pension
+                                <i class="bi bi-info-circle" [title]="benefit.schemes[1]?.Changes[0].notes"></i>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>Employer's Contribution</td>
+                            <td>{{ benefit.schemes[0].employer_contribution }}%</td>
+                            <td>
+                              <ng-container *ngFor="let change of benefit.schemes[1]?.Changes; let i = index">
+                                <span
+                                  [title]="i > 0 ? (benefit.schemes[0].employer_contribution + '% for salaries below AED ' + change.gross_pay_above + ' and ' + change.employer_contribution + '% for salaries equal to or exceeding AED ' + change.gross_pay_above) : ''"
+                                  [class.text-danger]="i > 0">
+                                  {{ change.employer_contribution }}%
+                                </span>
+                                <span *ngIf="i < benefit.schemes[1]?.Changes.length - 1"  class="right-line  pe-0 me-2"                                
+                                    > </span>
+                              </ng-container>
+                            </td>
+                          </tr>
+                    
+                          <tr>
+                            <td>Employees' Contribution</td>
+                            <td>{{ benefit.schemes[0].employee_contribution }}%</td>
+                            <td>{{ benefit.schemes[1]?.Changes[1]?.employee_contribution }}%</td>
+                          </tr>
+                    
+                          <tr>
+                            <td>Contributory Wage Min Limit</td>
+                            <td>AED{{ benefit.schemes[0].wage_range_min | number:'1.0-0' }}</td>
+                            <td>AED{{ benefit.schemes[1]?.Changes[1]?.wage_range_min | number:'1.0-0' }}</td>
+                          </tr>
+                    
+                          <tr>
+                            <td>Contributory Wage Max Limit</td>
+                            <td>AED{{ benefit.schemes[0].wage_range_max | number:'1.0-0' }}</td>
+                            <td>AED{{ benefit.schemes[1]?.Changes[1]?.wage_range_max | number:'1.0-0' }}</td>
+                          </tr>
+                    
+                          <tr>
+                            <td>On Pro Rata Basis</td>
+                            <td>{{ benefit.schemes[0].is_pro_rate }}</td>
+                            <td>{{ benefit.schemes[1]?.Changes[1]?.is_pro_rate }}</td>
+                          </tr>
+                    
+                          <tr>
+                            <td>Renewal at the start of the year</td>
+                            <td>{{ benefit.schemes[0].postpone_to_next_year }}</td>
+                            <td>{{ benefit.schemes[1]?.Changes[1]?.postpone_to_next_year }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      
+                    <!-- <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Pension Details</th>
+                                <th>
+                                    Old Pension
+                                <span 
+                                    class="ms-1 text-primary"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="This is the revised pension scheme with updated wage limits and contributions.">
+                                <i class="bi bi-info-circle"></i>
+                                </span>
+                                </th>
+                                <th>New Pension <i class="bi bi-info-circle" data-toggle="tooltip" data-placement="top" title="Employees who were employed on or after 31 Oct 2023."></i></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Employer's Contribution</td>
+                                <td *ngFor="let b of benefit.schemes">
+                                    <span>{{ b.employer_contribution }} %</span>
+                                    <span class="border-right pe-0 me-2"></span>
+                                    <span *ngIf="b.gross_pay_above>0">{{ b.employer_contribution }} %</span>
+                                    </td>
+                            </tr>
+                            <tr>
+                                <td>Employees' Contribution</td>
+                                <td *ngFor="let b of benefit.schemes">{{ b.employee_contribution }} %</td>
+                            </tr>
+                            <tr>
+                                <td>Contributory Wage Min Limit</td>
+                                <td *ngFor="let b of benefit.schemes">{{ b.wage_range_min }}</td>
+                            </tr>
+                            <tr>
+                                <td>Contributory Wage Max Limit</td>
+                                <td *ngFor="let b of benefit.schemes">{{ b.wage_range_max }}</td>
+                            </tr>
+                            <tr>
+                                <td>On Pro Rata Basis</td>
+                                <td *ngFor="let b of benefit.schemes">{{ b.is_pro_rate }}</td>
+                            </tr>
+                            <tr>
+                                <td>Renewal at the start of the year</td>
+                                <td *ngFor="let b of benefit.schemes">{{ b.postpone_to_next_year }}</td>
+                            </tr>
+                        </tbody>
+                    </table> -->
+
+                    <div class="card-footer small text-muted">
+                        <i class="bi bi-people me-1"></i> {{benefit.employee_count}} Employees
+                    </div>
+                </div>
+                <ng-template #defaultLayout>
+
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead class="table-light" *ngIf="benefit.id==4">
+                                <tr>
+                                  <th>Pension Details</th>
+                                  <th>
+                                    Old Pension
+                                    <i class="bi bi-info-circle" [title]="benefit.schemes[0].notes"></i>
+                                  </th>
+                                  <th>New Pension
+                                      <i class="bi bi-info-circle" [title]="benefit.schemes[1]?.notes"></i>
+                                  </th>
+                                </tr>
+                              </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Employer's Contribution</td>
+                                    <td>{{benefit.schemes[0]?.employer_contribution}} %</td>
+                                    <td *ngIf="benefit.schemes[1]">{{benefit.schemes[1]?.employer_contribution}} %</td>
+                                </tr>
+                                <tr>
+                                    <td>Employees' Contribution</td>
+                                    <td>{{benefit.schemes[0]?.employee_contribution}}%</td>
+                                    <td *ngIf="benefit.schemes[1]">{{benefit.schemes[1]?.employee_contribution}}%</td>
+                                </tr>
+                                <tr>
+                                    <td>Contributory Wage Max Limit</td>
+                                    <td>AED {{benefit.max_contribution}}</td>
+                                    <td *ngIf="benefit.schemes[1]">AED {{benefit.max_contribution}}</td>
+                                </tr>
+                                <tr>
+                                    <td>On Pro Rata Basis</td>
+                                    <td>{{benefit.is_pro_rate ? 'Yes' : 'No'}}</td>
+                                    <td *ngIf="benefit.schemes[1]">{{benefit.is_pro_rate ? 'Yes' : 'No'}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Renewal at Start of Year</td>
+                                    <td>{{benefit.postpone_to_next_year? 'Yes' : 'No'}}</td>
+                                    <td *ngIf="benefit.schemes[1]">{{benefit.postpone_to_next_year? 'Yes' : 'No'}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer small text-muted">
+                        <i class="bi bi-people me-1"></i> {{benefit.employee_count}} Employees
+                    </div>
+                </ng-template>
+            </div>
+        </div>
+
+        <!-- GOSI
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-cash-stack me-2"></i>General Organization for Social Insurance (GOSI)</span>
+            <i class="bi bi-pencil cursor-pointer" (click)="openEdit('gosi')"></i>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm">
+              <tbody>
+                <tr><td>Employer's Contribution</td><td>9.00%</td></tr>
+                <tr><td>Employees' Contribution</td><td>9.00%</td></tr>
+                <tr><td>Contributory Wage Max Limit</td><td>Not Configured</td></tr>
+                <tr><td>On Pro Rata Basis</td><td>No</td></tr>
+                <tr><td>Renewal at Start of Year</td><td>Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer small text-muted">
+            <i class="bi bi-people me-1"></i> 1 Employee
+          </div>
+        </div>
+      </div>
+  
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-cash me-2"></i>Social Insurance Organization (SIO)</span>
+            <i class="bi bi-pencil cursor-pointer" (click)="openEdit('sio')"></i>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm">
+              <tbody>
+                <tr><td>Employer's Contribution</td><td>14.00%</td></tr>
+                <tr><td>Employees' Contribution</td><td>7.00%</td></tr>
+                <tr><td>Contributory Wage Max Limit</td><td>AED10,000.00</td></tr>
+                <tr><td>On Pro Rata Basis</td><td>No</td></tr>
+                <tr><td>Renewal at Start of Year</td><td>Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer small text-muted">
+            <i class="bi bi-people me-1"></i> 1 Employee
+          </div>
+        </div>
+      </div>
+    </div> -->
+    </div>

@@ -1,0 +1,464 @@
+<div class="pay-run-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Pay Runs</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="pay-run-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="pay-run-logo">
+          <i class="bi bi-cash-stack"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Pay Runs</h1>
+          <p class="header-subtitle">Process and manage payroll runs for your organization</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-secondary" (click)="openSettingsModal()">
+          <i class="bi bi-gear-fill"></i>
+          Settings
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Pending</h3>
+          <p class="stat-number">{{ getTotalPendingCount() }}</p>
+          <p class="stat-change positive">All pending payrolls</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Regular Payroll</h3>
+          <p class="stat-number">{{ getRegularPayrollCount() }}</p>
+          <p class="stat-change positive">Regular payrolls</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Bulk Termination</h3>
+          <p class="stat-number">{{ getBulkTerminationCount() }}</p>
+          <p class="stat-change negative">Bulk settlements</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>History Records</h3>
+          <p class="stat-number">{{ filteredPayrollHistory?.length || 0 }}</p>
+          <p class="stat-change positive">Total records</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Tabs Navigation -->
+    <ul class="nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'run'" (click)="setActiveTab('run')">
+          <i class="bi bi-play-circle me-2"></i>Run Payroll
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'history'" (click)="setActiveTab('history')">
+          <i class="bi bi-clock-history me-2"></i>Payroll History
+        </a>
+      </li>
+    </ul>
+
+    <!-- Run Payroll Tab Content -->
+    <div *ngIf="activeTab === 'run'" class="tab-content">
+      <!-- Filter Buttons -->
+      <div class="filters-section">
+        <div class="filters-bar">
+          <button class="filter-btn" 
+                  [class.active]="selectedFilter === 'all'"
+                  (click)="setFilter('all')">
+            All Pending ({{ getTotalPendingCount() }})
+          </button>
+          <button class="filter-btn" 
+                  [class.active]="selectedFilter === 'regular'"
+                  (click)="setFilter('regular')">
+            Regular Payroll ({{ getRegularPayrollCount() }})
+          </button>
+          <button class="filter-btn" 
+                  [class.active]="selectedFilter === 'bulk'"
+                  (click)="setFilter('bulk')">
+            Bulk Termination Payroll ({{ getBulkTerminationCount() }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Regular Payroll Runs -->
+      <div *ngIf="selectedFilter === 'all' || selectedFilter === 'regular'" class="payroll-runs-section">
+        <div *ngFor="let item of runPayrollData">
+          <div class="payroll-run-card" *ngIf="item?.status != '7'">
+            <div class="card-header-section">
+              <h5 class="card-title">
+                Process Pay Run for {{ item?.processing_period }}
+                <span class="status-badge approved" *ngIf="item?.status=='6'">Approved</span>
+                <span class="status-badge draft" *ngIf="item?.status=='5'">Draft</span>
+                <span class="status-badge processing" *ngIf="item?.status=='4'">Processing</span>
+              </h5>
+            </div>
+            <div class="run-details-bar">
+              <div class="detail-item">
+                <div class="label">EMPLOYEES' NET PAY</div>
+                <div class="value">{{ getcurrency() }} {{item?.employees_net_pay}}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">PAYMENT DATE</div>
+                <div class="value">{{ item?.pay_date_formatted }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">NO. OF EMPLOYEES</div>
+                <div class="value">{{ item?.no_of_employees }}({{ item?.skipped_employees_count }} Skipped)</div>
+              </div>
+              <button class="btn-primary" (click)="openPayRunDetail(item)">
+                <span *ngIf="item?.status === '4'">Create Payrun</span>
+                <span *ngIf="item?.status === '5'">View Details & Approved</span>
+                <span *ngIf="item?.status === '6'">Record Payment</span>
+              </button>
+            </div>
+            <div class="alert alert-info" *ngIf="item?.status_info && item?.status == '5'">
+              <i class="bi bi-info-circle me-2"></i>
+              <span>{{ item?.status_info }}</span>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="runPayrollData?.status === '7'" class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p>You have no outstanding pay runs.</p>
+        </div>
+      </div>
+
+      <!-- Bulk Final Settlement Batches -->
+      <div *ngIf="selectedFilter === 'all' || selectedFilter === 'bulk'" class="payroll-runs-section">
+        <div *ngFor="let settlement of bulkSettlementBatches">
+          <div class="payroll-run-card settlement-card">
+            <div class="card-header-section">
+              <h5 class="card-title">
+                Bulk Final Settlement Payroll
+                <span class="status-badge approved" *ngIf="settlement.status === 'approved'">APPROVED</span>
+                <span class="status-badge pending" *ngIf="settlement.status === 'pending'">PENDING</span>
+              </h5>
+            </div>
+            <div class="run-details-bar">
+              <div class="detail-item">
+                <div class="label">EMPLOYEES' NET PAY</div>
+                <div class="value">{{ getcurrency() }} {{ settlement.total_net_pay | number:'1.2-2' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">PAYMENT DATE</div>
+                <div class="value">{{ settlement.payment_date }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">NO. OF EMPLOYEES</div>
+                <div class="value">{{ settlement.employee_count }}</div>
+              </div>
+              <button class="btn-primary" (click)="openPayRunDetail(settlement)">
+                View Details & Pay
+              </button>
+            </div>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              Pay your employees on {{ settlement.payment_date }}. Record it here once you have made the payment.
+            </div>
+          </div>
+        </div>
+        <div *ngIf="bulkSettlementBatches.length === 0 && selectedFilter === 'bulk'" class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p>No bulk termination payroll batches found.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payroll History Tab Content -->
+    <div *ngIf="activeTab === 'history'" class="tab-content">
+      <div class="table-section">
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">
+              <i class="bi bi-table me-2"></i>Payroll History
+            </h3>
+          </div>
+          <div class="table-body">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>PAYMENT DATE</th>
+                  <th>PAYROLL TYPE</th>
+                  <th>DETAILS</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of filteredPayrollHistory" 
+                    [routerLink]="['../pay-run-detail']" 
+                    class="clickable-row">
+                  <td>{{ item?.payment_date }}</td>
+                  <td>{{ item?.payroll_type }}</td>
+                  <td>{{ item?.details }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'completed': item?.status === 'PAID' || item?.status === '6', 
+                      'pending': item?.status === 'PENDING',
+                      'inactive': item?.status === 'UNPAID',
+                      'info': item?.status === 'APPROVED'
+                    }">
+                      {{ item?.status }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredPayrollHistory.length === 0">
+                  <td colspan="4" class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>No payroll history found</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="pagination-section">
+        <div class="pagination-bar">
+          <div class="pagination-info">
+            <span class="info-text">Total Count: {{ filteredPayrollHistory.length }}</span>
+          </div>
+          <div class="pagination-controls">
+            <div class="page-size-selector">
+              <label class="page-size-label">Show:</label>
+              <select class="page-size">
+                <option value="50">50 per page</option>
+                <option value="100">100 per page</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Pay Run Details Modal -->
+<div class="modal fade" id="payRunDetailsModal" tabindex="-1" aria-labelledby="payRunDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xxl modal-dialog-centered">
+    <app-payrun-detail></app-payrun-detail>
+  </div>
+</div>
+
+<!-- Pay Slip Modal -->
+<div class="modal fade" id="paySlipModal" tabindex="-1" aria-labelledby="paySlipModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="paySlipModalLabel">Salary Pay Slip</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body payslip-body">
+        <div class="row mb-4 align-items-center">
+          <div class="col-md-8" *ngIf="paySlipData as ps">
+            <h4 class="company-name mb-1">{{ ps?.companyName }}</h4>
+            <div class="company-address small text-muted">{{ ps?.companyAddress }}</div>
+            <div class="payslip-subheader mt-2">Payslip for {{ ps?.payslipMonth }}</div>
+          </div>
+          <div class="col-md-4 text-end" *ngIf="paySlipData as ps">
+            <img [src]="ps?.logoUrl" alt="Company Logo" class="company-logo" style="max-height: 60px;">
+          </div>
+        </div>
+        <div class="row mb-4">
+          <div class="col-md-6" *ngIf="paySlipData as ps">
+            <div class="mb-2"><strong>Employee Name:</strong> {{ ps.employee?.name }}</div>
+            <div class="mb-2"><strong>Employee No:</strong> {{ ps.employee?.employeeNo }}</div>
+            <div class="mb-2"><strong>Designation:</strong> {{ ps.employee?.designation }}</div>
+            <div class="mb-2"><strong>Bank Account No:</strong> {{ ps.employee?.bankAccountNo }}</div>
+            <div class="mb-2"><strong>WPS Number:</strong> {{ ps.employee?.wpsNumber }}</div>
+          </div>
+          <div class="col-md-6" *ngIf="paySlipData as ps">
+            <div class="mb-2"><strong>Date of Joining:</strong> {{ ps.employee?.joiningDate }}</div>
+            <div class="mb-2"><strong>Paid Days:</strong> {{ ps.employee?.paidDays }}</div>
+          </div>
+        </div>
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-light fw-bold">Earnings</div>
+              <div class="card-body p-2">
+                <table class="table table-sm mb-0">
+                  <tbody *ngIf="paySlipData as ps">
+                    <tr *ngFor="let item of ps.earnings">
+                      <td>{{ item.component }}</td>
+                      <td class="text-end">{{ getcurrency() }} {{ item.amount | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th>Total</th>
+                      <th class="text-end">{{ getcurrency() }} {{ grossEarnings | number:'1.2-2' }}</th>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-light fw-bold">Deductions</div>
+              <div class="card-body p-2">
+                <table class="table table-sm mb-0">
+                  <tbody *ngIf="paySlipData as ps">
+                    <tr *ngFor="let item of ps.deductions">
+                      <td>{{ item.component }}</td>
+                      <td class="text-end">{{ getcurrency() }} {{ item.amount | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th>Total</th>
+                      <th class="text-end">{{ getcurrency() }} {{ totalDeductions | number:'1.2-2' }}</th>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-light fw-bold">Reimbursements</div>
+              <div class="card-body p-2">
+                <table class="table table-sm mb-0">
+                  <tbody *ngIf="paySlipData as ps">
+                    <tr *ngFor="let item of ps.reimbursements">
+                      <td>{{ item.component }}</td>
+                      <td class="text-end">{{ getcurrency() }} {{ item.amount | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th>Total</th>
+                      <th class="text-end">{{ getcurrency() }} {{ totalReimbursements | number:'1.2-2' }}</th>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <div class="card bg-success bg-opacity-10 border-success">
+              <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between">
+                <div class="fs-5 fw-bold text-success">Net Payable: {{ getcurrency() }} {{ netPayable | number:'1.2-2' }}</div>
+                <div class="text-muted small ms-md-4" *ngIf="paySlipData as ps">({{ ps.netPayableInWords }})</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-md-6">
+            <div class="system-note text-muted small">-- This is a system-generated document. --</div>
+          </div>
+          <div class="col-md-6 text-end">
+            <div class="signature-box d-inline-block me-4">
+              <p class="mb-0">Employee Signature</p>
+              <div class="signature-line"></div>
+            </div>
+            <div class="signature-box d-inline-block">
+              <p class="mb-0">Employer Signature</p>
+              <div class="signature-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pay Run Settings Modal -->
+<div class="modal fade" [class.show]="showSettingsModal" [style.display]="showSettingsModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="payRunSettingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="payRunSettingsModalLabel">Pay Run</h5>
+        <button type="button" class="btn-close" (click)="closeSettingsModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Settings Tabs -->
+        <ul class="nav nav-tabs mb-4">
+          <li class="nav-item">
+            <a class="nav-link active" id="general-tab" role="tab" aria-controls="general" aria-selected="true">General</a>
+          </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="settingsTabContent">
+          <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+            <h6 class="mb-4">Configure Your Pay Run Preferences</h6>
+            
+            <!-- Setting 1 -->
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="deductionLimit" [(ngModel)]="settings.allowDeductionsAbove50Percent">
+              <label class="form-check-label fw-semibold" for="deductionLimit">
+                Allow deductions above 50% of gross salary
+              </label>
+              <div class="form-text text-muted mt-2">
+                Enable this to allow employee deductions that are higher than 50% of their gross salary. This restriction exists to comply with wage protection regulations. Proceed only if you have appropriate exceptions.
+              </div>
+            </div>
+
+            <!-- Setting 2 -->
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="settlementDate" [(ngModel)]="settings.allowFinalSettlement14Days">
+              <label class="form-check-label fw-semibold" for="settlementDate">
+                Allow final settlement date to be 14 days after termination
+              </label>
+              <div class="form-text text-muted mt-2">
+                Enable this to allow the final settlement date to be 14 days after the employee's last working day. This restriction is set up to comply with the labor law timelines. Ensure compliance before proceeding.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeSettingsModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="saveSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showSettingsModal"></div>

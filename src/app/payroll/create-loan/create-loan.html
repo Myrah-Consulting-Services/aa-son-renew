@@ -1,0 +1,188 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title d-flex align-items-center">
+      <i class="bi bi-file-earmark-plus me-2 text-primary"></i>
+      Create New Loan
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="cancel()"></button>
+  </div>
+  
+  <div class="modal-body">
+    <form [formGroup]="loanForm" (ngSubmit)="createLoan()">
+      <!-- Row 1: Loan Type -->
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-6 col-lg-8">
+          <label class="form-label">Loan Type<span class="text-danger">*</span></label>
+          <select class="form-select form-select-sm" formControlName="loan_type">
+            <option value="">Select Loan Type</option>
+            <option *ngFor="let lt of loanTypes" [value]="lt.id">
+              {{ lt.name }}
+            </option>
+          </select>
+          <div *ngIf="loanForm.get('loan_type')?.invalid && loanForm.get('loan_type')?.touched" 
+               class="text-danger small">Please select a loan type</div>
+        </div>
+      </div>
+
+      <!-- Row 2: Employee and Amount -->
+      <div class="row g-2 mt-2">
+        <div class="col-12 col-md-6">
+          <label class="form-label">Employee Name<span class="text-danger">*</span></label>
+          <select class="form-select form-select-sm" formControlName="employee_id">
+            <option value="">Select Employee</option>
+            <option *ngFor="let e of employees" [value]="e.id">
+              {{ e.first_name }} {{ e.last_name }} ({{ e.employee_code || e.id }})
+            </option>
+          </select>
+          <div *ngIf="loanForm.get('employee_id')?.invalid && loanForm.get('employee_id')?.touched" 
+               class="text-danger small">Please select an employee</div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label">Loan Amount<span class="text-danger">*</span></label>
+          <div class="input-group input-group-sm">
+            <select class="form-select form-select-sm" style="max-width: 100px" formControlName="currency">
+              <option *ngFor="let c of currencies" [value]="c">{{ c }}</option>
+            </select>
+            <input type="number" min="0" class="form-control form-control-sm text-end" 
+                   formControlName="principal_amount" (input)="useCalculatedEmi()" 
+                   placeholder="0.00">
+          </div>
+          <div *ngIf="loanForm.get('principal_amount')?.invalid && loanForm.get('principal_amount')?.touched" 
+               class="text-danger small">Please enter a valid amount</div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label">Interest Rate (%)</label>
+          <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end" 
+                 formControlName="interest_rate" placeholder="0.00" (input)="useCalculatedEmi()">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label">Tenure (Months)<span class="text-danger">*</span></label>
+          <input type="number" min="1" class="form-control form-control-sm text-end" 
+                 formControlName="tenure_months" (input)="useCalculatedEmi()" placeholder="0">
+          <div *ngIf="loanForm.get('tenure_months')?.invalid && loanForm.get('tenure_months')?.touched" 
+               class="text-danger small">Please enter tenure in months</div>
+        </div>
+      </div>
+
+      <!-- Row 3: Disbursement date and Paid through account -->
+      <div class="row g-2 mt-2">
+        <div class="col-12 col-md-6">
+          <label class="form-label">Disbursement Date<span class="text-danger">*</span></label>
+          <input type="date" class="form-control form-control-sm" formControlName="disbursement_date">
+          <div *ngIf="loanForm.get('disbursement_date')?.invalid && loanForm.get('disbursement_date')?.touched" 
+               class="text-danger small">Please select disbursement date</div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label">Paid Through Account<span class="text-danger">*</span></label>
+          <select class="form-select form-select-sm" formControlName="paid_through_account">
+            <option *ngFor="let a of paidThroughAccounts" [value]="a">{{ a }}</option>
+          </select>
+          <div *ngIf="loanForm.get('paid_through_account')?.invalid && loanForm.get('paid_through_account')?.touched" 
+               class="text-danger small">Please select payment method</div>
+        </div>
+      </div>
+
+      <!-- Row 4: Reference Number and Status -->
+      <div class="row g-2 mt-2">
+        <div class="col-12 col-md-6">
+          <label class="form-label">Reference Number</label>
+          <input type="text" class="form-control form-control-sm" formControlName="reference_number" 
+                 placeholder="Optional">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label">Status<span class="text-danger">*</span></label>
+          <select class="form-select form-select-sm" formControlName="status">
+            <option value="1">Pending</option>
+            <option value="2">Approved</option>
+            <option value="3">Rejected</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 5: Reason -->
+      <div class="row g-2 mt-2">
+        <div class="col-12">
+          <label class="form-label">Reason<span class="text-danger">*</span></label>
+          <textarea rows="2" class="form-control form-control-sm" formControlName="reason" 
+                    placeholder="Enter reason for loan"></textarea>
+          <div *ngIf="loanForm.get('reason')?.invalid && loanForm.get('reason')?.touched" 
+               class="text-danger small">Please enter a reason</div>
+        </div>
+      </div>
+      
+      <hr class="my-3">
+      <h6 class="mb-2 d-flex align-items-center">
+        <i class="bi bi-arrow-repeat me-2 text-primary"></i>
+        Repayments
+      </h6>
+
+      <!-- Row 6: EMI Start and Installment Amount -->
+      <div class="row g-2">
+        <div class="col-12 col-md-6">
+          <label class="form-label">EMI Deduction Start Date<span class="text-danger">*</span></label>
+          <input type="date" class="form-control form-control-sm" formControlName="emi_start_date">
+          <div *ngIf="loanForm.get('emi_start_date')?.invalid && loanForm.get('emi_start_date')?.touched" 
+               class="text-danger small">Please select EMI start date</div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label">Installment Amount<small class="text-muted">(Auto-calculated)</small><span class="text-danger">*</span></label>
+          <div class="input-group input-group-sm">
+            <select class="form-select form-select-sm" style="max-width: 100px" disabled>
+              <option>{{ loanForm.get('currency')?.value || 'AED' }}</option>
+            </select>
+            <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end" 
+                   formControlName="emi_amount" placeholder="0.00" readonly>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info note -->
+      <div class="alert alert-light border mt-3" *ngIf="totalInstallments > 0">
+        <i class="bi bi-info-circle me-2"></i>
+        This loan will be fully paid off in {{ totalInstallments }} installments ({{ tenureMonths }} months). 
+        The first deduction for this loan will be on {{ firstDeductionDate | date:'mediumDate' }}.
+      </div>
+
+      <!-- Calculations Preview -->
+      <div class="row g-2 mt-2">
+        <div class="col-md-4">
+          <div class="card bg-light">
+            <div class="card-body py-2">
+              <div class="small text-muted">Calculated EMI</div>
+              <div class="h6 mb-0">{{ calculatedEmi | number:'1.2-2' }} {{ loanForm.get('currency')?.value }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card bg-light">
+            <div class="card-body py-2">
+              <div class="small text-muted">Total Payable</div>
+              <div class="h6 mb-0">{{ calculatedTotalPayable | number:'1.2-2' }} {{ loanForm.get('currency')?.value }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card bg-light">
+            <div class="card-body py-2">
+              <div class="small text-muted">Total Interest</div>
+              <div class="h6 mb-0">{{ calculatedTotalInterest | number:'1.2-2' }} {{ loanForm.get('currency')?.value }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="resetForm()">
+      <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+    </button>
+    <button type="button" class="btn btn-secondary btn-sm" (click)="cancel()">
+      Cancel
+    </button>
+    <button type="button" class="btn btn-primary btn-sm" (click)="createLoan()" 
+            [disabled]="loanForm.invalid">
+      <i class="bi bi-save me-1"></i> Create Loan
+    </button>
+  </div>
+</div>

@@ -1,0 +1,106 @@
+<div class="reports-page-container">
+  <!-- Compact Header -->
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <span class="breadcrumb-link active">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Reports</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="reports-content-card">
+    <div class="reports-header">
+      <div class="header-left">
+        <h1 class="page-title">All Reports</h1>
+        <p class="page-subtitle">Access and generate various business reports</p>
+      </div>
+    </div>
+
+    <div class="reports-layout">
+      <!-- Sidebar: Categories & Search -->
+      <div class="reports-sidebar">
+        <div class="sidebar-card">
+          <div class="search-section">
+            <div class="search-wrapper">
+              <i class="bi bi-search search-icon"></i>
+              <input 
+                type="text" 
+                class="search-input" 
+                placeholder="Search reports..." 
+                [(ngModel)]="searchTerm" 
+                (input)="setSearchTerm(searchTerm)">
+              <button 
+                class="btn-clear" 
+                type="button" 
+                *ngIf="searchTerm" 
+                (click)="searchTerm = ''; setSearchTerm('')">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="categories-section">
+            <div class="section-label">
+              <i class="bi bi-folder"></i>
+              Categories
+            </div>
+            <ul class="categories-list">
+              <li 
+                *ngFor="let cat of categories" 
+                class="category-item"
+                [class.active]="activeCategory === cat"
+                (click)="setCategory(cat); $event.preventDefault()">
+                <i class="bi" 
+                   [class.bi-file-earmark-text]="cat === 'All Reports'"
+                   [class.bi-graph-up-arrow]="cat === 'Financial Statements'"
+                   [class.bi-cart]="cat === 'Sales'"
+                   [class.bi-bag]="cat === 'Purchase'"
+                   [class.bi-journal-text]="cat === 'Ledgers'"
+                   [class.bi-percent]="cat === 'VAT Reports (UAE)'"></i>
+                <span>{{ cat }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content: Report Cards -->
+      <div class="reports-main">
+        <div class="reports-grid" *ngIf="filteredReports.length > 0">
+          <div 
+            *ngFor="let report of filteredReports" 
+            class="report-card">
+            <div class="report-card-header">
+              <div class="report-icon">
+                <i class="bi bi-file-earmark-text"></i>
+              </div>
+              <h5 class="report-title">{{ report.name }}</h5>
+            </div>
+            <p class="report-description">{{ report.description }}</p>
+            <a 
+              [routerLink]="report.routerLink" 
+              [queryParams]="report.queryParams || null" 
+              class="btn-view-report">
+              <i class="bi bi-arrow-right"></i>
+              View Report
+            </a>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="filteredReports.length === 0">
+          <i class="bi bi-inbox"></i>
+          <p>No reports found</p>
+          <small *ngIf="searchTerm">Try adjusting your search term or category filter</small>
+          <small *ngIf="!searchTerm && activeCategory !== 'All Reports'">No reports available in this category</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

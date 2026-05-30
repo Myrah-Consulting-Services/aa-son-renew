@@ -1,0 +1,416 @@
+<div class="attendance-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Attendance Register</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="attendance-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="attendance-logo">
+          <i class="bi bi-calendar-check"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Employee Attendance Register</h1>
+          <p class="header-subtitle">Track and manage employee attendance for payroll processing</p>
+        </div>
+      </div>
+      <div class="period-selector">
+        <label class="form-label fw-bold">Accounting Period</label>
+        <div class="input-group">
+          <input type="month" 
+                 class="form-control form-control-sm" 
+                 [(ngModel)]="selectedMonth"
+                 (change)="setMonthAndYear(selectedMonth, null)">
+          <span class="input-group-text">
+            <i class="bi bi-calendar"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section" *ngIf="invoiceMode==='daily'">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Attendance Statistics</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Present Days</h3>
+          <p class="stat-number">{{ getTotalPresent() }}</p>
+          <p class="stat-change positive">Total present</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-x-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Absent Days</h3>
+          <p class="stat-number">{{ getTotalAbsent() }}</p>
+          <p class="stat-change negative">Total absent</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clock"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Late Days</h3>
+          <p class="stat-number">{{ getTotalLate() }}</p>
+          <p class="stat-change negative">Total late</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-x"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Leave Days</h3>
+          <p class="stat-number">{{ getTotalLeaves() }}</p>
+          <p class="stat-change positive">Total leaves</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-week"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Weekends</h3>
+          <p class="stat-number">{{ getTotalWeekends() }}</p>
+          <p class="stat-change positive">Total weekends</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Employees</h3>
+          <p class="stat-number">{{ totalData }}</p>
+          <p class="stat-change positive">Active employees</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <!-- Edit Mode -->
+        <div class="filter-item">
+          <label class="filter-label">
+            <i class="bi bi-toggle-on me-1"></i>Enable Edit
+          </label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" 
+                   type="checkbox" 
+                   [(ngModel)]="isAttendanceEnabled" 
+                   id="attendanceToggle">
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="filter-item search-wrapper">
+          <i class="bi bi-search"></i>
+          <input type="text" 
+                 class="search-input" 
+                 placeholder="Search employees..."
+                 [(ngModel)]="searchTerm"
+                 (input)="attendancereport()">
+        </div>
+
+        <!-- Actions -->
+        <div class="filter-item" *ngIf="isAttendanceEnabled">
+          <button class="btn-primary btn-sm" (click)="saveAttendance()">
+            <i class="bi bi-save me-1"></i> Save Changes
+          </button>
+        </div>
+
+        <!-- Import -->
+        <div class="filter-item">
+          <button class="btn-secondary btn-sm" (click)="importattendannce(importModal)">
+            <i class="bi bi-file-earmark-excel me-1"></i> Import Excel
+          </button>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="filter-item" *ngIf="isAttendanceEnabled">
+          <button class="btn-secondary btn-sm" (click)="markPresentForToday()" title="Mark Present for Today">
+            <i class="bi bi-calendar-check me-1"></i> All Present For Today
+          </button>
+        </div>
+
+        <!-- Invoice Mode -->
+        <div class="filter-item">
+          <div class="d-flex align-items-center gap-1">
+            <i class="bi bi-receipt-cutoff"></i>
+            <span class="badge">{{invoiceMode}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-table me-2"></i>Attendance Register
+          </h3>
+          <div class="table-badges">
+            <span class="badge">{{ attendanceData.length }} Employees</span>
+            <span class="badge">{{ daysInMonth.length }} Days</span>
+          </div>
+        </div>
+        <div class="table-body">
+          <div class="table-responsive">
+            <table class="compact-table attendance-table">
+              <thead>
+                <tr>
+                  <th class="employee-column sticky-col">
+                    <i class="bi bi-person"></i> Employee Details
+                  </th>
+                  <ng-container *ngFor="let day of daysInMonth">
+                    <th class="day-column" [ngClass]="{'weekend-day': isWeekend(day.originalDate)}">
+                      <div class="day-header">
+                        <div class="day-number">{{ day.displayDate.split(' ')[0] }}</div>
+                        <div class="day-name">{{ day.displayDate.split(' ')[1] }}</div>
+                      </div>
+                    </th>
+                  </ng-container>
+                  <th class="summary-column">P</th>
+                  <th class="summary-column">A</th>
+                  <th class="summary-column">L</th>
+                  <th class="summary-column">W</th>
+                  <th class="summary-column">C</th>
+                  <th class="summary-column">S</th>
+                  <th class="summary-column">CO</th>
+                  <th class="summary-column">H</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let employee of attendanceData" class="employee-row">
+                  <td class="employee-info-cell sticky-col">
+                    <div class="employee-details" title="View Detail" (click)="employedetail(employeeModal,employee)">
+                      <div class="employee-name">{{ employee.employee_name }}</div>
+                      <div class="employee-meta">
+                        <!-- <span class="employee-id">phone: {{ employee.phone_number }}</span> -->
+                        <!-- <span class="employee-dept">{{ employee.department?.name || 'N/A' }}</span> -->
+                      </div>
+                    </div>
+                  </td>
+                  <ng-container *ngFor="let day of daysInMonth">
+                    <td [ngClass]="getCellClasses(employee, day.originalDate)">
+                      <ng-container *ngIf="invoiceMode==='daily'; else hourlyTpl">
+                        <ng-container *ngIf="isWeekend(day.originalDate); else normalDaySelect">
+                          <select class="custom-select"
+                                  [disabled]="true"
+                                  [ngModel]="'W'"
+                                  [ngClass]="getAttendanceBadgeClass('W')">
+                            <option [value]="'W'">W</option>
+                          </select>
+                        </ng-container>
+                        <ng-template #normalDaySelect>
+                          <select class="custom-select" 
+                                  (change)="onAttendanceChange(employee,day.originalDate, $event)" 
+                                  [(ngModel)]="employee.attendance[day.originalDate]" 
+                                  [disabled]="!isAttendanceEnabled" 
+                                  [ngClass]="getAttendanceBadgeClass(employee.attendance[day.originalDate])">
+                            <ng-container>
+                              <option *ngFor="let status of attendanceStatuses" [value]="status.value">
+                                {{ status.display }}
+                              </option>
+                            </ng-container>
+                          </select>
+                        </ng-template>
+                      </ng-container>
+                      <ng-template #hourlyTpl>
+                        <ng-container *ngIf="isWeekend(day.originalDate); else normalHourSelect">
+                          <select class="custom-select"
+                                  [disabled]="true"
+                                  [ngModel]="'W'"
+                                  [ngClass]="getAttendanceBadgeClass('W')">
+                            <option [value]="'W'">W</option>
+                          </select>
+                        </ng-container>
+                        <ng-template #normalHourSelect>
+                          <select
+                            class="custom-select"
+                            [ngClass]="getAttendanceBadgeClass(employee.attendance[day.originalDate])"
+                            (change)="onHoursChange(employee, day.originalDate, $event)"
+                            [disabled]="!isAttendanceEnabled"
+                            [(ngModel)]="employee.attendance[day.originalDate]">
+                            <option *ngFor="let hr of hourOptions" [value]="hr.id">
+                              {{ hr.value }}
+                            </option>
+                          </select>
+                        </ng-template>
+                      </ng-template>
+                    </td>
+                  </ng-container>
+                  <td class="summary-cell present-summary">{{ employee.totalPresent || 0 }}</td>
+                  <td class="summary-cell absent-summary">{{ employee.totalAbsent || 0 }}</td>
+                  <td class="summary-cell late-summary">{{ employee.totalLate || 0 }}</td>
+                  <td class="summary-cell weekend-summary">{{ employee.totalWeekOff || 0 }}</td>
+                  <td class="summary-cell casual-summary">{{ employee.totalCausalLeave || 0 }}</td>
+                  <td class="summary-cell sick-summary">{{ employee.totalSickLeave || 0 }}</td>
+                  <td class="summary-cell comp-summary">{{ employee.totalCompensatoryOff || 0 }}</td>
+                  <td class="summary-cell half-summary">{{ employee.totalHalfDay || 0 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-section">
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          <span class="info-text">
+            Showing {{ (currentPage * pageSize) + 1 }} to {{ Math.min((currentPage + 1) * pageSize, totalData) }} of {{ totalData }} employees
+          </span>
+        </div>
+        <div class="pagination-controls">
+          <div class="page-size-selector">
+            <label class="page-size-label">Show:</label>
+            <select class="page-size" 
+                    [(ngModel)]="pageSize" 
+                    (change)="onPageChange({pageIndex: 0, pageSize: pageSize})">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+          <div class="page-navigation">
+            <button class="btn-page" 
+                    [disabled]="currentPage == 0"
+                    (click)="onPageChange({pageIndex: currentPage - 1, pageSize: pageSize})">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="page-number">
+              Page {{ currentPage + 1 }} of {{ Math.ceil(totalData / pageSize) }}
+            </span>
+            <button class="btn-page" 
+                    [disabled]="(currentPage + 1) * pageSize >= totalData"
+                    (click)="onPageChange({pageIndex: currentPage + 1, pageSize: pageSize})">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Legend -->
+    <div class="legend-section">
+      <div class="tab-section-card">
+        <h3 class="tab-section-title">
+          <i class="bi bi-info-circle me-2"></i>Attendance Codes
+        </h3>
+        <div class="legend-grid">
+          <div class="legend-item">
+            <div class="legend-color present-legend"></div>
+            <div class="legend-text">
+              <span class="legend-code">P</span>
+              <span class="legend-description">Present - Full day worked</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color absent-legend"></div>
+            <div class="legend-text">
+              <span class="legend-code">A</span>
+              <span class="legend-description">Absent - No attendance</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color late-legend"></div>
+            <div class="legend-text">
+              <span class="legend-code">L</span>
+              <span class="legend-description">Late - Delayed arrival</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color weekoff-legend"></div>
+            <div class="legend-text">
+              <span class="legend-code">W</span>
+              <span class="legend-description">Weekoff - Weekend/Holiday</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color casual-legend"></div>
+            <div class="legend-text">
+              <span class="legend-code">C</span>
+              <span class="legend-description">Casual Leave</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color sick-legend"></div>
+            <div class="legend-text">
+              <span class="legend-code">S</span>
+              <span class="legend-description">Sick Leave</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color comp-legend"></div>
+            <div class="legend-text">
+              <span class="legend-code">CO</span>
+              <span class="legend-description">Compensatory Off</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color half-legend"></div>
+            <div class="legend-text">
+              <span class="legend-code">H</span>
+              <span class="legend-description">Half Day</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<ng-template #employeeModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">EMPLOYEE ATTENDANCE DETAILS</h5>
+      <button (click)="modalClosed()" type="button" aria-label="Close" class="btn-close"></button>
+    </div>
+    <div class="modal-body">
+      <app-employee-detail [for_emit]="for_emit" [modalRef]="modalRef"></app-employee-detail>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #importModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">IMPORT ATTENDANCE</h5>
+      <button (click)="modal.dismiss()" type="button" aria-label="Close" class="btn-close"></button>
+    </div>
+    <div class="modal-body">
+      <div class="container">
+        <app-import-attendance [modalRef]="modalRef"></app-import-attendance>
+      </div>
+    </div>
+  </div>
+</ng-template>

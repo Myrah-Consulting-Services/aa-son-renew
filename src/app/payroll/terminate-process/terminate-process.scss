@@ -1,0 +1,362 @@
+// Compact Modal Header
+.modal-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem 1.5rem;
+  
+  h6 {
+    font-size: 0.95rem;
+    letter-spacing: -0.02em;
+  }
+  
+  small {
+    font-size: 0.75rem;
+    opacity: 0.9;
+  }
+  
+  i {
+    font-size: 1.25rem;
+  }
+}
+
+// Exit Container
+.exit-container {
+  background: #f8f9fa;
+  
+  // Loading State
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    
+    .spinner-border {
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .loading-text {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// Employee Sidebar
+.employee-sidebar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  
+  .employee-card {
+    padding: 1.5rem;
+    
+    .employee-avatar {
+      text-align: center;
+      margin-bottom: 1rem;
+      
+      i {
+        font-size: 3.5rem;
+        opacity: 0.9;
+      }
+    }
+    
+    .employee-info {
+      text-align: center;
+      
+      .employee-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      
+      .employee-id {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        display: block;
+        margin-bottom: 1.5rem;
+      }
+      
+      .info-list {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 0.5rem 0;
+          font-size: 0.85rem;
+          
+          &:not(:last-child) {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          }
+          
+          .label {
+            opacity: 0.8;
+          }
+          
+          .value {
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Form Section
+.form-section {
+  background: white;
+  padding: 1.5rem;
+  
+  .exit-form {
+    // Compact Labels
+    .form-label-compact {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 0.25rem;
+      display: block;
+      
+      &.required::after {
+        content: ' *';
+        color: #dc3545;
+      }
+      
+      .bi-info-circle {
+        font-size: 0.7rem;
+        cursor: help;
+      }
+    }
+    
+    // Form Controls
+    .form-control,
+    .form-select {
+      font-size: 0.85rem;
+      border-color: #dee2e6;
+      
+      &:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.15rem rgba(102, 126, 234, 0.15);
+      }
+      
+      &.is-invalid {
+        border-color: #dc3545;
+        
+        &:focus {
+          border-color: #dc3545;
+          box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.15);
+        }
+      }
+    }
+    
+    .invalid-feedback {
+      font-size: 0.7rem;
+      margin-top: 0.25rem;
+    }
+    
+    // Section Block
+    .form-section-block {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 1rem;
+      border: 1px solid #e9ecef;
+      
+      .section-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        display: block;
+      }
+    }
+    
+    // Payment Options
+    .payment-options {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      
+      .payment-option {
+        flex: 1;
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.75rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        
+        &:hover {
+          border-color: #667eea;
+          background: #f8f9ff;
+        }
+        
+        .form-check-input {
+          float: left;
+          margin-top: 0.15rem;
+          margin-right: 0.5rem;
+          
+          &:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+            
+            ~ .option-label {
+              color: #667eea;
+              font-weight: 600;
+            }
+          }
+        }
+        
+        .option-label {
+          font-size: 0.8rem;
+          color: #6c757d;
+          cursor: pointer;
+          display: block;
+          margin-left: 1.5rem;
+          
+          i {
+            font-size: 0.75rem;
+          }
+        }
+      }
+    }
+    
+    // Specific Date Wrapper
+    .specific-date-wrapper {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed #dee2e6;
+    }
+    
+    // Form Footer
+    .form-footer {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e9ecef;
+      
+      .btn {
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        
+        &:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        
+        i {
+          font-size: 0.85rem;
+        }
+      }
+      
+      .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        
+        &:hover:not(:disabled) {
+          background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        }
+      }
+      
+      small {
+        font-size: 0.7rem;
+        text-align: right;
+      }
+    }
+  }
+}
+
+// Textarea
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+// Loading Spinner
+.spinner-border-sm {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .modal-header {
+    h6 {
+      font-size: 0.9rem;
+    }
+    
+    small {
+      font-size: 0.7rem;
+    }
+  }
+  
+  .employee-sidebar {
+    .employee-card {
+      padding: 1rem;
+      
+      .employee-avatar {
+        i {
+          font-size: 2.5rem;
+        }
+      }
+      
+      .employee-info {
+        .employee-name {
+          font-size: 1rem;
+        }
+        
+        .info-list {
+          padding: 0.75rem;
+          
+          .info-row {
+            font-size: 0.8rem;
+          }
+        }
+      }
+    }
+  }
+  
+  .form-section {
+    padding: 1rem;
+    
+    .exit-form {
+      .payment-options {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .form-footer {
+        .d-flex {
+          flex-direction: column;
+          
+          .btn {
+            width: 100%;
+          }
+        }
+        
+        small {
+          text-align: center;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .form-section {
+    padding: 0.75rem;
+  }
+  
+  .form-section-block {
+    padding: 0.75rem !important;
+  }
+}

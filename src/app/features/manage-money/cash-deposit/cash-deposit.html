@@ -1,0 +1,94 @@
+    <!-- when open for edit -->
+    <div *ngIf="isModal" class="modal-header">
+        <h5 class="modal-title">
+            <i class="bi bi-cash-coin me-2"></i>
+            Edit Cash Deposit
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+    </div>
+    <form [formGroup]="cashdForm"  class="container">
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="">Bank</label>
+                <select class="form-control" type="text" name="bank" id="" formControlName="bank" placeholder="Select Bank"
+                [class.is-invalid]="cashdForm.controls['bank'].touched && cashdForm.controls['bank'].invalid">                 
+                    <option *ngFor="let b of bankData" [value]="b.id">{{b.bank_name}}-{{b.bankTypeCode}}</option>  
+                </select>
+                <span class="text-danger" *ngIf="cashdForm.controls['bank'].hasError('required') && (cashdForm.controls['bank'].dirty || 
+                cashdForm.controls['bank'].touched)">Select Bank</span>
+                </div>
+                <div class="col-md-6" style="align-self: end;">
+                    <button type="button" class="btn btn-sm btn-primary"  (click)="largeModalbank(largeDataModalbank)">+ Add New Bank</button>
+               </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="">Cash Ledger</label>
+                <select class="form-control" type="text" name="ledger" placeholder="Select Ledger" id="" formControlName="ledger"
+                [class.is-invalid]="cashdForm.controls['ledger'].touched && cashdForm.controls['ledger'].invalid">
+                    <option *ngFor="let c of cashLedger" [value]="c.id">{{c.ledger_name}}-{{c.cashTypeCode}}</option> 
+                 </select>
+                 <span class="text-danger" *ngIf="cashdForm.controls['ledger'].hasError('required') && (cashdForm.controls['ledger'].dirty || 
+                 cashdForm.controls['ledger'].touched)">Select Ledger</span>
+            </div>
+            <div class="col-md-6" style="align-self: end;">
+                <!-- <app-add-cash-ledger (cashAddLedger)="cashAddLedger($event)"></app-add-cash-ledger> -->
+                <button class="btn btn-sm btn-primary" (click)="largeModal2(largeDataModal2)">+ Add Cash Ledger</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="">Amount</label>
+                <input class="form-control"onkeydown="return event.key !== '-';"
+                oninput="this.value = Math.max(Math.abs(this.value), 1)" type="number" name="amount" id="" formControlName="amount"
+                [class.is-invalid]="cashdForm.controls['amount'].touched && cashdForm.controls['amount'].invalid">
+                <span class="text-danger" *ngIf="cashdForm.controls['amount'].hasError('required') && (cashdForm.controls['amount'].dirty || 
+                 cashdForm.controls['amount'].touched)">Enter Amount</span>
+                 <!-- <span class="text-danger" *ngIf="cashdForm.controls['amount'].hasError('invalidAmount')">Invalid amount</span> -->
+            </div>
+            <div class="col-md-6">
+                <label for="">Date</label>
+                <input class="form-control" type="date" name="date" id="" formControlName="date"
+                [class.is-invalid]="cashdForm.controls['date'].touched && cashdForm.controls['date'].invalid">
+
+                <span class="text-danger" *ngIf="cashdForm.controls['date'].hasError('required') && (cashdForm.controls['date'].dirty || 
+                 cashdForm.controls['date'].touched)">Enter Date</span>
+                 <div *ngIf="cashdForm.get('date')?.hasError('dateError')">
+                    <p class="text-danger">Selected date cannot be earlier than the company's start date.</p>
+                  </div>
+            </div>
+        </div>
+        <div class="row">
+
+        </div>
+        <div class="mt-2 text-center">
+                <button type="submit" [disabled]="!cashdForm.valid" (click)="onSubmit()" class="btn btn-primary justify-content-center">Submit</button>
+        </div>
+
+    </div>
+    <ng-template #largeDataModal2 let-modal>
+        <div class="modal-header">
+            <h5 class="modal-title mt-0" style="font-weight: 500;
+            font-size: x-large;">Ledger Name</h5>
+            <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')" aria-hidden="true"></button>
+        </div>
+        <div class="modal-body">
+
+            <app-create-cash [modalRef]="modalRef1"></app-create-cash>
+            </div>
+      </ng-template>
+
+
+      <ng-template #largeDataModalbank let-modal>
+        <div class="modal-header" style="padding-left: 28px;
+        padding-bottom: 0px;"  >
+            <h5 class="modal-title mt-0 " style="font-size: large;
+              font-weight: 500;" >Add New Bank</h5>
+            <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')" aria-hidden="true"></button>
+        </div>
+        <div class="modal-body">
+          <app-create-bank [modalRef]="modalRef1"></app-create-bank>
+      </div>
+      </ng-template>
+</form>

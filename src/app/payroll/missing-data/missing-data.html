@@ -1,0 +1,323 @@
+<div class="missing-data-container">
+  <!-- Header Section -->
+  <div class="page-header-compact">
+    <div class="header-content-compact">
+      <div class="header-left-compact">
+        <button class="btn btn-outline-secondary btn-sm me-2" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <div class="header-title-compact">
+          <h1 class="page-title-compact">Regular Payroll</h1>
+          <p class="page-subtitle-compact">Complete missing employee data to process payroll</p>
+        </div>
+      </div>
+      <div class="header-actions-compact">
+        <button class="btn btn-primary btn-sm" 
+                [disabled]="selectedEmployees.size === 0"
+                (click)="completeSelectedEmployees()">
+          <i class="bi bi-check-circle me-1"></i>
+          Complete Selected ({{ selectedEmployees.size }})
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="loading-text">Loading missing data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error }}
+    </div>
+    <button class="btn btn-outline-primary" (click)="loadMissingData()">
+      <i class="bi bi-arrow-clockwise me-2"></i>Retry
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading && !error" class="container-fluid">
+    <!-- Summary Cards -->
+    <div class="summary-section-compact mb-3">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <div class="summary-card-compact">
+            <div class="summary-icon-compact">
+              <i class="bi bi-people"></i>
+            </div>
+            <div class="summary-content-compact">
+              <h3 class="summary-number-compact">{{ getTotalMissingCount() }}</h3>
+              <p class="summary-label-compact">Total Missing Data</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="summary-card-compact">
+            <div class="summary-icon-compact salary-icon-compact">
+              <i class="bi bi-currency-dollar"></i>
+            </div>
+            <div class="summary-content-compact">
+              <h3 class="summary-number-compact">{{ getMissingDataSummary().salaryStructure }}</h3>
+              <p class="summary-label-compact">Missing Salary Structure</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="summary-card-compact">
+            <div class="summary-icon-compact labour-icon-compact">
+              <i class="bi bi-card-text"></i>
+            </div>
+            <div class="summary-content-compact">
+              <h3 class="summary-number-compact">{{ getMissingDataSummary().labourCard }}</h3>
+              <p class="summary-label-compact">Missing Labour Card</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="alert alert-warning-compact mb-3" *ngIf="filteredEmployees.length > 0">
+      <div class="alert-content-compact">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+          <strong>The following employees are yet to be added in this payrun.</strong>
+          Complete/Add employees to process payroll for this period.
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Actions -->
+    <div class="table-controls-compact mb-2">
+      <div class="search-section-compact">
+        <div class="search-box-compact">
+          <i class="bi bi-search"></i>
+          <input type="text" 
+                 class="form-control form-control-sm" 
+                 placeholder="Search employees..." 
+                 [(ngModel)]="searchQuery"
+                 (input)="onSearchChange($event.target.value)">
+        </div>
+      </div>
+      <div class="action-section-compact">
+        <div class="selection-controls-compact">
+          <button class="btn btn-outline-secondary btn-sm me-1" (click)="selectAllEmployees()">
+            <i class="bi bi-check-square me-1"></i>Select All
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" (click)="deselectAllEmployees()">
+            <i class="bi bi-square me-1"></i>Deselect All
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employees Table -->
+    <div class="table-container-compact" *ngIf="filteredEmployees.length > 0">
+      <div class="table-responsive">
+        <table class="table table-compact table-hover">
+          <thead class="table-light-compact">
+            <tr>
+              <th style="width: 30px;">
+                <input type="checkbox" 
+                       [checked]="selectedEmployees.size === filteredEmployees.length && filteredEmployees.length > 0"
+                       (change)="selectedEmployees.size === filteredEmployees.length ? deselectAllEmployees() : selectAllEmployees()">
+              </th>
+              <th>EMPLOYEE</th>
+              <th>STATUS</th>
+              <th>EMAIL</th>
+              <th>MISSING DATA</th>
+              <th style="width: 150px;">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let employee of filteredEmployees" class="employee-row-compact">
+              <td>
+                <input type="checkbox" 
+                       [checked]="selectedEmployees.has(employee.id)"
+                       (change)="toggleEmployeeSelection(employee.id)">
+              </td>
+              <td>
+                <div class="employee-info-compact">
+                  <a href="javascript:void(0)" 
+                     class="employee-name-compact"
+                     (click)="completeEmployee(addEmployeeModal,employee.id)">
+                    {{ employee.first_name }} {{ employee.last_name }}
+                  </a>
+                  <div class="employee-meta-compact">
+                    <span class="employee-id-compact">{{ employee.emp_id }}</span>
+                    <span class="employee-designation-compact">{{ employee.designation_name }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="status-badge-compact" [class]="employee.statusClass">
+                  {{ employee.status }}
+                </span>
+              </td>
+              <td>
+                <span class="email-compact">{{ employee.work_email }}</span>
+              </td>
+              <td>
+                <span class="missing-type-compact" [class]="'missing-' + employee.missingType">
+                  <i class="bi bi-exclamation-circle me-1"></i>
+                  {{ employee.missingTypeLabel }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons-compact">
+                  <button class="btn btn-primary btn-sm me-1" (click)="completeEmployee(addEmployeeModal,employee.id)">
+                    <i class="bi bi-check-circle me-1"></i>Complete
+                  </button>
+                  <button class="btn btn-outline-secondary btn-sm" (click)="skipEmployee(skipEmployeeModal,employee.id)">
+                    <i class="bi bi-skip-forward me-1"></i>Skip
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredEmployees.length === 0 && !loading" class="empty-state">
+      <div class="empty-icon">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <h3 class="empty-title">No Missing Data Found</h3>
+      <p class="empty-description">
+        <span *ngIf="searchQuery">No employees match your search criteria.</span>
+        <span *ngIf="!searchQuery">All employees have complete data. You can proceed with payroll processing.</span>
+      </p>
+      <button *ngIf="searchQuery" class="btn btn-outline-primary" (click)="searchQuery = ''; onSearchChange('')">
+        <i class="bi bi-arrow-clockwise me-2"></i>Clear Search
+      </button>
+    </div>
+  </div>
+  <!-- Edit/Add Employee Modal -->
+<ng-template #addEmployeeModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="addEmployeeModalLabel">
+      <i class="bi bi-person-plus me-2"></i>
+      {{ selectedEmployee ? 'Edit Employee' : 'Add New Employee' }}
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  
+  <div class="modal-body">
+    <app-add-employee [employeeToEdit]="selectedEmployee"></app-add-employee>
+  </div>
+  
+  <div class="modal-footer">
+    <div class="footer-content">
+      <div class="footer-actions">
+        <button type="button" class="btn btn-outline-secondary me-2" (click)="modal.dismiss('Cancel')">
+          <i class="bi bi-x-circle me-1"></i>Cancel
+        </button>
+        <!-- <button type="button" class="btn btn-primary" (click)="saveEmployee(modal)">
+          <i class="bi bi-check-circle me-1"></i>Save Employee
+        </button> -->
+      </div>
+
+    </div>
+  </div>
+</ng-template>
+
+  <!-- Skip Employee Modal -->
+  <ng-template #skipEmployeeModal let-modal>
+    <div class="modal-header">
+      <h4 class="modal-title">Skip Employee?</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Warning Banner -->
+      <div class="alert alert-danger mb-4">
+        <div class="alert-content">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <div>
+            <strong>Warning:</strong> Once you skip an employee(s) from the pay run, you will not be able to pay them later for this pay cycle.
+          </div>
+        </div>
+      </div>
+
+      <!-- Employee Details -->
+      <div class="employee-details mb-4">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="detail-item">
+              <label class="detail-label">Employee</label>
+              <div class="detail-value">{{ getSelectedEmployeeName() }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <label class="detail-label">Payroll Period</label>
+              <div class="detail-value">{{ getPayrollPeriod() }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrears Option -->
+      <div class="arrears-section mb-4" *ngIf="isNewlyJoinedEmployee()">
+        <div class="arrears-card">
+          <div class="arrears-content">
+            <p class="arrears-text">
+              This employee has newly joined your organisation. Check the option below to add this pay periods salary as arrears.
+            </p>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="payAsArrears" [(ngModel)]="payAsArrears">
+              <label class="form-check-label" for="payAsArrears">
+                Pay as arrears in the next month
+              </label>
+            </div>
+            <p class="arrears-note">
+              Payment will be added to the next month's pay run as arrears.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reason Input -->
+      <div class="reason-section">
+        <label class="form-label required">Please enter a reason*</label>
+        <textarea class="form-control" 
+                  rows="4" 
+                  placeholder="Enter reason for skipping this employee..."
+                  [(ngModel)]="skipReason"
+                  [class.is-invalid]="!skipReason && skipFormSubmitted">
+        </textarea>
+        <div class="invalid-feedback" *ngIf="!skipReason && skipFormSubmitted">
+          Please enter a reason for skipping this employee.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="footer-content">
+        <div class="footer-actions">
+          <button type="button" class="btn btn-primary" (click)="proceedSkip(modal)">
+            Proceed
+          </button>
+          <button type="button"  (click)="modal.dismiss('Cancel')">
+            Cancel
+          </button>
+        </div>
+        <div class="required-note">
+          <span class="text-danger">* indicates mandatory fields</span>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

@@ -1,0 +1,167 @@
+<div class="ledger-report-page">
+  <div class="report-header">
+    <div class="header-content">
+      <div class="header-title-section">
+        <div class="title-icon">
+          <i class="bi bi-journal-text"></i>
+        </div>
+        <div>
+          <h1 class="report-title">Expense Ledger Report</h1>
+          <p class="report-subtitle">Track transactional history for the selected expense category.</p>
+        </div>
+      </div>
+      
+      <div class="summary-cards-top" *ngIf="hasData">
+        <div class="summary-card">
+          <div class="summary-label">OPENING BALANCE</div>
+          <div class="summary-value">{{ openingBalance || '0.00' }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">CURRENT BALANCE</div>
+          <div class="summary-value">{{ currentBalance || '0.00' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="date-section">
+    <form [formGroup]="expenseLedgerForm" (ngSubmit)="onSubmit()" class="date-form">
+      <div class="date-inputs">
+        <div class="date-field">
+          <label class="date-label">FROM DATE <span class="required">*</span></label>
+          <div class="date-input-wrapper">
+            <i class="bi bi-calendar date-icon"></i>
+            <input 
+              type="date" 
+              formControlName="start_date"
+              class="date-input"
+              [class.is-invalid]="expenseLedgerForm.get('start_date')?.invalid && expenseLedgerForm.get('start_date')?.touched">
+          </div>
+          <div 
+            *ngIf="expenseLedgerForm.get('start_date')?.invalid && expenseLedgerForm.get('start_date')?.touched"
+            class="error-message">
+            From date is required
+          </div>
+        </div>
+
+        <div class="date-field">
+          <label class="date-label">TO DATE <span class="required">*</span></label>
+          <div class="date-input-wrapper">
+            <i class="bi bi-calendar date-icon"></i>
+            <input 
+              type="date" 
+              formControlName="end_date"
+              class="date-input"
+              [class.is-invalid]="expenseLedgerForm.get('end_date')?.invalid && expenseLedgerForm.get('end_date')?.touched">
+            <i class="bi bi-check-circle check-icon" *ngIf="expenseLedgerForm.get('end_date')?.valid && expenseLedgerForm.get('end_date')?.touched"></i>
+          </div>
+          <div 
+            *ngIf="expenseLedgerForm.get('end_date')?.invalid && expenseLedgerForm.get('end_date')?.touched"
+            class="error-message">
+            To date is required
+          </div>
+        </div>
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn-generate"
+        [disabled]="expenseLedgerForm.invalid || isLoading">
+        <span *ngIf="isLoading" class="spinner"></span>
+        <span *ngIf="!isLoading">Generate Report</span>
+        <span *ngIf="isLoading">Loading...</span>
+      </button>
+    </form>
+  </div>
+
+  <div *ngIf="!expenseId" class="no-expense-message">
+    <i class="bi bi-info-circle"></i>
+    <p>Please select an expense category from the list above to view their ledger.</p>
+  </div>
+
+  <div class="table-section" *ngIf="expenseId">
+    <div class="table-container">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>DATE</th>
+            <th>PARTICULAR</th>
+            <th class="text-end">DEBIT</th>
+            <th class="text-end">CREDIT</th>
+            <th class="text-end">BALANCE</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="hasData">
+          <tr *ngFor="let entry of ledgerData">
+            <td>
+              <div class="date-cell">
+                <i class="bi bi-calendar"></i>
+                <span>{{ entry.invoice_date | date:'dd-MM-yyyy' }}</span>
+              </div>
+            </td>
+            <td>{{ entry.particular }}</td>
+            <td class="text-end debit-amount">{{ formatAmount(entry.debit) }}</td>
+            <td class="text-end credit-amount">{{ formatAmount(entry.credit) }}</td>
+            <td class="text-end balance-cell" [ngClass]="getBalanceClass(entry.balance)">
+              {{ entry.balance }}
+            </td>
+          </tr>
+        </tbody>
+        <tbody *ngIf="!hasData">
+          <tr>
+            <td colspan="5" class="empty-table">
+              <div class="empty-content">
+                <i class="bi bi-inbox"></i>
+                <p>No ledger data available</p>
+                <small>Select date range and click Generate Report to load data</small>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-section" *ngIf="paginationData && paginationData.total_pages > 1">
+      <div class="pagination-info">
+        <span class="page-range">{{ getPageRange() }}</span>
+        <div class="items-per-page">
+          <label>Items per page:</label>
+          <select 
+            class="limit-select" 
+            [(ngModel)]="currentLimit"
+            (ngModelChange)="onLimitChange($event)">
+            <option *ngFor="let limit of getLimitOptions()" [ngValue]="limit">
+              {{ limit }}
+            </option>
+          </select>
+        </div>
+      </div>
+      
+      <nav class="pagination-nav">
+        <button 
+          class="page-btn" 
+          [disabled]="!paginationData.previous_page"
+          (click)="onPageChange(currentPage - 1)">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        
+        <div class="page-numbers">
+          <button 
+            *ngFor="let page of getPageNumbers()" 
+            class="page-number"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+        </div>
+        
+        <button 
+          class="page-btn" 
+          [disabled]="!paginationData.next_page"
+          (click)="onPageChange(currentPage + 1)">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </nav>
+    </div>
+  </div>
+</div>

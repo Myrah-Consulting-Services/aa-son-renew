@@ -1,0 +1,316 @@
+<div class="requisition-list-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Requisitions</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="requisition-list-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="requisition-logo">
+          <i class="bi bi-clipboard-check"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Requisitions</h1>
+          <p class="header-subtitle">Manage item requisitions and approvals ({{ filteredRequisitions.length }})</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary btn-sm" (click)="openForm(requistionmodal)" title="Create Requisition">
+          <i class="bi bi-plus-circle me-1"></i>Create Requisition
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="refreshData()" title="Refresh Data">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-ul"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total</h3>
+          <p class="stat-number">{{ requisitions.length }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Pending</h3>
+          <p class="stat-number">{{ pendingCount }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Approved</h3>
+          <p class="stat-number">{{ approvedCount }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-x-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Rejected</h3>
+          <p class="stat-number">{{ rejectedCount }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <form [formGroup]="filterForm" (ngSubmit)="onFilterSubmit()" class="filters-bar">
+        <div class="filter-item">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search requisitions..." 
+              formControlName="searchText"
+            >
+          </div>
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            formControlName="startDate"
+            placeholder="Start Date"
+          >
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            formControlName="endDate"
+            placeholder="End Date"
+          >
+        </div>
+        <div class="filter-item">
+          <select class="form-select form-select-sm" formControlName="selectedStatus">
+            <option value="">All Status</option>
+            <option value="1">Pending</option>
+            <option value="2">Approved</option>
+            <option value="4">Rejected</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-primary btn-sm w-100" type="submit">
+            <i class="bi bi-search me-1"></i>Search
+          </button>
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-secondary btn-sm w-100" type="button" (click)="clearFilters()">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-list-ul me-2"></i>Requisitions List
+          </h3>
+        </div>
+        <div class="table-body">
+          <!-- Loading State -->
+          <div *ngIf="loading" class="loading-state">
+            <i class="bi bi-arrow-repeat spinner"></i>
+            <p>Loading requisitions...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loading && filteredRequisitions.length === 0" class="empty-state">
+            <i class="bi bi-clipboard-check"></i>
+            <h6>No requisitions found</h6>
+            <p>No requisitions match your search criteria</p>
+          </div>
+
+          <!-- Table -->
+          <table *ngIf="!loading && filteredRequisitions.length > 0" class="compact-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Invoice#</th>
+                <th>Requestor</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let req of filteredRequisitions">
+                <td>
+                  <span class="badge bg-light">#{{ req.id }}</span>
+                </td>
+                <td>
+                  <small class="text-muted">{{ req.date | date:'dd/MM/yy' }}</small>
+                </td>
+                <td>
+                  <small class="fw-medium">{{ req.invoiceNo || '-' }}</small>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-person text-info me-1"></i>
+                    <small class="fw-medium">{{ req.created_by_user || 'N/A' }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-person-badge text-secondary me-1"></i>
+                    <small class="fw-medium">Showroom</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" 
+                        [ngClass]="{
+                          'bg-warning': req.status === 1 || req.status === 8,
+                          'bg-success': req.status === 2 || req.status === 6 || req.status === 11 || req.status === 10,
+                          'bg-danger': req.status === 4 || req.status === 13,
+                          'bg-info': req.status === 3 || req.status === 12
+                        }">
+                    {{ getStatusName(req.status) }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <!-- Pending: Approve/Reject -->
+                    <div *ngIf="req.status === 1" class="action-group">
+                      <button class="btn-action-icon view" (click)="viewRequisition(requistionmodal, req)" title="View">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn-action-icon reject" (click)="onSubmit(req)" title="Reject">
+                        <i class="bi bi-x-circle"></i>
+                      </button>
+                      <button class="btn-action-icon approve" (click)="openmodal(requistionmodal, req.id, 'approve')" title="Approve">
+                        <i class="bi bi-check-circle"></i>
+                      </button>
+                    </div>
+
+                    <!-- Approved: Icon -->
+                    <div *ngIf="req.status === 2" class="action-group">
+                      <button class="btn-action-icon view" (click)="viewRequisition(requistionmodal, req)" title="View">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <i class="bi bi-check-circle-fill text-success" title="Approved"></i>
+                    </div>
+
+                    <!-- Rejected: Icon -->
+                    <div *ngIf="req.status === 4" class="action-group">
+                      <button class="btn-action-icon view" (click)="viewRequisition(requistionmodal, req)" title="View">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <i class="bi bi-x-circle-fill text-danger" title="Rejected"></i>
+                    </div>
+
+                    <!-- Dispatched: Icon -->
+                    <div *ngIf="req.status === 8" class="action-group">
+                      <button class="btn-action-icon view" (click)="viewRequisition(requistionmodal, req)" title="View">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <i class="bi bi-truck text-primary" title="Dispatched"></i>
+                    </div>
+
+                    <!-- Completed: Icon -->
+                    <div *ngIf="req.status === 6" class="action-group">
+                      <button class="btn-action-icon view" (click)="viewRequisition(requistionmodal, req)" title="View">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <i class="bi bi-flag-fill text-success" title="Completed"></i>
+                    </div>
+
+                    <!-- Other statuses: Icon -->
+                    <div *ngIf="[1,2,4,6,8].indexOf(req.status) === -1" class="action-group">
+                      <button class="btn-action-icon view" (click)="viewRequisition(requistionmodal, req)" title="View">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <i class="bi bi-info-circle text-secondary" title="Other"></i>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-section" *ngIf="!loading && filteredRequisitions.length > 0 && totalPages > 1">
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          <label class="me-2">Requisitions per page:</label>
+          <select 
+            class="form-select form-select-sm page-size" 
+            [(ngModel)]="pageSize"
+            (change)="onPageSizeChange()">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <div class="pagination-controls">
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            class="btn-page"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Requisition Modal -->
+<ng-template #requistionmodal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">
+      {{ modalMode === 'create' ? 'CREATE REQUISITION' : modalMode === 'view' ? 'VIEW REQUISITION' : 'REQUISITION' }}
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-requisition-form (requisitionCreated)="requisitionCreated($event)" [modalRef]="modal" [emitdata]="emit" [mode]="modalMode"></app-requisition-form>
+  </div>
+</ng-template>

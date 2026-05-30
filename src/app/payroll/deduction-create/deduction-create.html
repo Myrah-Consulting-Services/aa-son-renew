@@ -1,0 +1,59 @@
+ <form [formGroup]="deductionForm" (ngSubmit)="saveDeduction()">
+          <div class="modal-body">
+            <label class="form-label">Deduction Name <span class="text-danger">*</span></label>
+            <span *ngIf="!data">
+            <div class="mb-3">
+              <select class="form-select" formControlName="deductionName">
+                <option value="">Select...</option>
+                <option *ngFor="let d of deductionNames" [value]="d.id">{{d.payslip_name}}</option>
+              </select>
+            </div>
+            <div class="alert alert-warning py-2">
+              <i class="bi bi-info-circle me-2"></i>
+              This is a recurring deduction based on the following configuration.
+            </div>
+</span>
+            <span *ngIf="data" class="form-control">{{data.payslip_name}}</span>
+
+            <div class="mb-3">
+              <label class="form-label">Amount <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <select class="form-select w-auto" formControlName="amountMode">
+                  <option value="2">% of Basic</option>
+                  <option value="1">Fixed amount</option>
+                </select>
+                <input *ngIf="deductionForm.get('amountMode')?.value == 1" type="number" class="form-control" formControlName="amountValue" min="0" step="0.01">
+                <input *ngIf="deductionForm.get('amountMode')?.value == 2" type="number" class="form-control" formControlName="employee_percent" placeholder="%">
+                <span class="input-group-text">per pay period</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">When do you want this recurring deduction to end? <span class="text-danger">*</span></label>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <select class="form-select" formControlName="endRule">
+                    <option *ngFor="let r of deductionEndRules" [value]="r.id">{{r.label}}</option>
+                  </select>
+                </div>
+                <div class="col-md-6" *ngIf="deductionForm.get('endRule')?.value == 1">
+                  <input type="month" class="form-control" formControlName="endMonth" placeholder="M yyyy">
+                </div>
+                <div class="col-md-6" *ngIf="deductionForm.get('endRule')?.value == 2">
+                  <div class="input-group"> 
+                    <span class="input-group-text">AED</span>
+                    <input type="number" class="form-control" formControlName="endTotalAmount" min="0" step="0.01">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer justify-content-between">
+            <div>
+              <button type="submit" class="btn btn-primary me-1">Save</button>
+              <button type="button" class="btn btn-secondary" (click)="deductionModalRef.close()">Cancel</button>
+            </div>
+            <div>
+              <p class="text-end text-danger small">* indicates mandatory fields</p>
+            </div>
+          </div>
+        </form>

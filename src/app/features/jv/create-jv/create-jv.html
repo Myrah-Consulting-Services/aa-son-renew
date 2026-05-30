@@ -1,0 +1,182 @@
+<!-- Modal Header -->
+<div class="jv-modal-header" *ngIf="isModal">
+  <h5 class="modal-title">
+    <i class="bi bi-file-earmark-text me-2"></i>
+    {{ isEditMode ? 'Edit Journal Voucher' : 'Create Journal Voucher' }}
+  </h5>
+  <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()">
+    <i class="bi bi-x-lg"></i>
+  </button>
+</div>
+
+<div class="jv-container">
+  <!-- Main Form Container -->
+  <div class="jv-form-container">
+    <form [formGroup]="jvForm" class="jv-form">
+      
+      <!-- Voucher Details Section -->
+      <div class="jv-section-card">
+        <div class="section-header">
+          <i class="bi bi-info-circle"></i>
+          <h6 class="section-title">Voucher Details</h6>
+        </div>
+        <div class="form-section">
+          <div class="form-row-2">
+            <div class="form-field-group">
+              <label class="form-label">
+                <i class="bi bi-hash"></i>
+                Voucher Number <span class="required">*</span>
+              </label>
+              <input 
+                type="text" 
+                formControlName="voucher_no"
+                class="form-control"
+                placeholder="Enter voucher number">
+            </div>
+            <div class="form-field-group">
+              <label class="form-label">
+                <i class="bi bi-calendar"></i>
+                Voucher Date <span class="required">*</span>
+              </label>
+              <div class="date-input-wrapper">
+                <input 
+                  type="date" 
+                  formControlName="voucher_date"
+                  class="form-control date-input">
+                <i class="bi bi-calendar3 date-icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ledger Entries Section -->
+      <div class="jv-section-card">
+        <div class="section-header">
+          <i class="bi bi-list-ul"></i>
+          <h6 class="section-title">Ledger Entries</h6>
+          <button 
+            type="button" 
+            class="btn-add-entry" 
+            (click)="addLedger()">
+            <i class="bi bi-plus"></i> Add Entry
+          </button>
+        </div>
+        
+        <div class="form-section">
+          <div class="ledger-entries" formArrayName="data">
+            <!-- Entry Rows -->
+            <div 
+              class="ledger-entry-row" 
+              *ngFor="let dataControl of dataArray.controls; let i=index" 
+              [formGroupName]="i">
+              <div class="entry-number">{{i+1}}</div>
+              <div class="entry-type">
+                <select 
+                  formControlName="voucher_type" 
+                  (change)="calculateTotals()" 
+                  class="form-select">
+                  <option [value]="'1'">Debit</option>
+                  <option [value]="'2'">Credit</option>
+                </select>
+              </div>
+              <div class="entry-ledger">
+                <select 
+                  formControlName="ledgerdata" 
+                  (change)="onPaymentTypeChange($event)" 
+                  class="form-select">
+                  <option value="">Select Ledger</option>
+                  <option *ngFor="let ledger of ledgerData1" [ngValue]="ledger">{{ledger.name}}</option>
+                </select>
+              </div>
+              <div class="entry-amount">
+                <div class="amount-input-wrapper">
+                  <span class="currency-label">{{getcurrency()}}</span>
+                  <input 
+                    type="number" 
+                    formControlName="amount"
+                    (click)="selectInput($event)" 
+                    (input)="calculateTotals()"
+                    class="form-control amount-input"
+                    placeholder="0.00">
+                </div>
+              </div>
+              <div class="entry-action">
+                <button 
+                  type="button" 
+                  *ngIf="deleteMode || dataArray.length > 2" 
+                  class="btn-delete-entry" 
+                  (click)="deleteLedger(i)"
+                  title="Delete Entry">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Section -->
+      <div class="jv-section-card summary-card">
+        <div class="section-header">
+          <i class="bi bi-calculator"></i>
+          <h6 class="section-title">Summary</h6>
+          <button 
+            type="button" 
+            class="btn-save" 
+            (click)="submitVoucher()"
+            [disabled]="forDebit !== forCredit || forDebit === 0">
+            <i class="bi bi-check-circle"></i>
+            {{ isEditMode ? 'Update' : 'Save' }}
+          </button>
+        </div>
+        
+        <div class="form-section">
+          <div class="summary-content-grid">
+            <div class="summary-left">
+              <div class="form-field-group">
+                <label class="form-label">
+                  <i class="bi bi-file-text"></i>
+                  Narration
+                </label>
+                <textarea 
+                  formControlName="narration"
+                  class="form-control form-textarea"
+                  placeholder="Enter narration for this voucher..."
+                  rows="4"></textarea>
+              </div>
+            </div>
+            
+            <div class="summary-right">
+              <div class="balance-summary">
+                <div class="balance-item" [ngClass]="{'balanced': forDebit === forCredit, 'unbalanced': forDebit !== forCredit}">
+                  <span class="balance-label">
+                    <i class="bi bi-arrow-down-circle"></i>
+                    Total Debit:
+                  </span>
+                  <span class="balance-amount">{{getcurrency()}} {{ forDebit | number:'1.2-2' }}</span>
+                </div>
+                <div class="balance-item" [ngClass]="{'balanced': forDebit === forCredit, 'unbalanced': forDebit !== forCredit}">
+                  <span class="balance-label">
+                    <i class="bi bi-arrow-up-circle"></i>
+                    Total Credit:
+                  </span>
+                  <span class="balance-amount">{{getcurrency()}} {{ forCredit | number:'1.2-2' }}</span>
+                </div>
+                <div class="balance-status" *ngIf="forDebit !== forCredit">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  <span>Debit and Credit amounts must be equal</span>
+                </div>
+                <div class="balance-status balanced" *ngIf="forDebit === forCredit && forDebit > 0">
+                  <i class="bi bi-check-circle"></i>
+                  <span>Balanced - Ready to save</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</div>

@@ -1,0 +1,154 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-percent me-2"></i>Zero-rated & Exempt Supplies Report
+      </h3>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-printer me-1"></i>Print
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+      <div class="col-md-2">
+        <div class="card bg-primary text-white">
+          <div class="card-body text-center">
+            <h6 class="card-title">Total Transactions</h6>
+            <h4 class="mb-0">{{ calculateTotals().total_transactions }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card bg-success text-white">
+          <div class="card-body text-center">
+            <h6 class="card-title">Zero-rated</h6>
+            <h4 class="mb-0">{{ calculateTotals().zero_rated_transactions }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card bg-info text-white">
+          <div class="card-body text-center">
+            <h6 class="card-title">Exempt</h6>
+            <h4 class="mb-0">{{ calculateTotals().exempt_transactions }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success text-white">
+          <div class="card-body text-center">
+            <h6 class="card-title">Zero-rated Amount</h6>
+            <h4 class="mb-0">{{ calculateTotals().total_zero_rated_amount | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-info text-white">
+          <div class="card-body text-center">
+            <h6 class="card-title">Exempt Amount</h6>
+            <h4 class="mb-0">{{ calculateTotals().total_exempt_amount | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <label class="form-label">From Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFrom">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">To Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateTo">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Supply Type</label>
+        <select class="form-select" [(ngModel)]="selectedSupplyType">
+          <option *ngFor="let type of getSupplyTypes()" [value]="type">{{ type }}</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Search</label>
+        <input type="text" class="form-control" placeholder="Invoice, Customer, Description..." [(ngModel)]="searchTerm">
+      </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-primary">
+          <tr>
+            <th>Date</th>
+            <th>Invoice No</th>
+            <th>Customer Name</th>
+            <th>Customer TRN</th>
+            <th>Description</th>
+            <th>Supply Type</th>
+            <th class="text-end">Amount (Excl. VAT)</th>
+            <th class="text-end">VAT Rate</th>
+            <th class="text-end">VAT Amount</th>
+            <th class="text-end">Total Amount</th>
+            <th>Reason Code</th>
+            <th>Reason Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let transaction of filterTransactions()">
+            <td>{{ formatDate(transaction.date) }}</td>
+            <td class="fw-semibold text-primary">{{ transaction.invoice_no }}</td>
+            <td>{{ transaction.customer_name }}</td>
+            <td class="font-monospace">{{ transaction.customer_trn }}</td>
+            <td>{{ transaction.description }}</td>
+            <td>
+              <span class="badge" [ngClass]="getSupplyTypeBadgeClass(transaction.supply_type)">
+                {{ transaction.supply_type }}
+              </span>
+            </td>
+            <td class="text-end" [ngClass]="getSupplyTypeClass(transaction.supply_type)">
+              {{ transaction.amount_excl_vat | number:'1.2-2' }}
+            </td>
+            <td class="text-end">{{ transaction.vat_rate }}%</td>
+            <td class="text-end">{{ transaction.vat_amount | number:'1.2-2' }}</td>
+            <td class="text-end">{{ transaction.total_amount | number:'1.2-2' }}</td>
+            <td class="font-monospace">{{ transaction.reason_code }}</td>
+            <td>{{ transaction.reason_description }}</td>
+          </tr>
+          <tr *ngIf="filterTransactions().length === 0">
+            <td colspan="12" class="text-center text-muted py-4">
+              <i class="bi bi-search fs-1 d-block mb-2"></i>
+              No zero-rated or exempt transactions found.
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-secondary">
+          <tr>
+            <td colspan="6" class="fw-bold">Totals</td>
+            <td class="text-end fw-bold">{{ calculateTotals().total_amount | number:'1.2-2' }}</td>
+            <td></td>
+            <td class="text-end fw-bold">0.00</td>
+            <td class="text-end fw-bold">{{ calculateTotals().total_amount | number:'1.2-2' }}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Notes -->
+    <div class="alert alert-info mt-4">
+      <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Zero-rated & Exempt Supplies Information</h6>
+      <p class="mb-0">
+        <strong>Zero-rated supplies:</strong> VAT is charged at 0% but can be claimed as input tax. Examples include exports, 
+        international transport, certain medical supplies, and educational services.<br>
+        <strong>Exempt supplies:</strong> No VAT is charged and input tax cannot be claimed. Examples include financial services, 
+        residential property, and certain government services.
+      </p>
+    </div>
+  </div>
+</div> 

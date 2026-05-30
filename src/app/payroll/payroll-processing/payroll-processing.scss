@@ -1,0 +1,372 @@
+.payroll-processing-container {
+  .mat-tab-group {
+    .mat-tab-label {
+      font-weight: 500;
+      color: #374151;
+      
+      &.mat-tab-label-active {
+        color: #3b82f6;
+      }
+    }
+  }
+
+  .mat-card {
+    border-radius: 8px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+    
+    .mat-card-header {
+      background-color: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      border-radius: 8px 8px 0 0;
+      
+      .mat-card-title {
+        color: #111827;
+        font-weight: 600;
+        font-size: 1.125rem;
+      }
+      
+      .mat-card-subtitle {
+        color: #6b7280;
+        font-size: 0.875rem;
+      }
+    }
+    
+    .mat-card-content {
+      padding: 1.5rem;
+    }
+  }
+
+  .mat-form-field {
+    width: 100%;
+    
+    .mat-form-field-wrapper {
+      padding-bottom: 0;
+    }
+    
+    .mat-form-field-underline {
+      background-color: #d1d5db;
+    }
+    
+    &.mat-focused .mat-form-field-underline {
+      background-color: #3b82f6;
+    }
+  }
+
+  .mat-table {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    
+    .mat-header-cell {
+      background-color: #f9fafb;
+      color: #374151;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .mat-cell {
+      color: #374151;
+      font-size: 0.875rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .mat-row {
+      &:hover {
+        background-color: #f9fafb;
+      }
+      
+      &:nth-child(even) {
+        background-color: #fafafa;
+      }
+    }
+  }
+
+  .mat-button, .mat-raised-button {
+    border-radius: 6px;
+    font-weight: 500;
+    text-transform: none;
+    
+    &.mat-primary {
+      background-color: #3b82f6;
+      color: white;
+      
+      &:hover {
+        background-color: #2563eb;
+      }
+      
+      &:disabled {
+        background-color: #9ca3af;
+        color: #6b7280;
+      }
+    }
+  }
+
+  .mat-icon-button {
+    border-radius: 50%;
+    
+    &.mat-primary {
+      color: #3b82f6;
+      
+      &:hover {
+        background-color: #eff6ff;
+      }
+    }
+  }
+
+  .mat-checkbox {
+    .mat-checkbox-frame {
+      border-color: #d1d5db;
+    }
+    
+    &.mat-checkbox-checked .mat-checkbox-background {
+      background-color: #3b82f6;
+    }
+  }
+
+  .grid {
+    display: grid;
+    gap: 1rem;
+    
+    &.grid-cols-1 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    &.grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    
+    &.grid-cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    
+    &.grid-cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .flex {
+    display: flex;
+    
+    &.items-center {
+      align-items: center;
+    }
+    
+    &.gap-2 {
+      gap: 0.5rem;
+    }
+    
+    &.gap-4 {
+      gap: 1rem;
+    }
+    
+    &.flex-col {
+      flex-direction: column;
+    }
+  }
+
+  .w-full {
+    width: 100%;
+  }
+
+  .mb-6 {
+    margin-bottom: 1.5rem;
+  }
+
+  .mt-6 {
+    margin-top: 1.5rem;
+  }
+
+  .p-4 {
+    padding: 1rem;
+  }
+
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+
+  .font-bold {
+    font-weight: 700;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .text-sm {
+    font-size: 0.875rem;
+  }
+
+  .text-lg {
+    font-size: 1.125rem;
+  }
+
+  .font-semibold {
+    font-weight: 600;
+  }
+
+  .text-blue-600 {
+    color: #2563eb;
+  }
+
+  .text-red-600 {
+    color: #dc2626;
+  }
+
+  .text-green-600 {
+    color: #16a34a;
+  }
+
+  .text-purple-600 {
+    color: #9333ea;
+  }
+
+  .text-gray-600 {
+    color: #4b5563;
+  }
+
+  .bg-gray-50 {
+    background-color: #f9fafb;
+  }
+
+  .bg-blue-50 {
+    background-color: #eff6ff;
+  }
+
+  .rounded-lg {
+    border-radius: 0.5rem;
+  }
+
+  .border {
+    border: 1px solid #e5e7eb;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    .grid {
+      &.md-grid-cols-2 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+      
+      &.md-grid-cols-3 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+      
+      &.md-grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    
+    .mat-table {
+      font-size: 0.75rem;
+      
+      .mat-header-cell,
+      .mat-cell {
+        padding: 0.5rem;
+      }
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .grid {
+      &.lg-grid-cols-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  }
+
+  // Animation for table rows
+  .mat-row {
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  // Loading state
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    
+    .mat-spinner {
+      margin-right: 1rem;
+    }
+  }
+
+  // Summary cards
+  .summary-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    
+    .summary-title {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      margin-bottom: 0.5rem;
+    }
+    
+    .summary-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .summary-change {
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+  }
+
+  // Status indicators
+  .status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    
+    &.success {
+      background-color: #10b981;
+    }
+    
+    &.warning {
+      background-color: #f59e0b;
+    }
+    
+    &.error {
+      background-color: #ef4444;
+    }
+  }
+
+  // Progress bars
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    
+    .progress-fill {
+      height: 100%;
+      background-color: #3b82f6;
+      transition: width 0.3s ease;
+    }
+  }
+} 

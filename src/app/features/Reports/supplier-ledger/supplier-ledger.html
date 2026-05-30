@@ -1,0 +1,152 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-truck me-2"></i>Supplier Ledger
+      </h3>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-printer me-1"></i>Print
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <label class="form-label">Search Supplier</label>
+        <input type="text" class="form-control" placeholder="Search by name, TRN, or email..." 
+               [(ngModel)]="searchTerm">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">From Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFrom">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">To Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateTo">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-primary w-100">
+          <i class="bi bi-search me-1"></i>Search
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Supplier List -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">Suppliers</h6>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <div *ngFor="let supplier of filterSuppliers()" 
+                   class="list-group-item list-group-item-action cursor-pointer"
+                   [class.active]="selectedSupplier?.id === supplier.id"
+                   (click)="selectSupplier(supplier)">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="mb-1">{{ supplier.name }}</h6>
+                    <small class="text-muted">{{ supplier.trn }}</small>
+                  </div>
+                  <span class="badge" [ngClass]="getBalanceClass(supplier.current_balance)">
+                    {{ supplier.current_balance | number:'1.2-2' }}
+                  </span>
+                </div>
+                <small class="text-muted">{{ supplier.email }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supplier Details and Transactions -->
+      <div class="col-md-8">
+        <div *ngIf="selectedSupplier" class="card">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">{{ selectedSupplier.name }} - Ledger</h6>
+              <span class="badge fs-6" [ngClass]="getBalanceClass(selectedSupplier.current_balance)">
+                Balance: {{ selectedSupplier.current_balance | number:'1.2-2' }}
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Supplier Info -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <p><strong>TRN:</strong> {{ selectedSupplier.trn }}</p>
+                <p><strong>Email:</strong> {{ selectedSupplier.email }}</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Phone:</strong> {{ selectedSupplier.phone }}</p>
+                <p><strong>Opening Balance:</strong> {{ selectedSupplier.opening_balance | number:'1.2-2' }}</p>
+              </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Description</th>
+                    <th class="text-end">Debit</th>
+                    <th class="text-end">Credit</th>
+                    <th class="text-end">Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Opening Balance Row -->
+                  <tr class="table-info">
+                    <td>{{ dateFrom | date:'shortDate' }}</td>
+                    <td>-</td>
+                    <td><em>Opening Balance</em></td>
+                    <td class="text-end">-</td>
+                    <td class="text-end">-</td>
+                    <td class="text-end fw-bold">{{ selectedSupplier.opening_balance | number:'1.2-2' }}</td>
+                  </tr>
+                  
+                  <!-- Transactions -->
+                  <tr *ngFor="let transaction of selectedSupplier.transactions">
+                    <td>{{ transaction.date | date:'shortDate' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getTransactionTypeClass(transaction.type)">
+                        {{ transaction.invoice_no }}
+                      </span>
+                    </td>
+                    <td>{{ transaction.description }}</td>
+                    <td class="text-end" [ngClass]="{'text-success': transaction.debit > 0}">
+                      {{ transaction.debit > 0 ? (transaction.debit | number:'1.2-2') : '-' }}
+                    </td>
+                    <td class="text-end" [ngClass]="{'text-danger': transaction.credit > 0}">
+                      {{ transaction.credit > 0 ? (transaction.credit | number:'1.2-2') : '-' }}
+                    </td>
+                    <td class="text-end fw-bold" [ngClass]="getBalanceClass(transaction.balance)">
+                      {{ transaction.balance | number:'1.2-2' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Supplier Selected -->
+        <div *ngIf="!selectedSupplier" class="card">
+          <div class="card-body text-center text-muted py-5">
+            <i class="bi bi-truck fs-1 d-block mb-3"></i>
+            <h5>Select a Supplier</h5>
+            <p>Choose a supplier from the list to view their ledger details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

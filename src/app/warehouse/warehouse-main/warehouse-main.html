@@ -1,0 +1,74 @@
+<div class="warehouse-main-wrapper" [ngClass]="{'sidebar-mode': isSidebarMode}">
+  <!-- Tab Layout (Default) -->
+  <div class="warehouse-tabs-container" *ngIf="!isSidebarMode">
+    <div class="tabs-header">
+      <div class="d-flex">
+        <a *ngFor="let link of navLinks"
+           class="warehouse-tab-link"
+           [routerLink]="link.path"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="link.path === 'dashboard' ? {exact: true} : {exact: false}">
+          <i [class]="link.icon + ' me-2'"></i>
+          {{ link.label }}
+        </a>
+      </div>
+      <div class="layout-toggle">
+        <span class="toggle-label">
+          <i class="bi bi-list-ul me-1"></i>Sidebar
+        </span>
+        <label class="switch">
+          <input type="checkbox" [checked]="isSidebarMode" (change)="toggleLayout()">
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label">
+          <i class="bi bi-tabs me-1"></i>Tabs
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Layout -->
+  <div class="warehouse-sidebar-container" *ngIf="isSidebarMode">
+    <div class="warehouse-sidebar">
+      <div class="sidebar-header">
+        <h5 class="sidebar-title">
+          <i class="bi bi-box-seam me-2"></i>Warehouse
+        </h5>
+      </div>
+      <nav class="sidebar-nav">
+        <a *ngFor="let link of navLinks"
+           class="sidebar-nav-item"
+           [routerLink]="link.path"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="link.path === 'dashboard' ? {exact: true} : {exact: false}">
+          <i [class]="link.icon + ' me-2'"></i>
+          <span>{{ link.label }}</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="layout-toggle">
+          <span class="toggle-label">
+            <i class="bi bi-list-ul me-1"></i>Sidebar
+          </span>
+          <label class="switch">
+            <input type="checkbox" [checked]="isSidebarMode" (change)="toggleLayout()">
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">
+            <i class="bi bi-tabs me-1"></i>Tabs
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="warehouse-content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+
+  <!-- Content Area for Tab Layout -->
+  <div class="warehouse-content-area" *ngIf="!isSidebarMode">
+    <div class="bg-white">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

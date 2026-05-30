@@ -1,0 +1,295 @@
+<div class="payroll-dashboard-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Payroll Dashboard</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="payroll-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="payroll-logo">
+          <i class="bi bi-wallet2"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Payroll</h1>
+          <p class="header-subtitle">All your payroll essentials in one place</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Employees</h3>
+          <p class="stat-number">156</p>
+          <p class="stat-change positive">+12 this month</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Payroll</h3>
+          <p class="stat-number">{{ getcurrency() }} 2.4M</p>
+          <p class="stat-change positive">+8.5% vs last month</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Attendance Rate</h3>
+          <p class="stat-number">94.2%</p>
+          <p class="stat-change positive">+2.1% vs last month</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Pending Approvals</h3>
+          <p class="stat-number">23</p>
+          <p class="stat-change negative">+5 new requests</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="charts-grid">
+        <!-- Payroll Trend Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title"><i class="bi bi-graph-up me-2"></i>Payroll Trend</h3>
+            <span class="chart-subtitle">Last 6 months</span>
+          </div>
+          <div class="chart-body">
+            <div class="bar-chart">
+              <div class="bar-item" *ngFor="let item of payrollTrend">
+                <div class="bar-wrapper">
+                  <div class="bar" [style.height.%]="getBarHeight(item.amount, maxPayrollAmount)"></div>
+                </div>
+                <span class="bar-label">{{ item.month }}</span>
+                <span class="bar-value">{{ getcurrency() }} {{ item.amount }}M</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Overview Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title"><i class="bi bi-calendar-check me-2"></i>Attendance Overview</h3>
+            <span class="chart-subtitle">Last 7 days</span>
+          </div>
+          <div class="chart-body">
+            <div class="bar-chart">
+              <div class="bar-item" *ngFor="let item of attendanceData">
+                <div class="bar-wrapper">
+                  <div class="bar attendance-bar" [style.height.%]="getBarHeight(item.rate, maxAttendanceRate)"></div>
+                </div>
+                <span class="bar-label">{{ item.day }}</span>
+                <span class="bar-value">{{ item.rate }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave Balance Section -->
+    <div class="leave-balance-section">
+      <h2 class="section-title"><i class="bi bi-calendar-event me-2"></i>Leave Balance Summary</h2>
+      <div class="leave-grid">
+        <div class="leave-card" *ngFor="let leave of leaveSummary">
+          <div class="leave-header">
+            <span class="leave-type">{{ leave.type }}</span>
+            <span class="leave-count">{{ leave.used }}/{{ leave.total }}</span>
+          </div>
+          <div class="progress-wrapper">
+            <div class="progress-bar-custom" [style.width.%]="(leave.used / leave.total) * 100" [style.background-color]="leave.color"></div>
+          </div>
+          <div class="leave-footer">
+            <span class="leave-remaining">{{ leave.total - leave.used }} days remaining</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Tables Section -->
+    <div class="tables-section">
+      <div class="tables-grid">
+        <!-- Recent Pay Runs -->
+        <div class="table-card">
+          <div class="table-header">
+            <h3 class="table-title"><i class="bi bi-clock-history me-2"></i>Recent Pay Runs</h3>
+            <a routerLink="/payroll/par-run" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+          </div>
+          <div class="table-body">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Pay Run ID</th>
+                  <th>Period</th>
+                  <th>Employees</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let run of recentPayRuns">
+                  <td>{{ run.id }}</td>
+                  <td>{{ run.period }}</td>
+                  <td>{{ run.employees }}</td>
+                  <td class="amount-cell">{{ run.amount }}</td>
+                  <td><span class="status-badge completed">{{ run.status }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Upcoming Pay Schedules -->
+        <div class="table-card">
+          <div class="table-header">
+            <h3 class="table-title"><i class="bi bi-calendar3 me-2"></i>Upcoming Pay Schedules</h3>
+            <a routerLink="/payroll/pay-schedule" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+          </div>
+          <div class="table-body">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Schedule</th>
+                  <th>Next Run</th>
+                  <th>Employees</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let schedule of upcomingSchedules">
+                  <td>{{ schedule.schedule }}</td>
+                  <td>{{ schedule.nextRun }}</td>
+                  <td>{{ schedule.employees }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Department & Loans Section -->
+    <div class="department-loans-section">
+      <div class="department-loans-grid">
+        <!-- Department Breakdown -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title"><i class="bi bi-building me-2"></i>Department Breakdown</h3>
+          </div>
+          <div class="chart-body">
+            <div class="department-list">
+              <div class="department-item" *ngFor="let dept of departmentBreakdown">
+                <div class="dept-info">
+                  <span class="dept-name">{{ dept.dept }}</span>
+                  <span class="dept-employees">{{ dept.employees }} employees</span>
+                </div>
+                <div class="dept-amount">{{ dept.payroll }}</div>
+                <div class="progress-wrapper">
+                  <div class="progress-bar-custom" [style.width.%]="dept.percentage" style="background-color: #41299b;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Loans -->
+        <div class="table-card">
+          <div class="table-header">
+            <h3 class="table-title"><i class="bi bi-bank me-2"></i>Active Loans</h3>
+            <a routerLink="/payroll/loan-management" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
+          </div>
+          <div class="table-body">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Amount</th>
+                  <th>Remaining</th>
+                  <th>Installments</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let loan of activeLoans">
+                  <td>{{ loan.employee }}</td>
+                  <td class="amount-cell">{{ loan.amount }}</td>
+                  <td class="amount-cell">{{ loan.remaining }}</td>
+                  <td>{{ loan.installments }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h2 class="section-title">Quick Actions</h2>
+      <div class="actions-grid">
+        <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+          <span class="action-icon"><i class="bi bi-person-plus"></i></span>
+          <span>Add Employee</span>
+        </button>
+        <button class="action-btn" routerLink="/payroll/par-run">
+          <span class="action-icon"><i class="bi bi-play-circle"></i></span>
+          <span>Run Payroll</span>
+        </button>
+        <button class="action-btn">
+          <span class="action-icon"><i class="bi bi-file-earmark-text"></i></span>
+          <span>View Reports</span>
+        </button>
+        <button class="action-btn" routerLink="/payroll/payroll-settings">
+          <span class="action-icon"><i class="bi bi-gear"></i></span>
+          <span>Settings</span>
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addEmployeeModalLabel">Add New Employee</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <app-add-employee></app-add-employee>
+      </div>
+    </div>
+  </div>
+</div>

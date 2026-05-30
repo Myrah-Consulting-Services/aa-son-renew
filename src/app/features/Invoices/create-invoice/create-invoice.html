@@ -1,0 +1,922 @@
+<div *ngIf="isModal" class="modal-header bg-success text-white">
+  <ng-template #lilargeDataModal let-modal>
+    <div class="modal-header" style="padding-left: 28px;
+  padding-bottom: 0px;">
+      <h5 class="modal-title mt-0" style="font-size: large;
+  font-weight: 500;">Edit Invoice</h5>
+      <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')" aria-hidden="true"></button>
+    </div>
+    <div class="modal-body">
+      <app-create-invoice [invoiceId]="editinvoiceId" [eInvoiceData]="invoiceData" [modalRef]="modalRef"></app-create-invoice>
+    </div>
+  </ng-template>
+  <h5 class="modal-title">
+    <i class="bi bi-receipt me-2"></i>
+    Invoice
+  </h5>
+  <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="close()"></button>
+</div>
+<div class="container-fluid" [formGroup]="invoiceForm">
+  <div class="row">
+    <!-- Left Sidebar: Single Toggle Button for Items/Service and Party -->
+    <div class="col-md-3 bg-light pt-3" style="min-height: 100vh;" *ngIf="invoiceForm.get('is_converted')?.value==false">
+      <div class="mb-3 text-end">
+        <button class="btn btn-sm btn-primary uae-btn" (click)="sidebarTab = sidebarTab === 'items' ? 'party' : 'items'">
+          <i class="bi bi-arrow-left-right me-1"></i>
+          {{ sidebarTab === 'items' ? 'ADD PARTY' : 'ADD ITEM' }}
+        </button>
+      </div>
+      <div *ngIf="sidebarTab === 'items'">
+        <app-add-item (addItem)="onItemSelect($event)" [warehouse]="getSelectedWarehouse()" (warehouseChanged)="onWarehouseChanged($event)"></app-add-item>
+      </div>
+      <div *ngIf="sidebarTab === 'party'">
+        <app-add-party (addParty)="onPartySelect($event)"></app-add-party>
+      </div>
+    </div>
+    
+    <!-- Main Content: Invoice Form -->
+    <div class="col-md-9 pt-2" [class.col-md-12]="invoiceForm.get('is_converted')?.value==true">
+      <div class="row mt-2 mb-2" *ngIf="editinvoiceId">
+        <div class="col-4" *ngIf="editinvoiceId && (set_inv_type == '9' || set_inv_type == '8')">
+          <div class="form-check form-switch">
+            <input class="form-check-input" (change)="onConvertChange(poitems,set_inv_type)" type="checkbox" formControlName="is_converted">
+            <label class="form-check-label" for="is_converted">
+              <span *ngIf="set_inv_type=='9'">Convert to Sales Invoice</span>
+              <span *ngIf="set_inv_type=='8'">Convert to Purchase Invoice</span>
+            </label>
+          </div>
+        </div>  
+        <div class="col-4" *ngIf="editinvoiceId && (set_inv_type == '1' || set_inv_type == '2' || set_inv_type == '5' || set_inv_type == '6')">
+          <div *ngIf="!invoiceData.is_converted" class="form-check form-switch form-switch-md"
+          style="margin-left: 13px;">
+          <label for="" style="display: inline;
+      padding-right: 7px;font-size:12px">Convert to {{set_inv_type=='1'?'Sales Return': set_inv_type=='2'?'Purchase Return': set_inv_type=='5'?'Sales Invoice': set_inv_type=='6'?'Convert to sales':''}}</label>
+          <input class="form-check-input" type="checkbox" (change)="convertInvoice(set_inv_type)"
+            formControlName="is_converted">
+        </div>
+        </div>
+
+          <!--  Invoice Info Section -->
+        <div class="row mb-3" *ngIf="invoiceData.invoice_info && invoiceData.invoice_info?.length > 0 && (editinvoiceId && set_inv_type=='9' || set_inv_type=='8')">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0 d-flex align-items-center">
+                  <i class="bi bi-receipt me-2 text-primary"></i>
+                  Converted Invoices ({{ invoiceData.invoice_info?.length }})
+                </h6>
+                <span class="badge bg-success">{{ invoiceData.invoice_info?.length }} Converted</span>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Invoice Number</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let invoice of invoiceData.invoice_info?.length; let i = index">
+                        <td>{{ i + 1 }}</td>
+                        <td>
+                          <span class="fw-semibold text-primary clickable-invoice" 
+                          (click)="getparticularinv(invoice.id)" 
+                          title="Click to view invoice">
+                      {{ invoice.invoice_no }}
+                    </span>                
+                  </td>
+                      
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>        
+        <div *ngIf="editinvoiceId && invoiceData.converted_invoice_type!=null">
+          <div class="info-btn">
+            <span *ngIf="invoiceData.converted_invoice_type">
+              <div class="invoice-status-labels mb-3">
+                <div class="converted-invoice-info" *ngIf="invoiceData.converted_invoice_type">
+                  <span class="badge bg-info bg-opacity-10 border border-info px-3 py-2 rounded-pill">
+                    <i class="bi bi-arrow-repeat me-1"></i>
+                    Converted from #{{invoiceData.converted_invoice_no}}
+                  </span>
+                </div>
+                </div>
+            </span>
+            <span *ngIf="invoiceData.invoice_info?.invoice_type==6">
+              <div class="chip-container">
+                <mat-chip style="border: 3px dashed #ffffff;" class="arrow bg-ac">Challan #{{invoiceData.invoice_info?.invoice_no}}</mat-chip>
+                <!-- <i class="arrow-icon fa fa-arrow-right"></i> -->
+                <mat-chip-list aria-label="label selection" *ngFor="let a of invoiceData.invoice_info?.length">
+                  <mat-chip class="chip bg arrow" *ngIf="invoiceData.invoice_info?.sales_id"
+                    (click)="openChallan(invoiceData.invoice_info?.sales_id, lilargeDataModal, invoice)">
+                     Sales #{{ invoiceData.invoice_info?.sales_number }}
+                  </mat-chip>
+                  <!-- <i *ngIf="a.sales_return_id" class="arrow-icon fa fa-arrow-right"></i> -->
+                  <!-- Sales Return Chip -->
+                  <mat-chip class="chip bg1 arrow" *ngIf="invoiceData.invoice_info?.sales_return_id"
+                    (click)="openChallan(invoiceData.invoice_info?.sales_return_id, lilargeDataModal, invoice)">
+                    <!-- <i class="fa fa-info-circle"></i> -->
+                    Credit #{{ invoiceData.invoice_info?.sales_return_no }}
+                  </mat-chip>
+
+                </mat-chip-list>
+              </div>
+              <!-- Tax invoice generated with invoice no {{a.sales_number}} -->
+            </span>
+            <span *ngIf="invoiceData.invoice_info?.invoice_type==7"> Tax Invoice For Proforma is Created </span>
+          </div>
+        </div>
+        <div class="col-8 text-end">
+          <div class="d-flex gap-2 justify-content-end">
+            <button *ngIf="showbutton" type="button" class="btn btn-sm btn-outline-secondary" (click)="previewPDF()">
+              <i class="bi bi-eye me-1"></i>Preview
+            </button>
+            <button *ngIf="showbutton" type="button" class="btn btn-sm btn-outline-primary" (click)="downloadPDF()">
+              <i class="bi bi-download me-1"></i>Download PDF
+            </button>
+            <button *ngIf="showbutton && !editinvoiceId" type="button" class="btn btn-sm btn-outline-primary" (click)="createNewInvoice()">Create New Invoice</button>
+            <button type="button" class="btn btn-sm btn-success btn-lg" (click)="onSubmit()">
+              <i class="bi bi-check-circle me-2"></i>Save Invoice
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- edit -->
+      <div class="row mt-2 mb-2" *ngIf="!editinvoiceId">
+          <!-- other wise show sales invoice create or converted -->
+        <div class="col-12 text-end">
+          <div class="d-flex gap-2 justify-content-end">
+            <button *ngIf="showbutton" type="button" class="btn btn-sm btn-outline-secondary" (click)="previewPDF()">
+              <i class="bi bi-eye me-1"></i>Preview
+            </button>
+            <button *ngIf="showbutton" type="button" class="btn btn-sm btn-outline-primary" (click)="downloadPDF()">
+              <i class="bi bi-download me-1"></i>Download PDF
+            </button>
+            <button *ngIf="showbutton && !editinvoiceId" type="button" class="btn btn-sm btn-outline-primary" (click)="createNewInvoice()">Create New Invoice</button>
+            <button type="button" class="btn btn-sm btn-success btn-lg" (click)="onSubmit()">
+              <i class="bi bi-check-circle me-2"></i>Save Invoice
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card shadow-sm border-0 p-3 invoice-card">
+        <!-- Header Section -->
+        <div class="row g-3 align-items-start mb-3 border-bottom pb-3">
+          <div class="col-md-7">
+            <!-- Company Section - Always visible -->
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="company-logo" (click)="logoInput.click()" style="cursor: pointer;" title="Change logo">
+                <!-- Debug info -->
+                <img [src]="invoiceForm.get('logo')?.value || 'assets/images/eb-logo-9.png'" 
+                     (error)="$event.target.src='assets/images/eb-logo-9.png'"
+                     class="rounded" style="max-height: 70px; object-fit: cover;">
+                <input type="file" #logoInput style="display: none;" (change)="onLogoChange($event)" accept="image/*" />
+              </div>
+              <div class="company-details">
+                <div class="fw-bold fs-4 text-primary">{{ companyData?.business_name || 'Company Name' }}
+                </div>
+                <div class="text-muted" *ngIf="companyData?.address1">
+                  <i class="bi bi-geo-alt me-1"></i>{{ companyData?.address1 }}
+                </div>
+                <div class="text-muted" *ngIf="companyData?.phone_no">
+                  <i class="bi bi-telephone me-1"></i>{{ companyData?.phone_no }}
+                </div>
+     
+              </div>
+            </div>
+            
+            <!-- Bill To Section - Only show when party is selected -->
+            <div class="bill-to-section" *ngIf="invoiceForm.get('partyData')?.value as selectedParty">
+              <div class="fw-semibold mb-2">
+                <i class="bi bi-person-badge me-1"></i>
+                <span *ngIf="invoiceForm.get('invoice_type')?.value == '2' || invoiceForm.get('invoice_type')?.value == '4' || invoiceForm.get('invoice_type')?.value == '7' || invoiceForm.get('invoice_type')?.value == '8'">Bill From:</span>
+                <span *ngIf="invoiceForm.get('invoice_type')?.value != '2' && invoiceForm.get('invoice_type')?.value != '4' && invoiceForm.get('invoice_type')?.value != '7' && invoiceForm.get('invoice_type')?.value != '8'">Bill To:</span>
+              </div>
+              <div class="bill-to-details">
+                <div class="fw-bold">{{ selectedParty.partyName }}</div>
+                <div class="text-muted">{{ selectedParty.billingAddress }}</div>
+                <div class="text-muted">
+                  <i class="bi bi-telephone me-1"></i>{{ selectedParty.contact }}
+                </div>
+                <div class="text-muted">
+                  <i class="bi bi-card-text me-1"></i>TRN: {{ selectedParty.trn }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Invoice Details -->
+          <div class="col-md-5">
+            <div class="invoice-details-card">
+              <h6 class="fw-bold mb-3">
+                <i class="bi bi-receipt me-2"></i>Invoice Details
+              </h6>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-hash me-1"></i>{{dictionary_name}} No
+                  </label>
+                  <input type="text" class="form-control form-control-sm" formControlName="invoice_no">
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-calendar me-1"></i>Date
+                  </label>
+                  <input type="date" class="form-control form-control-sm" formControlName="invoice_date">
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-calendar-check me-1"></i>Due Date
+                  </label>
+                  <input type="date" class="form-control form-control-sm" formControlName="due_date">
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-clock me-1"></i>Terms
+                  </label>
+                  <input type="text" class="form-control form-control-sm" formControlName="terms">
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-tag me-1"></i>Invoice Type
+                  </label>
+                  <select class="form-select form-select-sm" formControlName="inv_tax_type">
+                    <option value="1">Tax Invoice</option>
+                    <option value="2">Non-Tax Invoice</option>
+                  </select>
+                </div>
+               
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-currency-exchange me-1"></i>Currency
+                  </label>
+                  <select class="form-select form-select-sm" formControlName="currency" (change)="onCurrencyChange()">
+                    <option [value]="a.id" *ngFor="let a of currencies">{{a.name}}</option>
+                    
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-arrow-left-right me-1"></i>Exchange Rate
+                  </label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">1 {{ getSelectedCurrencyCode() }} =</span>
+                    <input type="number" class="form-control" formControlName="exchange_rate" step="0.0001" min="0.0001">
+                    <span class="input-group-text">{{ getSelectedCurrencyName() }}</span>
+                  </div>
+                </div>
+                <div class="col-12" *ngIf="invoiceForm.get('invoice_type')?.value == '1'">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-tag me-1"></i>Warehouse
+                  </label>
+                  <select class="form-select form-select-sm" formControlName="warehouse" (change)="onWarehouseChange()">
+                    <option *ngFor="let warehouse of warehouseList" [value]="warehouse.id">{{ warehouse.name }}</option>
+                  </select>
+                </div>
+                <div class="mt-2" *ngIf="invoiceForm.get('invoice_type')?.value == '2'">
+                  <label class="form-label fw-semibold small">Against GRN/Invoice</label>
+                  <div class="position-relative" style="max-width: 400px;">
+                    <input #grnInput type="text" class="form-control form-control-sm" placeholder="Search GRN..." (input)="onGrnInput($event)" (focus)="onGrnInputFocus()" [(ngModel)]="grnSearchText" [ngModelOptions]="{standalone: true}">
+                    <div class="dropdown-menu show w-100 mt-1" *ngIf="filteredGrnList.length && grnDropdownOpen" (mouseenter)="dropdownHover = true" (mouseleave)="dropdownHover = false">
+                      <div class="dropdown-item d-flex align-items-center border-bottom pb-1 mb-1">
+                        <input type="checkbox" class="form-check-input me-2" [checked]="areAllGrnsSelected()" (change)="onSelectAllGrns($event)">
+                        <span><strong>Select All</strong></span>
+                      </div>
+                      <div *ngFor="let grn of filteredGrnList" class="dropdown-item d-flex align-items-center">
+                        <input type="checkbox" class="form-check-input me-2" [checked]="isGrnSelected(grn)" (change)="onGrnToggle(grn)">
+                        <span>{{ grn.grnNo }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-2 d-flex flex-wrap gap-2">
+                    <span *ngFor="let grn of selectedGrns" class="badge bg-primary">
+                      {{ grn.grnNo }}
+                      <button type="button" class="btn-close btn-close-white btn-sm ms-1" (click)="removeGrn(grn)"></button>
+                    </span>
+                  </div>
+                  <!-- Debug button for testing -->
+                 
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exchange Rate and Options -->
+        <div class="row mb-3">
+          <div class="col-md-8">
+            <div class="d-flex gap-3 align-items-center">
+              <!-- <span class="badge bg-info text-dark border">
+                <i class="bi bi-currency-exchange me-1"></i>
+                Exchange Rate: 1 USD = 3.67 AED
+              </span> -->
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="mergeItem" formControlName="merge_items">
+                <label class="form-check-label small" for="mergeItem">
+                  <i class="bi bi-arrow-merge me-1"></i>Merge Items
+                </label>
+              </div>
+              <!-- <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="discountTotal">
+                <label class="form-check-label small" for="discountTotal">
+                  <i class="bi bi-percent me-1"></i>Discount on Total
+                </label>
+              </div> -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">
+              <i class="bi bi-list-ul me-2"></i>Invoice Items
+            </h6>
+            <div class="d-flex align-items-center gap-3">
+              <!-- Description Toggle Switch -->
+              <div class="form-check form-switch ">
+                <input class="form-check-input" type="checkbox" id="descriptionToggle" formControlName="is_description">
+                <label class="form-check-label small" for="descriptionToggle">
+                  Description
+                </label>
+              </div>
+              <!-- Item Count Badge -->
+              <span class="badge bg-secondary">{{ items.controls.length }} Items</span>
+            </div>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0 invoice-table">
+                             <thead class="table-primary">
+                 <tr class="text-center">
+                   <th class="small">Sr</th>
+                   <th class="small">Item/Service</th>
+                   <th class="small">QTY</th>
+                   <th class="small">Unit</th>
+                   <th class="small">Rate ({{ getSelectedCurrencyCode() }})</th>
+                   <th class="small">Disc (%)</th>
+                   <th class="small">VAT (%)</th>
+                   <th class="small">Amount</th>
+                   <th class="small">Action</th> 
+                 </tr>
+               </thead>
+                            <tbody formArrayName="items">
+                <tr *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="item-row">
+                  <td class="text-center" style="width: 50px;">
+                    <span class="badge bg-secondary">{{ i + 1 }}</span>
+                  </td>
+                  <td style="min-width: 250px;">
+                    <div class="fw-semibold">{{ item.get('itemName')?.value }}</div>
+                    <small class="text-muted">{{ item.get('itemCode')?.value }}</small>
+                    <textarea type="text" class="form-control form-control-sm" *ngIf="invoiceForm.get('is_description')?.value"
+                        formControlName="notes" placeholder="Enter description"></textarea>
+                  </td>
+                 
+                  <td class="text-center" style="width: 80px;">
+                    <input type="number" class="form-control form-control-sm text-center" 
+                        formControlName="qty" min="1" (input)="onHandoverToChange()">
+                  </td>
+                  <td class="text-center" style="width: 80px;">
+                    <select *ngIf="item.value.item_type === 1" class="form-select form-select-sm" formControlName="unit" (change)="onUnitChanged(i, item)">
+                      <option *ngFor="let unit of item.value.units" [value]="unit.id">{{ (unit.unit || unit.name) | slice:0:3 }}</option>
+                    </select>
+                    <span *ngIf="item.value.item_type !== 1" class="d-flex justify-content-center align-items-center h-100">-</span>
+                  </td>
+                                     <td style="width: 150px;">
+                     <div class="input-group input-group-sm">
+                       <span class="input-group-text">{{ getSelectedCurrencyCode() }}</span>
+                       <input type="number" class="form-control" formControlName="rate" step="0.01" (input)="onHandoverToChange()">
+                     </div>
+                   </td>
+                   <td class="text-center" style="width: 100px;">
+                     <div class="input-group input-group-sm">
+                       <input type="number" class="form-control" formControlName="disc" step="0.01" (input)="onHandoverToChange()">
+                       <span class="input-group-text">%</span>
+                     </div>
+                   </td>
+                   <td class="text-center" style="width: 160px; padding: 8px;">
+                     <div class="d-flex flex-column align-items-center gap-2">
+                       <!-- VAT Percentage Input - Wider for up to 100% -->
+                       <div class="input-group input-group-sm" style="width: 120px;">
+                         <input type="number" class="form-control border-0 bg-light" formControlName="vat" step="0.01" min="0" max="100" (input)="onVatRateChange(i)" style="width: 90px; text-align: center; font-weight: 500; font-size: 12px;">
+                         <span class="input-group-text border-0 bg-primary text-white" style="width: 30px; font-size: 11px; font-weight: 600;">%</span>
+                       </div>
+                       
+                       <!-- VAT Type Selection - Horizontal buttons instead of dropdown -->
+                       <div class="d-flex gap-1" style="width: 120px;">
+                         <button type="button" class="btn btn-sm" 
+                                 [class]="item.get('vat_category')?.value == '1' ? 'btn-primary' : 'btn-outline-primary'"
+                                 (click)="onVatCategoryChange(i, '1')"
+                                 style="font-size: 10px; padding: 2px 6px; min-width: 35px;">
+                           Std
+                         </button>
+                         <button type="button" class="btn btn-sm" 
+                                 [class]="item.get('vat_category')?.value == '2' ? 'btn-primary' : 'btn-outline-primary'"
+                                 (click)="onVatCategoryChange(i, '2')"
+                                 style="font-size: 10px; padding: 2px 6px; min-width: 35px;">
+                           Zero
+                         </button>
+                         <button type="button" class="btn btn-sm" 
+                                 [class]="item.get('vat_category')?.value == '3' ? 'btn-primary' : 'btn-outline-primary'"
+                                 (click)="onVatCategoryChange(i, '3')"
+                                 style="font-size: 10px; padding: 2px 10px; min-width: 35px;">
+                           Ex
+                         </button>
+                       </div>
+                                               <!-- VAT Category Indicator -->
+                        <div class="text-center mt-1">
+                          <small class="text-muted">
+                            <span *ngIf="item.get('vat_category')?.value == '1'" class="badge bg-success">Standard VAT</span>
+                            <span *ngIf="item.get('vat_category')?.value == '2'" class="badge bg-warning">Zero Rated</span>
+                            <span *ngIf="item.get('vat_category')?.value == '3'" class="badge bg-info">Exempt</span>
+                          </small>
+                          <!-- Reset VAT Button -->
+                          <button type="button" class="btn btn-outline-secondary btn-sm mt-1" 
+                                  (click)="resetVatToDefault(i)" 
+                                  title="Reset to default VAT rate"
+                                  style="font-size: 8px; padding: 1px 4px;">
+                            <i class="bi bi-arrow-clockwise"></i>
+                          </button>
+                        </div>
+                       
+                       <!-- VAT Amount Display -->
+                       <div  style="font-size: 11px; min-width: 80px; padding: 6px 8px; font-weight: 500;">
+                         {{ getSelectedCurrencyCode() }} {{ item.get('vat_amount')?.value || '0.00' }}
+                       </div>
+                     </div>
+                   </td>
+                   <td style="width: 150px;">
+                     <div class="input-group input-group-sm">
+                       <span class="input-group-text">{{ getSelectedCurrencyCode() }}</span>
+                       <input type="text" class="form-control" formControlName="total_amt" readonly>
+                     </div>
+                   </td>
+                  <td class="text-center" style="width: 60px;">
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeItem(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Summary and Additional Details -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="additional-details-card">
+              <h6 class="fw-bold mb-3">
+                <i class="bi bi-bank me-2"></i>Payment Details
+              </h6>
+              
+              <div class="mb-3" *ngIf="invoiceForm.get('invoice_type')?.value !== '2' && invoiceForm.get('invoice_type')?.value != '4' && invoiceForm.get('invoice_type')?.value != '7' && invoiceForm.get('invoice_type')?.value != '8'">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <label class="form-label fw-semibold small mb-0">Bank Details</label>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted">Show Bank in Invoice PDF</span>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="showBankDetails" formControlName="show_bank_details">
+                      <label class="form-check-label" for="showBankDetails"></label>
+                    </div>
+                  </div>
+                </div>
+                <!-- Selected Banks Chips -->
+             
+
+                <!-- Bank Selection Dropdown with Add Button -->
+                <div class="input-group">
+                  <div class="dropdown flex-grow-1">
+                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
+                            type="button" 
+                            data-bs-toggle="dropdown" 
+                            aria-expanded="false">
+                      <i class="bi bi-bank me-2"></i>
+                      Select Banks ({{ getSelectedBanks().length }} selected)
+                    </button>
+                    <ul class="dropdown-menu w-100 p-2">
+                      <li *ngFor="let bank of uaeBanks" class="dropdown-item">
+                        <div class="form-check">
+                          <input class="form-check-input" 
+                                 type="checkbox" 
+                                 [id]="'bank-' + bank.id"
+                                 [checked]="isBankSelected(bank.id)"
+                                 (change)="onBankToggle(bank.id)">
+                          <label class="form-check-label" [for]="'bank-' + bank.id">
+                            <i class="bi bi-bank me-2"></i>
+                            {{ bank.bank_name }}-{{bank.bankTypeCode}}
+                          </label>
+                        </div>
+                      </li>
+                      <li *ngIf="uaeBanks.length === 0" class="dropdown-item text-muted">
+                        No banks available
+                      </li>
+                    </ul>
+                  </div>
+                  <button class="btn btn-outline-primary" (click)="openAddBankModal(addBankModal)">
+                    <i class="bi bi-plus"></i> Add
+                  </button>
+                </div>
+                <div class="mb-2" *ngIf="getSelectedBanks().length > 0">
+                  <div class="d-flex flex-wrap gap-2">
+                    <div *ngFor="let bank of getSelectedBanks()" 
+                         class="badge bg-primary d-flex align-items-center gap-1">
+                      <i class="bi bi-bank me-1"></i>
+                      {{ bank.bank_name }}--{{bank.bankTypeCode}}
+                      <button type="button" 
+                              class="btn-close btn-close-white ms-1" 
+                              (click)="removeBank(bank.id)"
+                              style="font-size: 0.6rem;">
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">
+                  <i class="bi bi-chat-text me-1"></i>Notes / Terms
+                </label>
+                <textarea class="form-control" rows="4" formControlName="notes" 
+                          placeholder="Enter any additional notes or terms..."></textarea>
+              </div>
+
+              <!-- Custom Purchase Fields: Only show for Purchase invoices -->
+              <div *ngIf="invoiceForm.get('invoice_type')?.value === '2'" class="row g-2 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Customs Payable</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="customs_Payable" placeholder="Enter customs payable">
+                    <select class="form-select" formControlName="customs_Payable_currency" style="max-width: 80px;">
+                      <option [value]="1">{{getcurrency()}}</option>
+                      <option value="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Insurance Payable</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="insurance_Payable" placeholder="Enter insurance payable">
+                    <select class="form-select" formControlName="insurance_Payable_currency" style="max-width: 80px;">
+                      <option [value]="1">{{getcurrency()}}</option>
+                      <option value="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Demurrage</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="demurage" placeholder="Enter demurrage">
+                    <select class="form-select" formControlName="demurage_currency" style="max-width: 80px;">
+                      <option [value]="1">{{getcurrency()}}</option>
+                      <option value="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Freight Payable</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="freight_Payable" placeholder="Enter freight payable">
+                    <select class="form-select" formControlName="freight_Payable_currency" style="max-width: 80px;">
+                      <option [value]="1">{{getcurrency()}}</option>
+                      <option value="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Port Charge Payable</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="port_Charge_Payable" placeholder="Enter port charge payable">
+                    <select class="form-select" formControlName="port_Charge_Payable_currency" style="max-width: 80px;">
+                      <option [value]="1">{{getcurrency()}}</option>
+                      <option value="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Carriage Inwards</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="carriage_Inwards" placeholder="Enter carriage inwards">
+                    <select class="form-select" formControlName="carriage_Inwards_currency" style="max-width: 80px;">
+                      <option value="1">{{getcurrency()}}</option>
+                      <option value="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">THC Charges</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="thc_Charges" placeholder="Enter THC charges">
+                    <select class="form-select" formControlName="thc_Charges_currency" style="max-width: 80px;">
+                      <option [value]="1">{{getcurrency()}}</option>
+                      <option [value]="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Bank Charge Payable</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="bank_Charge_Payable" placeholder="Enter bank charge payable">
+                    <select class="form-select" formControlName="bank_Charge_Payable_currency" style="max-width: 80px;">
+                      <option [value]="1">{{getcurrency()}}</option>
+                      <option [value]="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Misc Others</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="misc_Others" placeholder="Enter misc others">
+                    <select class="form-select" formControlName="misc_Others_currency" style="max-width: 80px;">
+                      <option [value]="1">{{getcurrency()}}</option>
+                      <option [value]="2">{{getcurrencysecond()}}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="summary-card">
+              <h6 class="fw-bold mb-3">
+                <i class="bi bi-calculator me-2"></i>Invoice Summary
+              </h6>
+              
+              <div class="summary-item">
+                <span class="summary-label">Taxable Amount:</span>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{{ getSelectedCurrencyCode() }}</span>
+                  <input type="text" class="form-control" formControlName="taxable_amt" readonly>
+                </div>
+              </div>
+              
+              <div class="summary-item">
+                <span class="summary-label">VAT Amount:</span>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{{ getSelectedCurrencyCode() }}</span>
+                  <input type="text" class="form-control" formControlName="total_vat" readonly>
+                </div>
+              </div>
+              
+              <div class="summary-item">
+                <span class="summary-label">Total Discount:</span>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{{ getSelectedCurrencyCode() }}</span>
+                  <input type="text" class="form-control" formControlName="total_discount" readonly>
+                </div>
+              </div>
+              
+              <!-- Extra Charges -->
+              <div class="extra-charges-section">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="summary-label">Extra Charges:</span>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="addExtraCharge()">
+                    <i class="bi bi-plus"></i> Add Charge
+                  </button>
+                </div>
+                
+                <div formArrayName="extra_charge">
+                  <div *ngFor="let charge of extraCharges.controls; let i=index" 
+                       [formGroupName]="i" class="extra-charge-item">
+                    <div class="input-group input-group-sm">
+                      <input type="text" class="form-control" formControlName="extra_name" 
+                             placeholder="Charge name" (input)="onHandoverToChange()">
+                      <input type="number" class="form-control" formControlName="extra_value" 
+                             placeholder="Amount" (input)="onHandoverToChange()">
+                      <button type="button" class="btn btn-outline-danger" (click)="removeExtraCharge(i)">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <hr>
+              
+              <div class="summary-item total-item">
+                <span class="summary-label fw-bold">Total Amount:</span>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{{ getSelectedCurrencyCode() }}</span>
+                  <input type="text" class="form-control fw-bold" formControlName="final_total_amount" readonly>
+                </div>
+                <!-- Show USD amount for sales Invoice (type 1) -->
+               
+              </div>
+              <!-- Show Total Amount based on currency -->
+                <div class="summary-item" *ngIf="inset_data?.default_currency">
+                <span class="summary-label fw-bold">Total Amount in {{getfirstcurrency()}}:</span>
+                <div class="input-group input-group-sm mt-2" >
+                  <span class="input-group-text">{{getfirstcurrency()}}</span>
+                  <input type="text" class="form-control fw-bold" [value]="getAEDAmount()" readonly>
+                </div>
+              </div>
+              <div class="summary-item" *ngIf="inset_data?.curency_conversion">
+                <span class="summary-label fw-bold">Total Amount in {{getselectedcurrencysecond()}}:</span>
+                <div class="input-group input-group-sm mt-2" >
+                  <span class="input-group-text">{{getselectedcurrencysecond()}}</span>
+                  <input type="text" class="form-control fw-bold" [value]="getUSDAmount()" readonly>
+                </div>
+              </div>
+              
+             
+              
+              <!-- Show both Total Amount when currency is neither 1 nor 2 -->
+              <!-- <div class="summary-item" *ngIf="invoiceForm.get('currency')?.value != 1 && invoiceForm.get('currency')?.value != 2">
+                <span class="summary-label fw-bold">Total Amount in AED:</span>
+                <div class="input-group input-group-sm mt-2" >
+                  <span class="input-group-text">AED</span>
+                  <input type="text" class="form-control fw-bold" [value]="getAEDAmount()" readonly>
+                </div>
+              </div>
+              <div class="summary-item" *ngIf="invoiceForm.get('currency')?.value != 1 && invoiceForm.get('currency')?.value != 2">
+                <span class="summary-label fw-bold">Total Amount in USD:</span>
+                <div class="input-group input-group-sm mt-2" >
+                  <span class="input-group-text">USD</span>
+                  <input type="text" class="form-control fw-bold" [value]="getUSDAmount()" readonly>
+                </div>
+              </div> -->
+              
+          
+              <div class="summary-item">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="round_off" (change)="onHandoverToChange()">
+                  <label class="form-check-label small">Round Off Amount</label>
+                </div>
+              </div>
+              
+              <div class="summary-item mb-0">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                  <span class="summary-label" *ngIf="invoiceForm.get('invoice_type')?.value == '2' || invoiceForm.get('invoice_type')?.value == '4' || invoiceForm.get('invoice_type')?.value == '7' || invoiceForm.get('invoice_type')?.value == '8'">Amount Paid:</span>
+                  <span class="summary-label" *ngIf="invoiceForm.get('invoice_type')?.value !== '2' && invoiceForm.get('invoice_type')?.value != '4' && invoiceForm.get('invoice_type')?.value != '7' && invoiceForm.get('invoice_type')?.value != '8'">Amount Received:</span>
+                
+                  <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" formControlName="full_payment">
+                    <label class="form-check-label small mb-0">Full Payment</label>
+                  </div>
+                </div>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"></span>
+                <div class="input-group input-group-sm">
+                 <select name="" id="" formControlName="inv_pay_currency" class="form-select form-select-sm input-group-text">
+                    <option  [value]="1"> AED </option>
+                    <option  [value]="2"> USD </option>
+                  </select>
+                  <input type="number" class="form-control" formControlName="received_amount" step="0.01" min="0" 
+                         [title]="invoiceForm.get('received_amount')?.value || '0'" 
+                         (mouseenter)="showTooltip($event)" 
+                         (mouseleave)="hideTooltip()"
+                         (focus)="onAmountFocus($event)"
+                         (blur)="onAmountBlur()"
+                         (click)="onAmountClick($event)"
+                         style="cursor: pointer; width: 200px; font-size: 16px;"
+                         #amountInput>
+                  <select class="form-select form-select-sm input-group-text" formControlName="received_amount_by">
+                    <option value="1">Cash</option>
+                    <option value="2">Bank</option>
+                    <option value="3">Cheque</option>
+                  </select>
+                </div>
+              </div>
+              <div class="summary-item">
+               
+                <span class="summary-label fw-bold" *ngIf="invoiceForm.get('invoice_type')?.value == '2' || invoiceForm.get('invoice_type')?.value == '4' || invoiceForm.get('invoice_type')?.value == '7' || invoiceForm.get('invoice_type')?.value == '8'">Payment Paid In:</span>
+                <span class="summary-label fw-bold" *ngIf="invoiceForm.get('invoice_type')?.value == '1' || invoiceForm.get('invoice_type')?.value == '3' || invoiceForm.get('invoice_type')?.value == '5' || invoiceForm.get('invoice_type')?.value == '6'">Payment Received In:</span>
+                <div class="input-group input-group-sm">
+                  <select *ngIf="invoiceForm.get('received_amount_by')?.value=='1'" type="text" class="form-control fw-bold" formControlName="handover_to" (change)="onHandoverToChange()">
+                    <option *ngFor="let c of cashList" [value]="c.id">{{ c.ledger_name }}-{{c.cashTypeCode}}</option>
+                  </select>
+                  <select *ngIf="invoiceForm.get('received_amount_by')?.value!=='1'" type="text" class="form-control fw-bold" formControlName="handover_to" (change)="onHandoverToChange()">
+                    <option *ngFor="let b of uaeBanks" [value]="b.id">{{ b.bank_name }}-{{b.bankTypeCode}}</option>
+                  </select>
+                </div>
+              </div>
+              
+              
+              
+              <div class="summary-item">
+                <span class="summary-label fw-bold" *ngIf="invoiceForm.get('invoice_type')?.value == '2' || invoiceForm.get('invoice_type')?.value == '4' || invoiceForm.get('invoice_type')?.value == '7' || invoiceForm.get('invoice_type')?.value == '8'">Payable Amount:</span>  
+                <span class="summary-label fw-bold" *ngIf="invoiceForm.get('invoice_type')?.value == '1' || invoiceForm.get('invoice_type')?.value == '3' || invoiceForm.get('invoice_type')?.value == '5' || invoiceForm.get('invoice_type')?.value == '6'">Receivable Amount:</span>
+                <div class="input-group input-group-sm">
+                  <!-- <span class="input-group-text">{{ getPaymentCurrencyCode() }}</span> -->
+                  <input type="text" class="form-control fw-bold" [value]="getReceivableInPaymentCurrency()" readonly>
+                </div>
+              </div>
+              
+              <!-- Opposite Currency Display for Payable/Receivable Amount -->
+              <!-- <div class="summary-item" *ngIf="inset_data?.is_currency_conversion">
+                <span class="summary-label fw-bold" *ngIf="invoiceForm.get('invoice_type')?.value == '2' || invoiceForm.get('invoice_type')?.value == '4' || invoiceForm.get('invoice_type')?.value == '7' || invoiceForm.get('invoice_type')?.value == '8'">Payable Amount <span class="summary-label fw-bold" *ngIf="invoiceForm.get('inv_pay_currency')?.value == 1"> in USD:</span>
+                <span class="summary-label fw-bold" *ngIf="invoiceForm.get('inv_pay_currency')?.value != 1"> in AED</span></span>  
+                <span class="summary-label fw-bold" *ngIf="invoiceForm.get('invoice_type')?.value == '1' || invoiceForm.get('invoice_type')?.value == '3' || invoiceForm.get('invoice_type')?.value == '5' || invoiceForm.get('invoice_type')?.value == '6'">Receivable Amount <span class="summary-label fw-bold" *ngIf="invoiceForm.get('inv_pay_currency')?.value == 1"> in USD:</span>
+                <span class="summary-label fw-bold" *ngIf="invoiceForm.get('inv_pay_currency')?.value != 1"> in AED</span></span>  
+                 -->
+               
+                <!-- Show opposite currency amount when currency conversion is enabled -->
+                <!-- <div class="input-group input-group-sm mt-2" >
+                  <span class="input-group-text" *ngIf="invoiceForm.get('inv_pay_currency')?.value == 1">USD</span>
+                  <span class="input-group-text" *ngIf="invoiceForm.get('inv_pay_currency')?.value != 1">AED</span>
+                  <input type="text" class="form-control fw-bold" [value]="getOppositeCurrencyReceivableAmount()" readonly>
+                </div>
+              </div> -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #addBankModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Add Bank</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-bank [mode]="'create'" [modalRef]="modalRef" (bankSaved)="onBankSaved($event)"></app-create-bank>
+  </div>
+</ng-template>
+<ng-template #previewModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Preview Invoice</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-inv-template></app-inv-template>  
+  </div>
+</ng-template>
+<ng-template #poitems let-modal>
+  <div class="modal-header" style="padding-left: 28px; padding-bottom: 0px;">
+    <h5 class="modal-title mt-0" style="font-size: large; font-weight: 500;">Sales Order Items</h5>
+    <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')" aria-hidden="true"></button>
+  </div>
+  <div class="modal-body">
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <input type="checkbox" (change)="checkpobox(check_all)" [(ngModel)]="check_all">
+        <label for="">Select All</label>
+      </div>
+      <div class="col-md-6" style="text-align: right;">
+        <button (click)="submitPoItems()" class="btn btn-sm btn-outline-primary">submit</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th style="width: 10%;">Select Item</th>
+              <th style="width: 50%;">Item Name</th>
+              <th style="width: 20%;">QTY</th>
+              <th style="width: 20%;">Unit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of poItem; let i = index">
+              <td style="width: 10%;">
+                <input type="checkbox" [(ngModel)]="user.check_po">
+              </td>
+              <td style="width: 50%;">{{ user.item_info?.name }}</td>
+              <td style="width: 20%;">
+                <input type="number" 
+                       [(ngModel)]="user.qty" 
+                       (input)="onPoQtychange(user.qty, user)"
+                       [max]="user.pending_qty"
+                       style="width: 59px; margin-right: 25px; text-align: center; border: none; background-color: unset; background: #8774ca4d; border-radius: 3px;"
+                       [class.is-invalid]="user.qty > user.pending_qty">
+                
+                <!-- Validation message -->
+                <div *ngIf="user.qty > user.pending_qty" class="text-danger small">
+                  Quantity cannot exceed pending quantity
+                </div>
+                
+                <span *ngIf="user.pending_qty != 0" style="color: green;">
+                  Remaining Qty: {{ user.pending_qty | number:'2.1-2' }}
+                </span>
+                <span *ngIf="user.pending_qty == 0" style="color: red;">
+                  Remaining Qty: {{ user.pending_qty | number:'2.1-2' }}
+                </span>
+              </td>
+              <td style="width: 20%;">
+                <select [(ngModel)]="user.unit" 
+                          *ngIf="user.unit != null" 
+                        class="form-select"
+                        (change)="unitChange(user.unit, i)">
+                  <option *ngFor="let n of user.item_info?.units" [ngValue]="n.id">{{ (n.unit || n.name) | slice:0:3 }}</option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</ng-template>

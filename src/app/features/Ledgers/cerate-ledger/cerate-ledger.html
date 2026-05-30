@@ -1,0 +1,89 @@
+<form [formGroup]="ledgerForm" (ngSubmit)="onSubmit()" class="ledger-form">
+  <div class="form-section">
+    <div class="form-row-2">
+      <div class="form-field-group">
+        <label class="form-label">
+          <i class="bi bi-journal-bookmark"></i>
+          Name <span class="required">*</span>
+        </label>
+        <input 
+          type="text" 
+          class="form-control" 
+          formControlName="ledger_name" 
+          placeholder="Enter ledger name" />
+        <div class="validation-error" *ngIf="ledgerForm.get('ledger_name')?.touched && ledgerForm.get('ledger_name')?.errors?.['required']">
+          Ledger name is required
+        </div>
+      </div>
+
+      <div class="form-field-group">
+        <label class="form-label">
+          <i class="bi bi-diagram-3"></i>
+          Under <span class="required">*</span>
+        </label>
+        <select 
+          class="form-select" 
+          formControlName="ledger_under" 
+          (change)="onLedgerUnderChange($event)">
+          <option value="">Select Under</option>
+          <option *ngFor="let under of underledger" [value]="under.id">{{under.payment_under_name}}</option>
+        </select>
+        <div class="validation-error" *ngIf="ledgerForm.get('ledger_under')?.touched && ledgerForm.get('ledger_under')?.errors?.['required']">
+          Please select under
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row-3">
+      <div class="form-field-group">
+        <label class="form-label">
+          <i class="bi bi-currency-dollar"></i>
+          Opening Balance <span class="required">*</span>
+        </label>
+        <input 
+          type="number" 
+          class="form-control" 
+          formControlName="opening_balance" 
+          placeholder="0.00" />
+        <div class="validation-error" *ngIf="ledgerForm.get('opening_balance')?.touched && ledgerForm.get('opening_balance')?.errors?.['required']">
+          Opening balance is required
+        </div>
+      </div>
+
+      <div class="form-field-group">
+        <label class="form-label">
+          <i class="bi bi-arrow-left-right"></i>
+          Type <span class="required">*</span>
+        </label>
+        <select class="form-select" formControlName="payment_type">
+          <option value="Debit">Debit</option>
+          <option value="Credit">Credit</option>
+        </select>
+      </div>
+
+      <div class="form-field-group">
+        <label class="form-label">
+          <i class="bi bi-calendar"></i>
+          As On <span class="required">*</span>
+        </label>
+        <div class="date-input-wrapper">
+          <input 
+            type="date" 
+            class="form-control date-input" 
+            formControlName="as_on_date" />
+          <i class="bi bi-calendar3 date-icon"></i>
+        </div>
+        <div class="validation-error" *ngIf="ledgerForm.get('as_on_date')?.touched && ledgerForm.get('as_on_date')?.errors?.['required']">
+          Date is required
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-submit">
+      <i class="bi bi-check-circle"></i>
+      Submit
+    </button>
+  </div>
+</form>

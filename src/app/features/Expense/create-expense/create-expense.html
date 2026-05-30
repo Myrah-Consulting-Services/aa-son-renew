@@ -1,0 +1,376 @@
+<!-- Modal Header -->
+<div *ngIf="isModal" class="expense-modal-header">
+  <h5 class="modal-title">
+    <i class="bi bi-plus-circle me-2"></i>
+    {{ editinvoiceId ? 'Edit Expense' : 'Create Expense' }}
+  </h5>
+  <button type="button" class="btn-close" aria-label="Close" (click)="close()">
+    <i class="bi bi-x-lg"></i>
+  </button>
+</div>
+
+<form [formGroup]="expenseForm" class="expense-form-container">
+  <div class="expense-form-row">
+    <!-- Left Column: Basic Details -->
+    <div class="expense-form-col-left">
+      <div class="expense-section-card">
+        <div class="section-header">
+          <i class="bi bi-list-ul"></i>
+          <h6 class="section-title">Basic Details</h6>
+        </div>
+
+        <div class="form-section">
+          <!-- Party Field -->
+          <div class="form-field-group">
+            <label class="form-label">
+              <i class="bi bi-building"></i>
+              Party
+            </label>
+            <div class="input-with-action">
+              <select 
+                formControlName="party_name" 
+                class="form-select search-select" 
+                (change)="onPartyChange($any($event.target).value)">
+                <option value="">Search party...</option>
+                <option *ngFor="let party of createdPartyData" [value]="party.id">
+                  {{party.partyName}}
+                </option>
+              </select>
+              <button 
+                type="button" 
+                class="btn-add-icon" 
+                (click)="blargeModal(blargeDataModal)"
+                title="Add New Party">
+                <i class="bi bi-plus"></i>
+              </button>
+            </div>
+            <div class="trn-info">
+              Company TRN: {{companyTRN || 'N/A'}} Party TRN: {{partyTRN || 'N/A'}}
+            </div>
+          </div>
+
+          <!-- Category Field -->
+          <div class="form-field-group">
+            <label class="form-label">
+              <i class="bi bi-tags"></i>
+              Category <span class="required">*</span>
+            </label>
+            <div class="input-with-action">
+              <select 
+                formControlName="expense_category" 
+                class="form-select search-select" 
+                required>
+                <option value="">Search category...</option>
+                <option *ngFor="let cat of categoryData" [value]="cat.id">
+                  {{cat.category}}
+                </option>
+              </select>
+              <button 
+                type="button" 
+                class="btn-add-icon" 
+                (click)="centerModal(createCategoryModal)"
+                title="Add New Category">
+                <i class="bi bi-plus"></i>
+              </button>
+            </div>
+            <div class="text-danger small" *ngIf="p['expense_category'].touched && p['expense_category'].errors?.['required']">
+              Select Category
+            </div>
+          </div>
+
+          <!-- Expense Date & Payment Mode -->
+          <div class="form-row-2">
+            <div class="form-field-group">
+              <label class="form-label">
+                <i class="bi bi-calendar"></i>
+                Expense Date <span class="required">*</span>
+              </label>
+              <div class="date-input-wrapper">
+                <input 
+                  type="date" 
+                  formControlName="payment_date" 
+                  class="form-control date-input" 
+                />
+                <i class="bi bi-calendar3 date-icon"></i>
+              </div>
+              <div class="text-danger small" *ngIf="p['payment_date'].touched && p['payment_date'].errors?.['required']">
+                Select Payment Date
+              </div>
+            </div>
+
+            <div class="form-field-group">
+              <label class="form-label">
+                <i class="bi bi-credit-card"></i>
+                Payment Mode <span class="required">*</span>
+              </label>
+              <select 
+                formControlName="payment_type" 
+                class="form-select" 
+                (change)="datetime($event)">
+                <option [value]="1">Cash</option>
+                <option [value]="2">Cheque</option>
+                <option [value]="3">Bank Transfer</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Cash Ledger / Bank -->
+          <div class="form-field-group">
+            <label class="form-label">
+              <i class="bi bi-file-earmark-text"></i>
+              <span *ngIf="expenseForm.get('payment_type')?.value == '1'">Cash Ledger</span>
+              <span *ngIf="expenseForm.get('payment_type')?.value == '2' || expenseForm.get('payment_type')?.value == '3'">Bank</span>
+              <span class="required">*</span>
+            </label>
+            <div class="input-with-action">
+              <select 
+                *ngIf="expenseForm.get('payment_type')?.value == '1'"
+                formControlName="handover_to" 
+                class="form-select" 
+                required>
+                <option value="">Select Cash Ledger</option>
+                <option *ngFor="let item of c_Ledger" [value]="item.id">{{item.ledger_name}}</option>
+              </select>
+              <select 
+                *ngIf="expenseForm.get('payment_type')?.value == '2' || expenseForm.get('payment_type')?.value == '3'"
+                formControlName="bank_name" 
+                class="form-select" 
+                required>
+                <option value="">Select Bank</option>
+                <option *ngFor="let i of bankList" [value]="i.id">{{i.bank_name}}</option>
+              </select>
+              <button 
+                *ngIf="expenseForm.get('payment_type')?.value == '1'"
+                type="button" 
+                class="btn-add-icon" 
+                (click)="largeModal2(largeDataModal2)"
+                title="Add Cash Ledger">
+                <i class="bi bi-plus"></i>
+              </button>
+              <button 
+                *ngIf="expenseForm.get('payment_type')?.value == '2' || expenseForm.get('payment_type')?.value == '3'"
+                type="button" 
+                class="btn-add-icon" 
+                (click)="largeModalbank(largeDataModalbank)"
+                title="Add Bank">
+                <i class="bi bi-plus"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Payment Date & Invoice Details -->
+          <div class="form-row-2">
+            <div class="form-field-group">
+              <label class="form-label">
+                <i class="bi bi-calendar-check"></i>
+                Payment Date <span class="required">*</span>
+              </label>
+              <div class="date-input-wrapper">
+                <input 
+                  type="date" 
+                  formControlName="cleared_date" 
+                  class="form-control date-input" 
+                />
+                <i class="bi bi-calendar3 date-icon"></i>
+              </div>
+            </div>
+
+            <div class="form-field-group">
+              <label class="form-label">
+                <i class="bi bi-calendar-date"></i>
+                Invoice Date
+              </label>
+              <div class="date-input-wrapper">
+                <input 
+                  type="date" 
+                  formControlName="invoice_date" 
+                  class="form-control date-input" 
+                />
+                <i class="bi bi-calendar3 date-icon"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Invoice No -->
+          <div class="form-field-group">
+            <label class="form-label">
+              <i class="bi bi-receipt"></i>
+              Invoice No
+            </label>
+            <input 
+              type="text" 
+              formControlName="invoice_no" 
+              class="form-control" 
+              placeholder="Enter invoice number"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Items & Summary -->
+    <div class="expense-form-col-right">
+      <div class="expense-section-card">
+        <div class="section-header">
+          <i class="bi bi-cart"></i>
+          <h6 class="section-title">Items & Summary</h6>
+          <button 
+            type="button" 
+            class="btn-record" 
+            (click)="onClickSubmit()">
+            <i class="bi bi-check-circle"></i>
+            Record
+          </button>
+        </div>
+
+        <div class="form-section">
+          <!-- Expense Items -->
+          <div class="expense-items-section">
+            <div class="section-subheader">
+              <i class="bi bi-cart"></i>
+              <h6 class="section-subtitle">Expense Items</h6>
+              <button 
+                type="button" 
+                class="btn-add-item" 
+                (click)="addExpensesField()">
+                <i class="bi bi-plus"></i> Add
+              </button>
+            </div>
+
+            <div formArrayName="data" class="expense-items-list">
+              <div 
+                *ngFor="let ex of exArray.controls; let i=index" 
+                [formGroupName]="i" 
+                class="expense-item-row">
+                <div class="item-number">{{i+1}}</div>
+                <div class="item-fields">
+                  <input 
+                    type="text" 
+                    placeholder="Description" 
+                    formControlName="desc" 
+                    class="form-control item-description" 
+                  />
+                  <div class="text-danger small" *ngIf="ex.get('desc')?.touched && ex.get('desc')?.errors?.['required']">
+                    Enter Description
+                  </div>
+                </div>
+                <div class="item-currency-group">
+                  <div>
+                    <button 
+                      type="button" 
+                      class="btn-currency" 
+                      disabled>
+                      {{getcurrency()}}
+                    </button>
+                    <input 
+                      type="number" 
+                      placeholder="0" 
+                      formControlName="amt" 
+                      class="form-control item-amount" 
+                      (keyup)="calculateAmount()" 
+                    />
+                  </div>
+                  <div class="text-danger small" *ngIf="ex.get('amt')?.touched && ex.get('amt')?.errors?.['required']">
+                    Enter Amount
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VAT Section -->
+          <div class="vat-section">
+            <div class="section-subheader">
+              <i class="bi bi-percent"></i>
+              <h6 class="section-subtitle">% VAT</h6>
+            </div>
+            <div class="vat-toggle-wrapper">
+              <label class="vat-toggle-label">
+                <span>Apply VAT</span>
+                <div class="form-check form-switch">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    formControlName="is_vat" 
+                    (change)="checkvat($event)" 
+                    id="vatSwitch">
+                </div>
+              </label>
+            </div>
+            <div *ngIf="vatWarning" class="vat-warning">
+              <i class="bi bi-exclamation-triangle"></i>
+              {{vatWarning}}
+            </div>
+          </div>
+
+          <!-- Summary Section -->
+          <div class="summary-section">
+            <div class="section-subheader">
+              <i class="bi bi-file-earmark-text"></i>
+              <h6 class="section-subtitle">Summary</h6>
+            </div>
+            <div class="summary-content">
+              <div class="summary-row">
+                <span>Sub Total:</span>
+                <span class="summary-value">{{getcurrency()}} {{expenseForm.get('subTotal')?.value | number:'1.3-3'}}</span>
+              </div>
+              <div class="summary-row summary-total">
+                <span>Total:</span>
+                <span class="summary-total-value">{{getcurrency()}} {{expenseForm.get('total_amount')?.value | number:'1.3-3'}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<!-- Modals -->
+<ng-template #largeDataModal2 let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title fw-bold">
+      <i class="bi bi-wallet2 me-2"></i>Ledger Name
+    </h5>
+    <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-cash [modalRef]="modal" (cashAddLedger1)="cashAddLedger($event)"></app-create-cash>
+  </div>
+</ng-template>
+
+<ng-template #largeDataModalbank let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title fw-bold">
+      <i class="bi bi-bank me-2"></i>Add New Bank
+    </h5>
+    <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-bank [modalRef]="modal" (bankSaved)="addBankFunction($event)"></app-create-bank>
+  </div>
+</ng-template>
+
+<ng-template #createCategoryModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title fw-bold">
+      <i class="bi bi-tags me-2"></i>Create New Category
+    </h5>
+    <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-expense-category [modalRef]="modal" (emitdata)="getExpenseCategory($event)"></app-expense-category>
+  </div>
+</ng-template>
+
+<ng-template #blargeDataModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <i class="bi bi-building me-2"></i>Create Party
+    </h5>
+    <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <app-party [ModalRef]="partyModalRef" (onSubmit)="partyCreation($event)"></app-party>
+  </div>
+</ng-template>

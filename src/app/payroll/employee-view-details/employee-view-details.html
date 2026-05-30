@@ -1,0 +1,662 @@
+<div class="employee-view-details-container" *ngIf="employee">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item"><a routerLink="/payroll/employee">Employee</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ employee.first_name }} {{ employee.last_name }}</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="employee-view-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="employee-view-logo">
+          <i class="bi bi-person"></i>
+        </span>
+        <div>
+          <h1 class="header-title">{{ employee.emp_id }} - {{ employee.first_name }} {{ employee.last_name }}</h1>
+          <p class="header-subtitle">{{ employee.designation_name }}</p>
+      </div>
+        <span class="badge ms-2" [class]="employee.active ? 'completed' : ''">{{ employee.active ?
+            'Active' : 'Inactive' }}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <div class="dropdown">
+          <button class="btn-secondary" data-bs-toggle="dropdown">Add</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" (click)="openAirTravelModal(null,airModal)">Air Travel Allowance</a></li>
+          <li><a class="dropdown-item" (click)="openDeductionModal(null,deductionModal)">Deduction</a></li>
+          <li><a class="dropdown-item" (click)="openBenefitModal(null,benefitModal)">Benefit</a></li>
+        </ul>
+      </div>
+      <div class="dropdown">
+          <button class="btn-secondary" type="button" 
+                data-bs-toggle="dropdown" aria-expanded="false">
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" (click)="sendSalaryTransferCertificate()">
+            <i class="bi bi-file-earmark-text me-2"></i>Send Salary Transfer Certificate
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" (click)="initiateExitProcess()">
+            <i class="bi bi-box-arrow-right me-2"></i>Initiate Exit Process
+          </a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item" *ngFor="let tab of tabs">
+      <a class="nav-link" [class.active]="activeTab === tab.key"
+        (click)="setActiveTab(tab.key); $event.preventDefault()">{{ tab.label }}</a>
+    </li>
+  </ul>
+    
+  <ng-container [ngSwitch]="activeTab">
+    <ng-container *ngSwitchCase="'overview'">
+        <div class="tab-content-wrapper">
+        <!-- Employee Profile Header -->
+          <div class="tab-section">
+            <div class="tab-section-header">
+              <h3 class="tab-section-title">
+                <i class="bi bi-person me-2"></i>Employee Profile
+              </h3>
+              <button class="btn-primary btn-sm" (click)="prepareForAction(employee.id, addEmployeeModal)">
+                <i class="bi bi-pencil me-1"></i> Edit
+              </button>
+            </div>
+            <div class="tab-section-card">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <div class="profile-avatar">
+                  <i class="bi bi-person"></i>
+                </div>
+              </div>
+              <div class="col">
+                    <h4 class="fw-bold mb-1">{{ employee.first_name }} {{ employee.last_name }}</h4>
+                    <div class="text-uppercase text-muted small mb-2">{{ employee.designation_name }}</div>
+                    <div class="d-flex align-items-center gap-2">
+                    <span class="badge">{{ employee.emp_id }}</span>
+                    <span class="badge" [class]="employee.portal_access_enabled ? 'completed' : ''">
+                        {{ employee.portal_access_enabled ? 'Portal Enabled' : 'Portal Disabled' }}
+                      </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Information Cards Grid -->
+          <div class="tab-section">
+            <h3 class="tab-section-title">
+              <i class="bi bi-info-circle me-2"></i>Employee Information
+            </h3>
+            <div class="row g-3">
+          <!-- Basic Information -->
+          <div class="col-lg-6">
+                <div class="tab-section-card h-100">
+                  <h6 class="card-title">Basic Information</h6>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Email</div>
+                    <div class="fw-semibold">{{ employee.work_email }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Phone</div>
+                    <div class="fw-semibold">{{ employee.phone_number }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Gender</div>
+                    <div class="fw-semibold">{{ employee.gender == 1 ? 'Male' : 'Female' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Department</div>
+                    <div class="fw-semibold">{{ employee.department_name }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Contract Type</div>
+                    <div class="fw-semibold">{{ employee.contract_type == 1 ? 'Limited' : 'Unlimited' }} Contract</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Employment Details -->
+          <div class="col-lg-6">
+                <div class="tab-section-card h-100">
+                  <h6 class="card-title">Employment Details</h6>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Date of Joining</div>
+                    <div class="fw-semibold">{{ employee.joining_date | date:'dd MMM yyyy' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Date of Confirmation</div>
+                    <div class="fw-semibold">{{ employee.confirmation_date | date:'dd MMM yyyy' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">MOL ID</div>
+                    <div class="fw-semibold">{{ employee.emirates_id || employee?.labour_card_number || 'N/A' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Date of Birth</div>
+                    <div class="fw-semibold">{{ employee.personal_info?.dob | date:'dd MMM yyyy' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Personal Email</div>
+                    <div class="fw-semibold">{{ employee.personal_info?.personal_email || 'N/A' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Address Information -->
+          <div class="col-lg-6">
+                <div class="tab-section-card h-100">
+                  <h6 class="card-title">Address Information</h6>
+                <div class="info-item">
+                  <div class="text-uppercase text-muted small mb-1">Present Address</div>
+                  <div class="fw-semibold">
+                    {{ employee.personal_info?.present_address_line1 }}<br>
+                    {{ employee.personal_info?.present_city }}, {{ employee.personal_info?.present_state }}<br>
+                    {{ employee.personal_info?.pin_code }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Information -->
+          <div class="col-lg-6">
+                <div class="tab-section-card h-100">
+                  <h6 class="card-title">Payment Information</h6>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Payment Mode</div>
+                    <div class="fw-semibold">{{ employee.payment_details[0]?.payment_mode == 1 ? 'Bank Transfer' : 
+                         employee.payment_details[0]?.payment_mode == 2 ? 'Cheque' : 'Cash' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Account Holder</div>
+                    <div class="fw-semibold">{{ employee.payment_details[0]?.account_holder_name || 'N/A' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">Bank Name</div>
+                    <div class="fw-semibold">{{ employee.payment_details[0]?.bank_name || 'N/A' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="text-uppercase text-muted small mb-1">IBAN Number</div>
+                    <div class="fw-semibold">{{ employee.payment_details[0]?.iban || 'N/A' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+      
+    <ng-container *ngSwitchCase="'salary'">
+        <div class="tab-content-wrapper">
+        <!-- Salary Summary -->
+          <div class="tab-section">
+            <h3 class="tab-section-title">
+              <i class="bi bi-cash-stack me-2"></i>Salary Summary
+            </h3>
+            <div class="row g-3">
+          <div class="col-md-6">
+                <div class="tab-section-card h-100">
+                  <div class="d-flex flex-column justify-content-center align-items-start">
+                <div class="text-uppercase text-muted small mb-1">Annual Income</div>
+                <div class="h4 fw-bold mb-0">{{ getcurrency() }} {{ getAnnualIncome() | number:'1.0-0' }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+                <div class="tab-section-card h-100">
+                  <div class="d-flex flex-column justify-content-between h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <div class="text-uppercase text-muted small mb-1">Monthly Income</div>
+                    <div class="h4 fw-bold mb-0">{{ getcurrency() }} {{ getMonthlyIncome() | number:'1.0-0' }}</div>
+                  </div>
+                  <div class="d-flex gap-2">
+                        <button class="btn-primary btn-sm px-3" (click)="onReviseSalary()">
+                      <i class="bi bi-arrow-repeat me-1"></i> Revise
+                    </button>
+                    <div class="dropdown">
+                          <button class="btn-secondary btn-sm" 
+                              type="button" 
+                              data-bs-toggle="dropdown" 
+                              aria-expanded="false"
+                              title="More options">
+                        <i class="bi bi-three-dots"></i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <a class="dropdown-item" href="#" (click)="generateSalaryCertificate($event)">
+                            <i class="bi bi-file-earmark-text me-2"></i> Salary Certificate
+                          </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                          <a class="dropdown-item" href="#" (click)="viewSalaryHistory($event)">
+                            <i class="bi bi-clock-history me-2"></i> Salary History
+                          </a>
+                        </li>
+                      </ul>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Salary Structure -->
+          <div class="tab-section">
+            <div class="tab-section-header">
+              <h3 class="tab-section-title">
+                <i class="bi bi-list-check me-2"></i>Salary Structure
+              </h3>
+              <a (click)="prepareForAction(employee.id, addEmployeeModal)" class="btn-action-icon edit" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+        </div>
+            <div class="tab-section-card">
+              <div class="table-container">
+                <table class="compact-table">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 60%">Salary Component</th>
+                  <th class="text-end" style="width: 20%">Monthly Amount</th>
+                  <th class="text-end" style="width: 20%">Annual Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-secondary">
+                  <td colspan="3" class="fw-semibold">Earnings</td>
+                </tr>
+                <tr *ngFor="let e of getEarnings()">
+                  <td>{{ e.head_name || e.payslip_name }}</td>
+                  <td class="text-end">{{ (e.monthly_amount || e.monthly_value || 0) | number:'1.2-2' }}</td>
+                  <td class="text-end">{{ (e.annual_amount || e.annual_value || ((e.monthly_amount||e.monthly_value||0)*12)) | number:'1.2-2' }}</td>
+                </tr>
+                <tr class="fw-bold border-top">
+                  <td>Total Gross Pay</td>
+                  <td class="text-end">{{ sumMonthly(getEarnings()) | number:'1.2-2' }}</td>
+                  <td class="text-end">{{ sumAnnual(getEarnings()) | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+              </div>
+          </div>
+        </div>
+
+          <!-- Air Travel Allowances -->
+          <div class="tab-section">
+            <h3 class="tab-section-title">
+              <i class="bi bi-airplane me-2"></i>Air Travel Allowances
+            </h3>
+            <div class="tab-section-card">
+              <div class="table-container">
+                <table class="compact-table">
+              <thead class="table-light">
+                <tr>
+                  <th width="25%">Earning Name</th>
+                  <th width="20%">Payout Type</th>
+                  <th width="20%">Annual Amount</th>
+                  <th width="20%">Payout Month</th>
+                  <th width="15%" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of airDeductions">
+                  <td>{{a.head_name || a.payslip_name || 'Earning Name'}}</td>
+                  <td>{{a.deduction_frequency==1?'One Time': 'Recurring'}}</td>
+                  <td>{{a.annual_amount | number:'1.2-2'}}</td>
+                  <td>{{a.month}}</td>
+                  <td class="text-end">
+                      <button type="button" class="btn-action-icon edit me-1"
+                      (click)="openAirTravelModal(a,airModal)" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                      <button type="button" class="btn-action-icon delete"
+                      (click)="deleteAirTravel(a)" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="airDeductions.length === 0">
+                  <td colspan="5" class="text-muted text-center">No air travel allowances configured.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div> 
+          </div> 
+          
+          <!-- Other Deduction -->
+          <div class="tab-section">
+            <h3 class="tab-section-title">
+              <i class="bi bi-calculator me-2"></i>Other Deductions & Benefits
+            </h3>
+            <div class="tab-section-card">
+              <div class="table-container">
+                <table class="compact-table">
+              <thead class="table-light">
+                <tr>
+                  <th>Deduction Name</th>
+                  <th>Calculation Type</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let b of benefits">
+                  <tr>
+                    <td><strong>{{ b.head_name||b.payslip_name || 'Benefit Plan' }}</strong></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td style="padding-left: 30px;">Employer's Contribution</td>
+                    <td>{{ getBenefitCalculationType(b.employer_amount_mode, b.employer_amount_value) }}</td>
+                    <td>
+
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding-left: 30px;">Employee's Contribution</td>
+                    <td>{{ getBenefitCalculationType(b.employee_amount_mode, b.employee_amount_value) }}</td>
+                    <td class="text-end" *ngIf="!b.is_gcc">
+                        <button class="btn-action-icon edit me-1" (click)="openBenefitModal(b,benefitModal)">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                        <button class="btn-action-icon delete" (click)="deleteBenefit(b)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </ng-container>
+                <ng-container *ngFor="let b of deductions">
+                  <tr>
+                    <td><strong>{{ b.payslip_name || 'Deduction Plan' }}</strong></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">Employer's Contribution</td>
+                    <td> {{getBenefitCalculationType(b.amountMode, b.amountValue)}} {{b.employee_percent}} {{b.amount_mode_name}}</td>
+                    <td class="text-end">
+                        <button class="btn-action-icon edit me-1"
+                        (click)="openDeductionModal(b,deductionModal)" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                        <button class="btn-action-icon delete" (click)="deleteDeduction(b)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </ng-container>
+                <tr *ngIf="benefits.length === 0 && deductions.length === 0">
+                  <td colspan="3" class="text-muted text-center">No benefits or deductions configured.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      </div>
+    </ng-container>
+      
+      <ng-container *ngSwitchCase="'leave'">
+        <div class="tab-content-wrapper">
+          <div class="tab-section">
+            <h3 class="tab-section-title">
+              <i class="bi bi-calendar-event me-2"></i>Leave Records
+            </h3>
+            <div class="tab-section-card">
+              <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <span>No leave records available.</span>
+              </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+      
+      <ng-container *ngSwitchCase="'attendance'">
+        <app-employee-detail [for_emit]="for_emit"></app-employee-detail>
+      </ng-container>
+      
+    <ng-container *ngSwitchCase="'payslips'">
+        <div class="tab-content-wrapper">
+          <div class="tab-section">
+            <div class="tab-section-header">
+              <h3 class="tab-section-title">
+                <i class="bi bi-file-earmark-text me-2"></i>Payslips
+              </h3>
+            <div class="d-flex align-items-center">
+                <span class="text-muted me-2" style="font-size: 0.875rem;">Financial Year:</span>
+              <select class="form-select form-select-sm" style="width: auto;">
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+              </select>
+            </div>
+          </div>
+            <div class="tab-section-card">
+              <div class="table-container" *ngIf="payslipData && payslipData.length > 0">
+                <table class="compact-table">
+              <thead class="table-light">
+                <tr>
+                  <th class="border-0 py-3 px-4 fw-semibold">PAYMENT DATE</th>
+                  <th class="border-0 py-3 px-4 fw-semibold">MONTH</th>
+                  <th class="border-0 py-3 px-4 fw-semibold">PAYSLIPS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let payslip of payslipData" class="border-bottom">
+                  <td class="py-3 px-4">{{ payslip.pay_date | date:'dd MMM yyyy' }}</td>
+                  <td class="py-3 px-4">{{ payslip.payslip?.company_info?.payslip_month || payslip.payslip?.employee_summary?.pay_period }}</td>
+                  <td class="py-3 px-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn-action-icon edit" 
+                              (click)="downloadPayslip(payslip)"
+                              title="Download Payslip">
+                        <i class="bi bi-download"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+              <div *ngIf="!payslipData || payslipData.length === 0" class="empty-state">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>No payslips available for this employee.</span>
+              </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+      
+    <ng-container *ngSwitchCase="'loans'">
+        <div class="tab-content-wrapper">
+          <div class="tab-section">
+            <div class="tab-section-header">
+              <h3 class="tab-section-title">
+                <i class="bi bi-journal-text me-2"></i>Loan Ledger
+              </h3>
+              <button class="btn-primary btn-sm" (click)="openCreateLoanModal()">
+            <i class="bi bi-plus-circle me-1"></i>
+            Create New Loan
+          </button>
+        </div>
+            <div class="tab-section-card">
+              <div class="table-container" *ngIf="loanLedgers">
+                <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Loan Type</th>
+                  <th>Principal</th>
+                  <th>Total Paid</th>
+                  <th>Emi amount</th>
+                  <th>Outstanding</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let ledger of loanLedgers">
+                  <td>{{ ledger.loan_type }}</td>
+                  <td>{{ ledger.principal_amount }}</td>
+                  <td>{{ ledger.total_amount_paid }}</td>
+                  <td>{{ ledger.emi_amount }}</td>
+                  <td>{{ ledger.outstanding }}</td>
+                  <td>{{ ledger.status | titlecase }}</td>
+                  <td>
+                      <button class="btn-action-icon edit me-1" (click)="editLoan(ledger.loan_id)"
+                      title="Edit Loan">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                      <button class="btn-action-icon delete" (click)="deleteLoan(ledger.loan_id)"
+                      title="Delete Loan">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+              <div *ngIf="loanLedgers?.length == 0" class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <span>No loans found for the selected employee.</span>
+              </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+      
+    <ng-container *ngSwitchCase="'documents'">
+        <div class="tab-content-wrapper">
+          <div class="tab-section">
+            <h3 class="tab-section-title">
+              <i class="bi bi-folder me-2"></i>Uploaded Documents
+            </h3>
+            <div class="tab-section-card">
+              <div class="table-container">
+                <table class="compact-table">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Document No</th>
+                <th>Issued On</th>
+                <th>Valid From</th>
+                <th>Expires On</th>
+                <th>Primary</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let doc of documentList; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ doc.document?.title }}</td>
+                <td>{{ doc.document?.type_name }}</td>
+                <td>{{ doc.document?.document_number || '-' }}</td>
+                <td>{{ doc.document?.issued_on ? (doc.issued_on | date:'dd-MMM-yyyy') : '-' }}</td>
+                <td>{{ doc.document?.valid_from ? (doc.valid_from | date:'dd-MMM-yyyy') : '-' }}</td>
+                <td>{{ doc.document?.expires_on ? (doc.expires_on | date:'dd-MMM-yyyy') : '-' }}</td>
+                <td>
+                    <span class="badge completed" *ngIf="doc.is_primary">Yes</span>
+                    <span class="badge" *ngIf="!doc.is_primary">No</span>
+                </td>
+                <td class="text-center">
+                    <button class="btn-action-icon edit" (click)="downloadDocument(doc)" title="Download">
+                    <i class="bi bi-download"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="!documentList.length > 0">
+                  <td colspan="9" class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <span>No documents uploaded yet.</span>
+                  </td>
+              </tr>
+            </tbody>
+          </table>
+              </div>
+            </div>
+        </div>
+      </div>
+    </ng-container>
+  </ng-container>
+  </section>
+</div>
+
+<!-- Edit/Add Employee Modal -->
+<ng-template #addEmployeeModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="addEmployeeModalLabel">{{ selectedEmployee ? 'Edit Employee' : 'Add New Employee' }}
+      </h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <app-add-employee [employeeToEdit]="selectedEmployee"></app-add-employee>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Air Travel Allowance Modal -->
+<ng-template #airModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4 class="modal-title">Add Air Travel Allowance</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <app-air-travel-earning-create [id]="id" [data]="airData"
+        [airTravelModalRef]="airTravelModalRef"></app-air-travel-earning-create>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Deduction Modal -->
+<ng-template #deductionModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4 class="modal-title">Add Deductions</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <app-deduction-create [id]="id" [data]="deductionData" [deductionModalRef]="deductionModalRef"></app-deduction-create>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #benefitModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4 class="modal-title">Add Benefits</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <app-benefit-creation [employee]="id" [data]="benefitData" [benefitsModalRef]="benefitsModalRef"></app-benefit-creation>
+    </div>
+  </div>
+</ng-template>
+
+<div *ngIf="!employee" class="alert alert-warning mt-4">Employee not found.</div>

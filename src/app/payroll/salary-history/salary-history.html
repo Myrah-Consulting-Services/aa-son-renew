@@ -1,0 +1,106 @@
+<div class="salary-history-modal">
+  <!-- Modal Header -->
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <i class="bi bi-clock-history me-2"></i>
+      Salary Revision History
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+  </div>
+
+  <!-- Modal Body -->
+  <div class="modal-body">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading salary history...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error }}
+    </div>
+
+    <!-- No Data State -->
+    <div *ngIf="!loading && !error && salaryHistory.length === 0" class="text-center py-4">
+      <i class="bi bi-inbox display-4 text-muted"></i>
+      <p class="mt-2 text-muted">No salary revision history found</p>
+    </div>
+
+    <!-- Salary History Table -->
+    <div *ngIf="!loading && !error && salaryHistory.length > 0" class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Employee Name</th>
+            <th>Revision Date</th>
+            <th>Effective From</th>
+            <th>Monthly Salary</th>
+            <th>Annual Salary</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let revision of salaryHistory; let i = index">
+            <td>
+              <div class="fw-semibold">{{ revision.employee_name }}</div>
+            </td>
+            <td>
+              <div class="fw-semibold">{{ formatDate(revision.created_at) }}</div>
+              <small class="text-muted">{{ formatDate(revision.updated_at) }}</small>
+            </td>
+            <td>
+              <span class="badge bg-info">{{ formatDate(revision.revised_salary_effective_from) }}</span>
+            </td>
+            <td>
+              <div class="text-muted">{{ formatCurrency(revision.gross_monthly_earnings) }}</div>
+            </td>
+            <td>
+              <div class="fw-bold text-success">{{ formatCurrency(revision.gross_annual_earnings) }}</div>
+            </td>
+            <td>
+              <span class="text-truncate d-inline-block" style="max-width: 150px;" 
+                    [title]="revision.reason">
+                {{ revision.reason || 'N/A' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" 
+                    [class]="revision.status === 'approved' ? 'bg-success' : 
+                            revision.status === 'pending' ? 'bg-warning' : 
+                            revision.status === 'rejected' ? 'bg-danger' : 'bg-secondary'">
+                {{ revision.status || 'Unknown' | titlecase }}
+              </span>
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-primary btn-sm" 
+                        title="View Details"
+                        (click)="viewRevisionDetails(revision)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" 
+                        title="Download Certificate"
+                        (click)="downloadRevisionCertificate(revision)">
+                  <i class="bi bi-download"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal Footer -->
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal()">
+      <i class="bi bi-x me-1"></i> Close
+    </button>
+  </div>
+</div>

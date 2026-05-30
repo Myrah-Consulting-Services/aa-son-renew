@@ -1,0 +1,184 @@
+<div class="container-fluid py-4">
+    <div class="card shadow-sm border-0 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-primary mb-0">
+          <i class="bi bi-exclamation-diamond me-2"></i>Party wise Bills
+        </h3>
+        <div class="d-flex gap-2">
+          <!-- <button class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-download me-1"></i>Export
+          </button>
+          <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i>Print
+          </button> -->
+        </div>
+      </div>
+  
+      <!-- Summary Cards -->
+      <div class="row g-3 mb-4" *ngIf="summary">
+        <div class="col-6 col-md-3">
+          <div class="card border-0 bg-light h-100">
+            <div class="card-body">
+              <div class="text-muted small">Total Bills</div>
+              <div class="fs-5 fw-bold">{{ summary.total_bills }}</div>
+              <div class="text-primary">AED {{ summary.total_bills_amount | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background: #e8f7ee">
+            <div class="card-body">
+              <div class="text-muted small">Paid Bills</div>
+              <div class="fs-5 fw-bold text-success">{{ summary.total_paid_bills }}</div>
+              <div class="text-success">AED {{ summary.total_paid_amount | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background: #fff7e6">
+            <div class="card-body">
+              <div class="text-muted small">Partially Paid</div>
+              <div class="fs-5 fw-bold text-warning">{{ summary.total_partiallypaid_bills }}</div>
+              <div class="text-warning">AED {{ summary.total_partiallypaid_amount | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background: #fdecec">
+            <div class="card-body">
+              <div class="text-muted small">Unpaid Bills</div>
+              <div class="fs-5 fw-bold text-danger">{{ summary.total_unpaid_bills }}</div>
+              <div class="text-danger">AED {{ summary.total_unpaid_amount | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Filters -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <label class="form-label">From Date</label>
+          <input type="date" class="form-control" [(ngModel)]="dateFrom">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">To Date</label>
+          <input type="date" class="form-control" [(ngModel)]="dateTo">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Search</label>
+          <input type="text" class="form-control" placeholder="Bill or Supplier..." [(ngModel)]="searchTerm">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-primary w-100">
+            <i class="bi bi-search me-1"></i>Search
+          </button>
+        </div>
+      </div>
+  
+      <!-- Bills Table -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-primary">
+            <tr>
+              <th>Bill No</th>
+              <th>Date</th>
+              <!-- <th>Due Date</th> -->
+              <th>Supplier</th>
+              <th class="text-end">Total (AED )</th>
+              <!-- <th class="text-end">Amount Due</th> -->
+              <th>Status</th>
+              <!-- <th>Days Overdue</th> -->
+              <!-- <th>Action</th> -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let bill of filterBills()">
+              <td class="fw-semibold text-primary">{{ bill.reference_no }}</td>
+              <td>{{ bill.invoice_date  }}</td>
+              <!-- <td>{{ bill.due_date  }}</td> -->
+              <td>{{ bill.party_name }}</td>
+              <td class="text-end">{{ bill.amount | number:'1.2-2' }}</td>
+              <!-- <td class="text-end fw-bold text-danger">{{ bill.amount_due | number:'1.2-2' }}</td> -->
+              <td>
+                <span class="badge" [ngClass]="{
+                  'bg-danger': bill.payment_status
+                  === 'Unpaid',
+                  'bg-warning text-dark': bill.payment_status
+                  === 'Partial',
+                  'bg-success text-dark': bill.payment_status
+                  === 'Paid'
+                }">{{ bill.payment_status }}</span>
+              </td>
+              <!-- <td class="text-center">
+                <span [ngClass]="{'text-danger': bill.days_overdue > 0, 'text-muted': bill.days_overdue === 0}">
+                  {{ bill.days_overdue > 0 ? bill.days_overdue : '-' }}
+                </span>
+              </td> -->
+              <!-- <td>
+                <button class="btn btn-outline-secondary btn-sm" title="View">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </td> -->
+            </tr>
+            <tr *ngIf="filterBills().length === 0">
+              <td colspan="9" class="text-center text-muted py-4">
+                <i class="bi bi-search fs-1 d-block mb-2"></i>
+                No outstanding bills found.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Controls -->
+    <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="!isLoading && pagination.total_pages > 1">
+        <div class="d-flex align-items-center gap-2">
+          <label class="form-label mb-0 me-2">Page Size:</label>
+          <select class="form-select form-select-sm" style="width: auto;" (change)="onPageSizeChange(+$event.target.value)">
+            <option [value]="10" [selected]="pageSize === 10">10</option>
+            <option [value]="25" [selected]="pageSize === 25">25</option>
+            <option [value]="50" [selected]="pageSize === 50">50</option>
+            <option [value]="100" [selected]="pageSize === 100">100</option>
+          </select>
+          <small class="text-muted ms-2">
+            Showing {{ showingFrom }} to {{ showingTo }} of {{ pagination.total_data || 0 }} entries
+          </small>
+        </div>
+        
+        <nav aria-label="Purchase register pagination">
+          <ul class="pagination pagination-sm mb-0">
+            <!-- First Page -->
+            <li class="page-item" [class.disabled]="pagination.page_number == 1">
+              <button class="page-link" (click)="onPageChange(1)" [disabled]="pagination.page_number == 1">
+                <i class="bi bi-chevron-double-left"></i>
+              </button>
+            </li>
+            
+            <!-- Previous Page -->
+            <li class="page-item" [class.disabled]="pagination.page_number == 1">
+              <button class="page-link" (click)="onPageChange(pagination.page_number - 1)" [disabled]="pagination.page_number == 1">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            </li>
+            
+            <!-- Page Numbers -->
+            <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === pagination.page_number">
+              <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+            </li>
+            
+            <!-- Next Page -->
+            <li class="page-item" [class.disabled]="pagination.page_number == pagination.total_pages">
+              <button class="page-link" (click)="onPageChange(pagination.page_number + 1)" [disabled]="pagination.page_number == pagination.total_pages">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </li>
+            
+            <!-- Last Page -->
+            <li class="page-item" [class.disabled]="pagination.page_number == pagination.total_pages">
+              <button class="page-link" (click)="onPageChange(pagination.total_pages)" [disabled]="pagination.page_number == pagination.total_pages">
+                <i class="bi bi-chevron-double-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>    
+  </div> 

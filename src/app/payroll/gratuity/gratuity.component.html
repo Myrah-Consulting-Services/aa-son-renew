@@ -1,0 +1,333 @@
+<div class="gratuity-container">
+  <!-- Compact Header -->
+  <div class="header-section py-3">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-calculator fs-3 text-primary me-3"></i>
+            <div>
+              <h4 class="mb-1">End of Service Benefits (EOSB) - UAE</h4>
+              <small class="text-muted">UAE Labour Law Compliant Gratuity Calculation</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="badge bg-info text-dark">
+            <i class="bi bi-info-circle me-1"></i>UAE Law Compliant
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container-fluid">
+    <div class="row g-3">
+      <!-- Left Panel - Forms -->
+      <div class="col-md-6">
+        <!-- Employee Selection -->
+        <div class="card">
+          <div class="card-header py-2">
+            <h6 class="mb-0"><i class="bi bi-person-plus me-2"></i>Employee Selection</h6>
+          </div>
+          <div class="card-body py-3">
+            <form [formGroup]="employeeForm" (ngSubmit)="onEmployeeSelect()">
+              <div class="row g-2">
+                <div class="col-md-8">
+                  <label class="form-label small mb-1">Select Employee</label>
+                  <select class="form-select form-select-sm" formControlName="employeeId" (change)="onEmployeeSelect()">
+                    <option value="">Choose an employee...</option>
+                    <option *ngFor="let emp of employees" [value]="emp.id">
+                      {{ emp.first_name }} {{ emp.last_name }} - {{ emp.designation_name }} 
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small mb-1">Calculation Date</label>
+                  <input type="date" class="form-control form-control-sm" formControlName="calculationDate">
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Gratuity Calculation Form -->
+        <div class="card mt-3" *ngIf="selectedEmployee">
+          <div class="card-header py-2">
+            <h6 class="mb-0"><i class="bi bi-calculator me-2"></i>EOSB Calculation Details (UAE)</h6>
+          </div>
+          <div class="card-body py-3">
+            <form [formGroup]="gratuityForm">
+              <!-- Employee Details & Basic Info -->
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Basic Salary (AED)</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="basic_salary" readonly>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Gross Salary (AED)</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="gross_salary" readonly>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Joining Date</label>
+                  <input type="date" class="form-control form-control-sm" formControlName="joining_date" readonly>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Last Working Date</label>
+                  <input type="date" class="form-control form-control-sm" formControlName="last_working_date"
+                    [max]="employeeForm.get('calculationDate')?.value">
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Reason for Leaving</label>
+                  <select class="form-select form-select-sm" formControlName="reason_for_leaving">
+                    <option *ngFor="let reason of reasonOptions" [value]="reason.value">
+                      {{ reason.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Unpaid Leave Days</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="unpaid_leave_days" placeholder="0" readonly>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Additional Benefits (AED)</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="additional_benefits" placeholder="0">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Deductions (AED)</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="deductions" placeholder="0" readonly>
+                </div>
+              </div>
+
+              <!-- Action Button -->
+              <div class="mt-3">
+                <button type="button" class="btn btn-primary w-100" (click)="calculateGratuity()"
+                  [disabled]="gratuityForm.invalid || isCalculating">
+                  <i class="bi bi-calculator me-1"></i>
+                  {{ isCalculating ? 'Calculating...' : 'Calculate EOSB (UAE)' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel - Results -->
+      <div class="col-md-6">
+        <!-- UAE EOSB Settings -->
+        <div class="card mb-3">
+          <div class="card-header bg-info text-white py-2">
+            <h6 class="mb-0"><i class="bi bi-gear me-2"></i>UAE EOSB Settings</h6>
+          </div>
+          <div class="card-body py-3">
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="d-flex justify-content-between mb-1">
+                  <small>Basic Rate:</small>
+                  <small>{{ gratuitySettings.basicSalaryPercentage }} days/year</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex justify-content-between mb-1">
+                  <small>Max Years:</small>
+                  <small>{{ gratuitySettings.maxYears }} years</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex justify-content-between mb-1">
+                  <small>Max Amount:</small>
+                  <small>{{ getCurrencyFormat(gratuitySettings.maxAmount) }}</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex justify-content-between mb-1">
+                  <small>Min Service:</small>
+                  <small>{{ gratuitySettings.minServiceYears }} year</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex justify-content-between mb-1">
+                  <small>UAE Law:</small>
+                  <small class="text-success">{{ gratuitySettings.uaeLawCompliant ? 'Compliant' : 'Non-Compliant' }}</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex justify-content-between mb-1">
+                  <small>Prorated:</small>
+                  <small>{{ gratuitySettings.proratedEnabled ? 'Enabled' : 'Disabled' }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculation Results -->
+        <div class="card" *ngIf="showResults && gratuityCalculations.length > 0">
+          <div class="card-header bg-success text-white py-2">
+            <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>UAE EOSB Calculation Results</h6>
+          </div>
+          <div class="card-body py-3">
+            <div *ngFor="let calc of gratuityCalculations">
+              <!-- Employee Info -->
+              <div class="mb-3">
+                <h6 class="text-primary mb-1">{{ calc.employee.employee_name }}</h6>
+                <small class="text-muted">{{ calc.employee.designation }} | ID: {{ calc.employee.employee_id }}</small>
+              </div>
+
+              <!-- Eligibility Check -->
+              <div *ngIf="!calc.eligible" class="alert alert-warning py-2">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Not Eligible:</strong> {{ calc.reason }}
+              </div>
+
+              <!-- Calculation Results -->
+              <div *ngIf="calc.eligible" class="calculation-results">
+                <!-- Service Summary -->
+                <div class="mb-3">
+                  <h6 class="text-secondary small mb-2">Service Summary</h6>
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <div class="d-flex justify-content-between mb-1">
+                        <small>Service Years:</small>
+                        <small>{{ calc.serviceYears.toFixed(2) }} years</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="d-flex justify-content-between mb-1">
+                        <small>Adjusted Service:</small>
+                        <small>{{ calc.adjustedServiceYears.toFixed(2) }} years</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="d-flex justify-content-between mb-1">
+                        <small>Basic Salary:</small>
+                        <small>{{ getCurrencyFormat(calc.basicSalary) }}</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="d-flex justify-content-between mb-1">
+                        <small>Gross Salary:</small>
+                        <small>{{ getCurrencyFormat(calc.grossSalary) }}</small>
+                      </div>
+                    </div>
+                    <div class="col-6" *ngIf="calc.unpaidLeaveDays > 0">
+                      <div class="d-flex justify-content-between mb-1">
+                        <small>Unpaid Leave:</small>
+                        <small class="text-warning">{{ calc.unpaidLeaveDays }} days</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Calculation Breakdown -->
+                <div class="mb-3">
+                  <h6 class="text-secondary small mb-2">Calculation Breakdown</h6>
+                  <div class="breakdown-list">
+                    <div *ngFor="let detail of calc.calculationDetails" class="mb-2 p-2 bg-light rounded">
+                      <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-bold">{{ detail.type }}</small>
+                        <small class="fw-bold"
+                          [ngClass]="{'text-success': detail.amount > 0, 'text-danger': detail.amount < 0}">
+                          {{ getCurrencyFormat(Math.abs(detail.amount)) }}
+                        </small>
+                      </div>
+                      <small class="text-muted">{{ detail.formula }}</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Final Amount -->
+                <div class="mb-3 p-2 bg-light rounded">
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <div class="d-flex justify-content-between">
+                        <strong>Gross EOSB:</strong>
+                        <strong class="text-primary">{{ getCurrencyFormat(calc.gratuityAmount) }}</strong>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="d-flex justify-content-between">
+                        <strong>Net Amount:</strong>
+                        <strong class="text-success">{{ getCurrencyFormat(calc.netAmount) }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Additional Info -->
+                <div class="mb-3">
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <div class="d-flex justify-content-between mb-1">
+                        <small>Additional Benefits:</small>
+                        <small>{{ getCurrencyFormat(calc.additionalBenefits) }}</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="d-flex justify-content-between mb-1">
+                        <small>Deductions:</small>
+                        <small class="text-danger">{{ getCurrencyFormat(calc.deductions) }}</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="row g-2">
+                  <div class="col-6">
+                    <button class="btn btn-success w-100 btn-sm" (click)="saveGratuityCalculation()">
+                      <i class="bi bi-save me-1"></i> Save EOSB
+                    </button>
+                  </div>
+                  <div class="col-6">
+                    <button class="btn btn-outline-primary w-100 btn-sm" (click)="exportGratuityReport()">
+                      <i class="bi bi-download me-1"></i> Export Report
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card" *ngIf="!showResults">
+          <div class="card-header bg-light py-2">
+            <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Processing Steps</h6>
+          </div>
+          <div class="card-body py-3">
+            <ol class="small mb-0">
+              <li>Select employee & set calculation date</li>
+              <li>Review auto-filled details</li>
+              <li>Set last working date & reason</li>
+              <li>Add benefits/deductions if any</li>
+              <li>Click "Calculate EOSB" to see results</li>
+              <li>Save calculation or export report</li>
+            </ol>
+            
+            <div class="mt-3 p-2 bg-light rounded">
+              <h6 class="text-secondary small mb-2">UAE Labour Law Formula</h6>
+              <ul class="small mb-0">
+                <li><strong>First 5 years:</strong> (Basic Salary ÷ 30) × 21 days × Service Years</li>
+                <li><strong>Beyond 5 years:</strong> (Basic Salary ÷ 30) × 30 days × Additional Years</li>
+                <li><strong>Final year:</strong> Prorated calculation for partial years</li>
+                <li><strong>Unpaid leave:</strong> Deducted from total service period</li>
+                <li><strong>No maximum cap:</strong> UAE Law allows unlimited EOSB amount</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

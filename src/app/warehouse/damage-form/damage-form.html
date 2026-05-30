@@ -1,0 +1,58 @@
+<div class="modal-header">
+  <h4 class="modal-title">New Damage Report</h4>
+  <button type="button" class="btn-close" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="mb-3">
+          <label for="date" class="form-label">Date *</label>
+          <input type="date" class="form-control" id="date" formControlName="date">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="mb-3">
+          <label for="warehouseId" class="form-label">Warehouse *</label>
+          <select class="form-select" formControlName="warehouseId">
+            <option *ngFor="let w of warehouses" [value]="w.id">{{w.name}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="mb-3">
+          <label for="locationId" class="form-label">Location *</label>
+          <select class="form-select" formControlName="locationId">
+            <option *ngFor="let l of locations" [value]="l.id">{{l.name}}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+              <label for="itemId" class="form-label">Item *</label>
+              <select class="form-select" formControlName="itemId">
+                <option *ngFor="let i of items" [value]="i.id">{{i.name}}</option>
+              </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="quantity" class="form-label">Damaged Quantity *</label>
+                <input type="number" class="form-control" formControlName="quantity" min="1">
+            </div>
+        </div>
+    </div>
+    <div class="mb-3">
+      <label for="reason" class="form-label">Reason for Damage *</label>
+      <textarea class="form-control" formControlName="reason" rows="3"></textarea>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+  <button type="button" class="btn btn-primary" (click)="save()" [disabled]="form.invalid">
+    Report Damage
+  </button>
+</div>

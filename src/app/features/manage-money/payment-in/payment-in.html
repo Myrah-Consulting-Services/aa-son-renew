@@ -1,0 +1,426 @@
+<div *ngIf="isModal" class="payment-modal-header">
+  <h5 class="payment-modal-title">
+    <i class="bi bi-receipt"></i>
+    <span>Edit Payment In</span>
+  </h5>
+  <button type="button" class="payment-close-btn" aria-label="Close" (click)="close()">
+    <i class="bi bi-x-lg"></i>
+  </button>
+</div>
+
+<form [formGroup]="paymentIn" class="payment-form-container">
+  <div *ngIf="loading" class="payment-loading">
+    <div class="payment-loading-skeleton">
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line"></div>
+                        </div>
+                    </div>
+
+  <div class="payment-content" *ngIf="!loading">
+    <!-- Main Payment Form -->
+    <div class="payment-form-grid">
+      <!-- Left Column: Basic Details -->
+      <div class="payment-section">
+        <div class="payment-section-header">
+          <i class="bi bi-file-earmark-text"></i>
+          <span>Payment Details</span>
+        </div>
+        <div class="payment-form-body">
+          <div class="payment-field-group">
+            <label class="payment-label">
+              Receipt No
+            </label>
+            <input 
+              type="text" 
+              id="step14" 
+              formControlName="receipt_no" 
+              class="payment-input" 
+              readonly
+            />
+                </div>
+
+          <div class="payment-field-group">
+            <label class="payment-label">
+              Receipt Date <span class="payment-required">*</span>
+            </label>
+            <input 
+              type="date" 
+              id="receipt_date" 
+              formControlName="receipt_date" 
+              class="payment-input" 
+            />
+            <div class="payment-error" *ngIf="paymentIn.controls['receipt_date'].hasError('required') && (paymentIn.controls['receipt_date'].dirty || paymentIn.controls['receipt_date'].touched)">
+              Required field
+            </div>
+        </div>
+
+          <div class="payment-field-group">
+            <label class="payment-label">
+              Received For <span class="payment-required">*</span>
+            </label>
+            <select 
+              class="payment-select" 
+              formControlName="received_for1" 
+              id="step16" 
+              required 
+              (change)="getpaidledgers(paymentIn.value.received_for1?.id)"
+            >
+              <option value="">Select Ledger</option>
+                            <option *ngFor="let item of received_F" [ngValue]="item">{{ item.received_for }}</option>
+                        </select>
+            <div class="payment-error" *ngIf="paymentIn.controls['received_for1'].hasError('required') && (paymentIn.controls['received_for1'].dirty || paymentIn.controls['received_for1'].touched)">
+              Required field
+            </div>
+                    </div>
+
+          <!-- Party Selection (when received_for1.id == 18) -->
+          <div *ngIf="paymentIn.value.received_for1?.id==18" class="payment-field-group">
+            <label class="payment-label">
+              Received For {{paymentIn.value.received_for1?.received_for}} <span class="payment-required">*</span>
+              <button type="button" class="payment-add-btn" (click)="inExtraLarge(exlargeModal)">
+                <i class="bi bi-plus-circle"></i> Create Party
+              </button>
+                        </label>
+            <select 
+              class="payment-select" 
+              formControlName="party_name1" 
+              id="Party_name" 
+              required 
+              (change)="onPartySelected()"
+            >
+              <option value="">Select Party</option>
+                            <option *ngFor="let item of for_received" [ngValue]="item">{{ item.partyName }}</option>
+                        </select>
+                    </div>
+
+          <div *ngIf="paymentIn.value.party_name1!=undefined && paymentIn.value.received_for1?.id==18" class="payment-balance-badge">
+            <i class="bi bi-wallet2"></i>
+            <span>Pending Balance: {{paymentIn.value.party_name1?.current_balance | currency:'AED'}}</span>
+                    </div>
+
+          <!-- Ledger Selection (when received_for1.id != 18) -->
+          <div *ngIf="paymentIn.value.received_for1?.id!=18" class="payment-field-group">
+            <label class="payment-label">
+              Received For {{paymentIn.value.received_for1?.received_for}} <span class="payment-required">*</span>
+            </label>
+            <select 
+              class="payment-select" 
+              formControlName="ledger_name1" 
+              id="ledger_name" 
+              required
+            >
+              <option value="">Select Ledger</option>
+                            <option *ngFor="let item of for_received" [ngValue]="item">{{ item.ledger_name }}</option>
+                        </select>
+                    </div>
+
+          <div class="payment-amount-row">
+            <div class="payment-field-group">
+              <label class="payment-label">
+                Amount <span class="payment-required">*</span>
+              </label>
+              <div class="payment-amount-input">
+                <span class="payment-currency">AED</span>
+                <input 
+                  type="number" 
+                  class="payment-input payment-input-amount" 
+                  name="amount" 
+                  id="amount" 
+                  formControlName="amount" 
+                  (keyup)="chngeA(paymentIn.value.amount)" 
+                  placeholder="0.00"
+                />
+              </div>
+              <div class="payment-error" *ngIf="paymentIn.controls['amount'].hasError('required') && (paymentIn.controls['amount'].dirty || paymentIn.controls['amount'].touched)">
+                Required field
+              </div>
+              <div class="payment-error" *ngIf="paymentIn.controls['amount'].hasError('min') && (paymentIn.controls['amount'].dirty || paymentIn.controls['amount'].touched)">
+                Enter valid amount
+                            </div>
+                        </div>
+
+            <div class="payment-field-group">
+              <label class="payment-label">
+                Payment Mode <span class="payment-required">*</span>
+              </label>
+              <select 
+                formControlName="payment_type" 
+                class="payment-select" 
+                (change)="datetime(paymentIn.value.payment_type)" 
+                id="selected"
+              >
+                <option [value]="1">Cash</option>
+                <option [value]="2">Cheque</option>
+                <option [value]="3">Bank Transfer</option>
+                            </select>
+              <div class="payment-error" *ngIf="paymentIn.controls['payment_type'].hasError('required') && (paymentIn.controls['payment_type'].dirty || paymentIn.controls['payment_type'].touched)">
+                Required field
+              </div>
+                        </div>
+                    </div>
+
+          <div class="payment-field-group">
+            <label class="payment-label">
+              Received Against <span class="payment-required">*</span>
+            </label>
+            <select 
+              class="payment-select payment-select-multiple" 
+              formControlName="payment_for" 
+              multiple 
+              required
+            >
+              <option [disabled]="!v1" value="1">Advance</option>
+              <option value="2">Against Invoice</option>
+              <option [disabled]="!v2" value="3">On Account</option>
+                        </select>
+            <div class="payment-error" *ngIf="paymentIn.controls['payment_for'].hasError('required') && (paymentIn.controls['payment_for'].dirty || paymentIn.controls['payment_for'].touched)">
+              Required field
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      <!-- Right Column: Payment Method Details -->
+      <div class="payment-section">
+        <div class="payment-section-header">
+          <i class="bi bi-credit-card"></i>
+          <span>Payment Method</span>
+        </div>
+        <div class="payment-form-body">
+          <div class="payment-method-grid">
+            <!-- Cash Payment Fields -->
+            <div *ngIf="paymentIn.value.payment_type==1" class="payment-field-group">
+              <label class="payment-label">
+                Ledger Name <span class="payment-required">*</span>
+                <button class="payment-add-btn" (click)="largeModal2(largeDataModal2)">
+                  <i class="bi bi-plus-circle"></i> Add Cash Ledger
+                </button>
+                                </label>
+              <select 
+                class="payment-select" 
+                formControlName="handover_to" 
+                required
+              >
+                <option value="">Select Ledger</option>
+                                    <option *ngFor="let item of c_Ledger" [ngValue]="item?.id">{{ item?.ledger_name }}</option>
+                                </select>
+                            </div>
+
+            <!-- Bank/Cheque Payment Fields -->
+            <div *ngIf="paymentIn.value.payment_type==2 || paymentIn.value.payment_type==3" class="payment-field-group">
+              <label class="payment-label">
+                Select Bank <span class="payment-required">*</span>
+                <button type="button" class="payment-add-btn" (click)="largeModalbank(largeDataModalbank)">
+                  <i class="bi bi-plus-circle"></i> Add Bank
+                </button>
+                                </label>
+              <select 
+                class="payment-select" 
+                formControlName="bank" 
+                required
+              >
+                <option value="">Select Bank</option>
+                                    <option *ngFor="let item of bankList" [ngValue]="item.id">{{ item.bank_name }}</option>
+                                </select>
+                            </div>
+
+            <!-- Payment Date (Cash or Bank Transfer) -->
+            <div *ngIf="paymentIn.value.payment_type==1 || paymentIn.value.payment_type==3" class="payment-field-group">
+              <label class="payment-label">
+                Payment Date <span class="payment-required">*</span>
+              </label>
+              <input 
+                type="date" 
+                formControlName="cleared_date" 
+                class="payment-input" 
+              />
+                        </div>
+
+            <!-- Cheque Number -->
+            <div *ngIf="paymentIn.value.payment_type==2" class="payment-field-group">
+              <label class="payment-label">Cheque No</label>
+              <input 
+                type="text" 
+                formControlName="cheque_no" 
+                required 
+                class="payment-input" 
+                placeholder="Enter cheque number"
+              />
+                            </div>
+
+            <!-- Date Cleared (Cheque) -->
+            <div *ngIf="paymentIn.value.payment_type==2" class="payment-field-group">
+              <label class="payment-label">
+                Date Cleared <span class="payment-required">*</span>
+              </label>
+              <input 
+                type="date" 
+                formControlName="cleared_date" 
+                class="payment-input" 
+              />
+                            </div>
+
+            <!-- Reference Number (Bank Transfer) -->
+            <div *ngIf="paymentIn.value.payment_type==3" class="payment-field-group">
+              <label class="payment-label">Reference No</label>
+              <input 
+                type="text" 
+                formControlName="reference_no" 
+                class="payment-input" 
+                placeholder="Enter reference number"
+              />
+                            </div>
+                        </div>
+
+          <!-- Invoice Table -->
+          <div class="payment-invoice-section" *ngIf="show && paymentIn.value.received_for1?.id == 18">
+            <div class="payment-invoice-header" *ngIf="name">
+              <i class="bi bi-receipt-cutoff"></i>
+              <span>Received For {{ name.Party_name }}</span>
+                        </div>
+            <div class="payment-table-wrapper">
+              <table class="payment-table">
+                <thead>
+                  <tr>
+                    <th class="payment-table-checkbox"></th>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th class="payment-table-amount">Amount Receiving</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let topping of invoiceList; let i = index">
+                    <td class="payment-table-checkbox">
+                      <input 
+                        type="checkbox" 
+                        [checked]="topping.checked" 
+                        (change)="checkDta($event, i)"
+                        class="payment-checkbox"
+                      />
+                                        </td>
+                                        <td>{{ topping.invoice_no }}</td>
+                                        <td>{{ topping.invoice_date | date: 'dd/MM/yyyy'}}</td>
+                    <td>
+                      {{ topping.remaining_amt | currency:'AED' }}
+                      <span class="payment-pending" *ngIf="topping.a!=0">
+                        ({{ topping.a | currency:'AED'}} Pending)
+                      </span>
+                    </td>
+                    <td class="payment-table-amount">{{ topping.deductedAmount | currency:'AED'}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+            <div class="payment-balance-summary" *ngIf="tempBalAmt!=undefined">
+              <span class="payment-balance-label">Balance Remain:</span>
+              <span class="payment-balance-amount">{{tempBalAmt | currency:'AED'}}</span>
+                        </div>
+                    </div>
+
+          <!-- Description -->
+          <div class="payment-field-group">
+            <label class="payment-label">Description</label>
+            <textarea 
+              formControlName="notes" 
+              class="payment-textarea" 
+              rows="3"
+              placeholder="Add any additional notes..."
+            ></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="payment-submit-section">
+            <button 
+              type="button" 
+              class="payment-submit-btn" 
+              (click)="submit()"
+              [disabled]="disabledbutton || !paymentIn.valid"
+            >
+              <i class="bi bi-check-circle"></i>
+              <span>Record Payment</span>
+            </button>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</form>
+
+<!-- Show summary and download button only after submit -->
+<div *ngIf="receiptSaved" class="payment-success-wrapper">
+      <div class="payment-success-card">
+    <div class="payment-success-header">
+          <span class="payment-success-icon">
+            <i class="bi bi-check-circle-fill"></i>
+          </span>
+          <div class="payment-success-title">Payment Recorded Successfully!</div>
+          <div class="payment-success-message">You can now download or preview the payment receipt below.</div>
+        </div>
+    <button 
+      class="payment-download-btn" 
+      type="button" 
+      (click)="downloadReceipt()" 
+      title="Download or preview the payment receipt as PDF"
+    >
+      <i class="bi bi-file-earmark-pdf"></i>
+      <span>Download/Preview Receipt</span>
+          </button>
+        <div class="payment-summary-section">
+      <h6>Payment Summary</h6>
+      <div>
+        <span class="payment-summary-label">Party:</span>
+        <span class="payment-summary-value">{{ paymentIn.value.party_name1?.partyName || 'None' }}</span>
+          </div>
+      <div>
+        <span class="payment-summary-label">Payment Mode:</span>
+        <span class="payment-summary-value">
+              {{ paymentIn.value.payment_type === '1' ? 'Cash' : paymentIn.value.payment_type === '2' ? 'Cheque' : paymentIn.value.payment_type === '3' ? 'Bank Transfer' : 'N/A' }}
+            </span>
+          </div>
+      <div>
+        <span class="payment-summary-label">Selected Invoices:</span>
+        <span class="payment-summary-value">{{ selectedInvoiceCount }}</span>
+          </div>
+      <div>
+        <span class="payment-summary-label">Total Invoice Amount:</span>
+        <span class="payment-summary-value">{{ selectedInvoiceTotal | currency:'AED' }}</span>
+          </div>
+      <div>
+        <span class="payment-summary-label">Notes:</span>
+        <span class="payment-summary-value">{{ paymentIn.value.notes || '-' }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #exlargeModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title mt-0">CREATE PARTY</h5>
+        <button type="button" class="btn-close" aria-label="Close" id="createParty" (click)="modal.dismiss('Close click')"></button>
+    </div>
+    <div class="modal-body">
+        <app-party [ModalRef]="modalRef" (onSubmit)="partyCreateFunction($event)"></app-party>
+    </div>
+</ng-template>
+
+<ng-template #largeDataModal2 let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title mt-0" style="font-weight: 500; font-size: x-large;">LEDGER NAME</h5>
+        <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')" aria-hidden="true"></button>
+    </div>
+    <div class="modal-body">
+        <app-create-cash (cashAddLedger1)="cashAddLedger($event)" [modalRef]="modalRef" [ledger2]="emit_Ledger2"></app-create-cash>
+    </div>
+</ng-template>
+
+<ng-template #largeDataModalbank let-modal>
+    <div class="modal-header" style="padding-left: 28px; padding-bottom: 0px;">
+        <h5 class="modal-title mt-0 " style="font-size: large; font-weight: 500;">ADD NEW BANK</h5>
+        <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')" aria-hidden="true"></button>
+    </div>
+    <div class="modal-body">
+        <app-create-bank (bankSaved)="addBankFunction($event)" [modalRef]="modalRef"></app-create-bank>
+    </div>
+</ng-template>

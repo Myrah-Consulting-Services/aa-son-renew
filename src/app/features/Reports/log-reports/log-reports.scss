@@ -1,0 +1,91 @@
+.log-reports-container {
+  max-width: 900px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 24px 18px 32px 18px;
+}
+
+.log-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #41299b;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+  background: #fafbfc;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(65,41,155,0.04);
+}
+
+.log-table th, .log-table td {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.98rem;
+}
+
+.log-table thead {
+  background: #f0f0fa;
+}
+
+.log-table th {
+  color: #41299b;
+  font-weight: 600;
+  border-bottom: 2px solid #e0e4f4;
+}
+
+.log-table tbody tr {
+  border-bottom: 1px solid #e0e4f4;
+  transition: background 0.2s;
+}
+
+.log-table tbody tr:hover {
+  background: #f5f5fa;
+}
+
+.loc-badge, .ip-badge {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1976d2;
+  font-size: 0.95rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #fff;
+}
+.badge-primary { background: #41299b; }
+.badge-success { background: #43a047; }
+.badge-secondary { background: #bdbdbd; color: #333; }
+
+.no-data-message {
+  text-align: center;
+  margin: 40px 0 20px 0;
+}
+
+@media (max-width: 600px) {
+  .log-reports-container {
+    padding: 8px 2px 16px 2px;
+  }
+  .log-title {
+    font-size: 1.1rem;
+  }
+  .log-table th, .log-table td {
+    padding: 6px 4px;
+    font-size: 0.85rem;
+  }
+}

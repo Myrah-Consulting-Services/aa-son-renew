@@ -1,0 +1,208 @@
+<div class="container-fluid coa-page py-4">
+  <div class="breadcrumb-bar mb-3">
+    <a routerLink="/dashboard" class="crumb-link">
+      <i class="bi bi-house-door me-1"></i>Dashboard
+    </a>
+    <span class="crumb-separator">/</span>
+    <a routerLink="/reports/report-list" class="crumb-link">Reports</a>
+    <span class="crumb-separator">/</span>
+    <span class="crumb-active">Chart of Accounts</span>
+  </div>
+
+  <div class="card shadow-sm border-0 p-4 coa-card">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h3 class="fw-bold title mb-1">
+          <i class="bi bi-diagram-3 me-2"></i>Chart of Accounts
+        </h3>
+        <p class="subtitle mb-0">Review account structure, balances, and status across all ledgers.</p>
+      </div>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <button class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-printer me-1"></i>Print
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-chips mb-4">
+      <div class="chip">
+        <span>Total Accounts</span>
+        <strong>{{ filteredAccounts.length }}</strong>
+      </div>
+      <div class="chip">
+        <span>Active Accounts</span>
+        <strong>{{ getActiveAccountsCount() }}</strong>
+      </div>
+      <div class="chip">
+        <span>Categories</span>
+        <strong>{{ categories.length - 1 }}</strong>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4 filter-panel">
+      <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="text" class="form-control" placeholder="Search by code or name..." 
+               [(ngModel)]="searchTerm" (input)="onSearchChange()">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Category</label>
+        <select class="form-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
+          <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-primary" (click)="filterAccounts()">
+          <i class="bi bi-funnel me-1"></i>Apply Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Accounts Table -->
+    <div class="table-responsive coa-table-wrap">
+      <table class="table table-hover align-middle coa-table">
+        <thead>
+          <tr>
+            <th>Account Code</th>
+            <th>Account Name</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th class="text-end">Balance</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let account of filteredAccounts">
+            <td class="fw-semibold text-primary">
+              <ng-container *ngIf="editingAccountCode !== account.code; else codeEditField">
+                {{ account.code }}
+              </ng-container>
+              <ng-template #codeEditField>
+                <input class="form-control form-control-sm" [(ngModel)]="editDraft!.code">
+              </ng-template>
+            </td>
+            <td>
+              <ng-container *ngIf="editingAccountCode !== account.code; else nameEditField">
+                {{ account.name }}
+              </ng-container>
+              <ng-template #nameEditField>
+                <input class="form-control form-control-sm" [(ngModel)]="editDraft!.name">
+              </ng-template>
+            </td>
+            <td>
+              <ng-container *ngIf="editingAccountCode !== account.code; else categoryEditField">
+                {{ account.category }}
+              </ng-container>
+              <ng-template #categoryEditField>
+                <input class="form-control form-control-sm" [(ngModel)]="editDraft!.category">
+              </ng-template>
+            </td>
+            <td>
+              <ng-container *ngIf="editingAccountCode !== account.code; else typeEditField">
+                <span class="badge" [ngClass]="getAccountTypeClass(account.type)">
+                  {{ account.type }}
+                </span>
+              </ng-container>
+              <ng-template #typeEditField>
+                <select class="form-select form-select-sm" [(ngModel)]="editDraft!.type">
+                  <option value="Asset">Asset</option>
+                  <option value="Liability">Liability</option>
+                  <option value="Equity">Equity</option>
+                  <option value="Revenue">Revenue</option>
+                  <option value="Expense">Expense</option>
+                </select>
+              </ng-template>
+            </td>
+            <td class="text-end fw-bold" [ngClass]="{'text-success': account.balance >= 0, 'text-danger': account.balance < 0}">
+              <ng-container *ngIf="editingAccountCode !== account.code; else balanceEditField">
+                {{ account.balance | number:'1.2-2' }}
+              </ng-container>
+              <ng-template #balanceEditField>
+                <input type="number" class="form-control form-control-sm text-end" [(ngModel)]="editDraft!.balance">
+              </ng-template>
+            </td>
+            <td>
+              <ng-container *ngIf="editingAccountCode !== account.code; else statusEditField">
+                <span class="badge" [ngClass]="account.is_active ? 'bg-success' : 'bg-secondary'">
+                  {{ account.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </ng-container>
+              <ng-template #statusEditField>
+                <select class="form-select form-select-sm" [(ngModel)]="editDraft!.is_active">
+                  <option [ngValue]="true">Active</option>
+                  <option [ngValue]="false">Inactive</option>
+                </select>
+              </ng-template>
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm" *ngIf="editingAccountCode !== account.code; else editActions">
+                <button class="btn btn-outline-primary" title="View Details" (click)="onViewAccount(account)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-outline-secondary" title="Edit" (click)="onEditAccount(account)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+              </div>
+              <ng-template #editActions>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-success" title="Save" (click)="onSaveEdit()">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                  <button class="btn btn-outline-danger" title="Cancel" (click)="onCancelEdit()">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </ng-template>
+            </td>
+          </tr>
+          <tr *ngIf="filteredAccounts.length === 0">
+            <td colspan="7" class="text-center text-muted py-4">
+              <i class="bi bi-search fs-1 d-block mb-2"></i>
+              No accounts found matching your criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card summary-card mt-3" *ngIf="selectedAccount">
+      <div class="card-body">
+        <h6 class="card-title mb-2">Selected Account Details</h6>
+        <p class="mb-1"><strong>Code:</strong> {{ selectedAccount.code }}</p>
+        <p class="mb-1"><strong>Name:</strong> {{ selectedAccount.name }}</p>
+        <p class="mb-1"><strong>Category:</strong> {{ selectedAccount.category }}</p>
+        <p class="mb-1"><strong>Type:</strong> {{ selectedAccount.type }}</p>
+        <p class="mb-0"><strong>Balance (AED):</strong> {{ selectedAccount.balance | number:'1.2-2' }}</p>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <h6 class="card-title">Summary</h6>
+            <p class="mb-1">Total Accounts: {{ filteredAccounts.length }}</p>
+            <p class="mb-1">Active Accounts: {{ getActiveAccountsCount() }}</p>
+            <p class="mb-0">Categories: {{ categories.length - 1 }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card summary-card">
+          <div class="card-body">
+            <h6 class="card-title">Balance Summary</h6>
+            <p class="mb-1">Total Assets : {{ getTotalAssets() | number:'1.2-2' }}</p>
+            <p class="mb-1">Total Liabilities : {{ getTotalLiabilities() | number:'1.2-2' }}</p>
+            <p class="mb-0">Total Equity : {{ getTotalEquity() | number:'1.2-2' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

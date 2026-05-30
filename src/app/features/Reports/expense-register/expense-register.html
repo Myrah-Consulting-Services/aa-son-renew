@@ -1,0 +1,108 @@
+<div class="container-fluid py-4">
+    <div class="card shadow-sm border-0 p-4">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-book me-2"></i>Expense Register
+        </h3>
+        <!-- <button class="btn btn-outline-primary btn-sm" (click)="getExpenseRegister()">
+          <i class="bi bi-download me-1"></i>Export
+        </button> -->
+      </div>
+  
+      <!-- Filters -->
+      <div class="row g-3 align-items-end mb-4">
+        <div class="col-md-3">
+          <label for="dateFrom" class="form-label fw-semibold small">From</label>
+          <input type="date" class="form-control" id="dateFrom" [(ngModel)]="dateFrom" (change)="getExpenseRegister()">
+        </div>
+        <div class="col-md-3">
+          <label for="dateTo" class="form-label fw-semibold small">To</label>
+          <input type="date" class="form-control" id="dateTo" [(ngModel)]="dateTo" (change)="getExpenseRegister()">
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="row g-3 mb-4" *ngIf="expenseRegister as entries">
+        <div class="col-6 col-md-2">
+          <div class="card border-0 bg-light h-100">
+            <div class="card-body py-3">
+              <div class="text-muted small">Total Records</div>
+              <div class="fs-5 fw-bold">{{ totalRecords }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="card border-0 h-100" style="background:#e8f7ee">
+            <div class="card-body py-3">
+              <div class="text-muted small">Total Taxable</div>
+              <div class="fs-5 fw-bold text-success">{{ totalTaxable | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="card border-0 h-100" style="background:#fff7e6">
+            <div class="card-body py-3">
+              <div class="text-muted small">Total VAT</div>
+              <div class="fs-5 fw-bold text-warning">{{ totalVat | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background:#eef2ff">
+            <div class="card-body py-3">
+              <div class="text-muted small">Total Amount</div>
+              <div class="fs-5 fw-bold text-primary">{{ totalAmount | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 h-100" style="background:#fdecec">
+            <div class="card-body py-3">
+              <div class="text-muted small">Total Paid</div>
+              <div class="fs-5 fw-bold text-danger">{{ totalPaid | number:'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Generating Expense Register...</p>
+      </div>
+  
+      <!-- Report Body -->
+      <div class="table-responsive" *ngIf="!isLoading">
+        <table class="table table-bordered table-hover">
+          <thead class="table-light text-center">
+            <tr>
+              <th>Date</th>
+              <th>Party</th>
+              <th>Reference No</th>
+              <th class="text-end">Taxable Amount</th>
+              <th class="text-center">VAT Rate</th>
+              <th class="text-end">VAT</th>
+              <th class="text-end">Total Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let entry of expenseRegister as entries">
+              <td class="text-center">{{ entry.date | date }}</td>
+              <td>{{ entry.party_name }}</td>
+              <td class="text-center">{{ entry.reference_no || '-' }}</td>
+              <td class="text-end">{{ entry.taxable_amount | number:'1.2-2' }}</td>
+              <td class="text-center">{{ entry.vat_rate }}%</td>
+              <td class="text-end">{{ entry.vat | number:'1.2-2' }}</td>
+              <td class="text-end fw-semibold">{{ entry.total_amount | number:'1.2-2' }}</td>
+            </tr>
+            <tr *ngIf="(expenseRegister?.length || 0) === 0">
+              <td colspan="8" class="text-center text-muted p-4">No transactions found for the selected criteria.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div> 

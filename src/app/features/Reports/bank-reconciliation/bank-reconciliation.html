@@ -1,0 +1,204 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-bank me-2"></i>Bank Reconciliation
+      </h3>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-printer me-1"></i>Print
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <label class="form-label">Search Transactions</label>
+        <input type="text" class="form-control" placeholder="Search by description, reference..." 
+               [(ngModel)]="searchTerm">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Reconciliation Date</label>
+        <input type="date" class="form-control" [(ngModel)]="reconciliationDate">
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-primary w-100">
+          <i class="bi bi-search me-1"></i>Search
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Bank Account List -->
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">Bank Accounts</h6>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <div *ngFor="let account of bankAccounts" 
+                   class="list-group-item list-group-item-action cursor-pointer"
+                   [class.active]="selectedAccount?.id === account.id"
+                   (click)="selectAccount(account)">
+                <div>
+                  <h6 class="mb-1">{{ account.name }}</h6>
+                  <small class="text-muted">{{ account.bank_name }}</small>
+                  <br>
+                  <small class="text-muted">Acc: {{ account.account_number }}</small>
+                </div>
+                <div class="mt-2">
+                  <span class="badge bg-primary">Balance: {{ account.closing_balance | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reconciliation Details -->
+      <div class="col-md-9">
+        <div *ngIf="selectedAccount" class="card">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">{{ selectedAccount.name }} - Reconciliation</h6>
+              <span class="badge bg-info">{{ selectedAccount.bank_name }}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Account Summary -->
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6 class="card-title">Opening Balance</h6>
+                    <h5 class="mb-0">{{ selectedAccount.opening_balance | number:'1.2-2' }}</h5>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6 class="card-title">Closing Balance</h6>
+                    <h5 class="mb-0">{{ selectedAccount.closing_balance | number:'1.2-2' }}</h5>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-success text-white">
+                  <div class="card-body text-center">
+                    <h6 class="card-title">Total Credits</h6>
+                    <h5 class="mb-0">{{ calculateTotals().total_credits | number:'1.2-2' }}</h5>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                  <div class="card-body text-center">
+                    <h6 class="card-title">Total Debits</h6>
+                    <h5 class="mb-0">{{ calculateTotals().total_debits | number:'1.2-2' }}</h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-primary">
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Reference</th>
+                    <th>Bank Ref</th>
+                    <th class="text-end">Amount</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let transaction of filterTransactions()">
+                    <td>{{ transaction.date | date:'shortDate' }}</td>
+                    <td>{{ transaction.description }}</td>
+                    <td>
+                      <span class="badge bg-secondary">{{ transaction.reference }}</span>
+                    </td>
+                    <td>
+                      <span *ngIf="transaction.bank_statement_ref" class="badge bg-info">
+                        {{ transaction.bank_statement_ref }}
+                      </span>
+                      <span *ngIf="!transaction.bank_statement_ref" class="text-muted">-</span>
+                    </td>
+                    <td class="text-end fw-bold" [ngClass]="getTransactionTypeClass(transaction.type)">
+                      {{ transaction.amount | number:'1.2-2' }}
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="transaction.type === 'Credit' ? 'bg-success' : 'bg-danger'">
+                        {{ transaction.type }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="getReconciliationClass(transaction.is_reconciled)">
+                        {{ transaction.is_reconciled ? 'Reconciled' : 'Pending' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-sm" 
+                              [ngClass]="transaction.is_reconciled ? 'btn-success' : 'btn-outline-success'"
+                              (click)="markAsReconciled(transaction)"
+                              title="Toggle reconciliation status">
+                        <i class="bi" [ngClass]="transaction.is_reconciled ? 'bi-check-circle-fill' : 'bi-check-circle'"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Reconciliation Summary -->
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <div class="card border-success">
+                  <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">Reconciled Transactions</h6>
+                  </div>
+                  <div class="card-body">
+                    <p><strong>Reconciled Credits:</strong> {{ calculateTotals().reconciled_credits | number:'1.2-2' }}</p>
+                    <p><strong>Reconciled Debits:</strong> {{ calculateTotals().reconciled_debits | number:'1.2-2' }}</p>
+                    <p><strong>Net Reconciled:</strong> {{ (calculateTotals().reconciled_credits - calculateTotals().reconciled_debits) | number:'1.2-2' }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card border-warning">
+                  <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">Unreconciled Transactions</h6>
+                  </div>
+                  <div class="card-body">
+                    <p><strong>Pending Credits:</strong> {{ (calculateTotals().total_credits - calculateTotals().reconciled_credits) | number:'1.2-2' }}</p>
+                    <p><strong>Pending Debits:</strong> {{ (calculateTotals().total_debits - calculateTotals().reconciled_debits) | number:'1.2-2' }}</p>
+                    <p><strong>Net Pending:</strong> {{ ((calculateTotals().total_credits - calculateTotals().reconciled_credits) - (calculateTotals().total_debits - calculateTotals().reconciled_debits)) | number:'1.2-2' }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Account Selected -->
+        <div *ngIf="!selectedAccount" class="card">
+          <div class="card-body text-center text-muted py-5">
+            <i class="bi bi-bank fs-1 d-block mb-3"></i>
+            <h5>Select a Bank Account</h5>
+            <p>Choose a bank account from the list to view reconciliation details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

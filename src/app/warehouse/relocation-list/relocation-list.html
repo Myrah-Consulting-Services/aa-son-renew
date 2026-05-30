@@ -1,0 +1,277 @@
+<div class="relocation-list-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Item Relocations</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="relocation-list-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="relocation-logo">
+          <i class="bi bi-shuffle"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Item Relocations</h1>
+          <p class="header-subtitle">Manage item movements between locations</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" (click)="refreshData()" title="Refresh Data">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="openForm()">
+          <i class="bi bi-arrows-move me-1"></i>New Relocation
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card" *ngFor="let card of summaryCards">
+        <div class="stat-icon">
+          <i [ngClass]="card.icon"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ card.title }}</h3>
+          <p class="stat-number">{{ card.value() }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <div class="filter-item">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search relocations..." 
+              [(ngModel)]="searchText"
+              (input)="loadData(1)"
+            >
+          </div>
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            placeholder="Start Date"
+            [(ngModel)]="startDate"
+          >
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            placeholder="End Date"
+            [(ngModel)]="endDate"
+          >
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-primary btn-sm w-100" type="button" (click)="triggerSearch()">
+            <i class="bi bi-search me-1"></i>Search
+          </button>
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-secondary btn-sm w-100" type="button" (click)="clearFilters()">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-list-ul me-2"></i>Relocations List
+          </h3>
+        </div>
+        <div class="table-body">
+          <!-- Loading State -->
+          <div *ngIf="loading" class="loading-state">
+            <i class="bi bi-arrow-repeat spinner"></i>
+            <p>Loading relocations...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loading && relocations.length === 0" class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h6>No item relocations found</h6>
+            <p>Create your first relocation to get started</p>
+            <button class="btn btn-primary btn-sm mt-2" (click)="openForm()">
+              <i class="bi bi-arrows-move me-1"></i>New Relocation
+            </button>
+          </div>
+
+          <!-- Table -->
+          <table *ngIf="!loading && relocations.length > 0" class="compact-table">
+            <thead>
+              <tr>
+                <th>Item Details</th>
+                <th>SKU/Code</th>
+                <th>Warehouse</th>
+                <th>Location</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of relocations">
+                <td>
+                  <div class="item-info">
+                    <div class="item-name">{{ item.name }}</div>
+                    <small class="item-description">{{ item.item_description || 'No description' }}</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-light">{{ item.item_code }}</span>
+                </td>
+                <td>
+                  <div *ngFor="let loc of item.locations" class="location-badge-item">
+                    <span class="badge bg-info">{{ loc.warehouse_name || loc.warehouse || 'Warehouse' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div *ngFor="let loc of item.locations" class="location-badge-item">
+                    <span class="badge bg-outline-secondary">{{ loc.location_name }}</span>
+                    <small class="text-muted ms-1">({{ loc.qty }})</small>
+                  </div>
+                </td>
+                <td class="text-end">
+                  <span class="quantity-text"
+                        [class.text-danger]="getTotalQty(item.locations) < 10"
+                        [class.text-warning]="getTotalQty(item.locations) >= 10 && getTotalQty(item.locations) < 50"
+                        [class.text-success]="getTotalQty(item.locations) >= 50">
+                    {{ getTotalQty(item.locations) }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <button class="btn-action-icon view" (click)="onView(viewRelocation, item)" title="View">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn-action-icon edit" (click)="onEdit(item)" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-section" *ngIf="!loading && relocations.length > 0 && totalPages > 1">
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          <label class="me-2">Relocations per page:</label>
+          <select 
+            class="form-select form-select-sm page-size" 
+            [(ngModel)]="pageSize"
+            (change)="onPageSizeChange()">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <div class="pagination-controls">
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            class="btn-page"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- View Relocation Modal -->
+<ng-template #viewRelocation let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Relocation History</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <p class="text-muted mb-3">Relocation History will be displayed here.</p>
+    <div class="table-container">
+      <table class="compact-table">
+        <thead>
+          <tr>
+            <th>Item Details</th>
+            <th>From Location</th>
+            <th>To Location</th>
+            <th class="text-end">Qty</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of viewRelocationData">
+            <td>
+              <div class="item-info">
+                <div class="item-name">{{ item.item_detail?.name }}</div>
+                <small class="item-description">{{ item.item_detail?.item_code || 'No code' }}</small>
+              </div>
+            </td>
+            <td>
+              <span class="badge bg-info">{{ item.from_location_name || item.from_location || 'Warehouse' }}</span>
+            </td>
+            <td>
+              <span class="badge bg-outline-secondary">{{ item.to_location_name || item.to_location || 'Warehouse' }}</span>
+            </td>
+            <td class="text-end">
+              <span class="quantity-text"
+                    [class.text-success]="item.quantity >= 50"
+                    [class.text-warning]="item.quantity >= 10 && item.quantity < 50"
+                    [class.text-danger]="item.quantity < 10">
+                {{ item.quantity }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="!viewRelocationData || viewRelocationData.length === 0">
+            <td colspan="4" class="text-center text-muted py-4">
+              <i class="bi bi-inbox"></i>
+              <div class="mt-2">No relocation history found.</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary btn-sm" (click)="modal.dismiss('cancel')">Close</button>
+  </div>
+</ng-template>

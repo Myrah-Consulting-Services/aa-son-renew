@@ -1,0 +1,152 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-people me-2"></i>Customer Ledger
+      </h3>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-printer me-1"></i>Print
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <label class="form-label">Search Customer</label>
+        <input type="text" class="form-control" placeholder="Search by name, TRN, or email..." 
+               [(ngModel)]="searchTerm">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">From Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFrom">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">To Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateTo">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-primary w-100">
+          <i class="bi bi-search me-1"></i>Search
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Customer List -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">Customers</h6>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <div *ngFor="let customer of filterCustomers()" 
+                   class="list-group-item list-group-item-action cursor-pointer"
+                   [class.active]="selectedCustomer?.id === customer.id"
+                   (click)="selectCustomer(customer)">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="mb-1">{{ customer.name }}</h6>
+                    <small class="text-muted">{{ customer.trn }}</small>
+                  </div>
+                  <span class="badge" [ngClass]="getBalanceClass(customer.current_balance)">
+                    {{ customer.current_balance | number:'1.2-2' }}
+                  </span>
+                </div>
+                <small class="text-muted">{{ customer.email }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Details and Transactions -->
+      <div class="col-md-8">
+        <div *ngIf="selectedCustomer" class="card">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">{{ selectedCustomer.name }} - Ledger</h6>
+              <span class="badge fs-6" [ngClass]="getBalanceClass(selectedCustomer.current_balance)">
+                Balance: {{ selectedCustomer.current_balance | number:'1.2-2' }}
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Customer Info -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <p><strong>TRN:</strong> {{ selectedCustomer.trn }}</p>
+                <p><strong>Email:</strong> {{ selectedCustomer.email }}</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Phone:</strong> {{ selectedCustomer.phone }}</p>
+                <p><strong>Opening Balance:</strong> {{ selectedCustomer.opening_balance | number:'1.2-2' }}</p>
+              </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Description</th>
+                    <th class="text-end">Debit</th>
+                    <th class="text-end">Credit</th>
+                    <th class="text-end">Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Opening Balance Row -->
+                  <tr class="table-info">
+                    <td>{{ dateFrom | date:'shortDate' }}</td>
+                    <td>-</td>
+                    <td><em>Opening Balance</em></td>
+                    <td class="text-end">-</td>
+                    <td class="text-end">-</td>
+                    <td class="text-end fw-bold">{{ selectedCustomer.opening_balance | number:'1.2-2' }}</td>
+                  </tr>
+                  
+                  <!-- Transactions -->
+                  <tr *ngFor="let transaction of selectedCustomer.transactions">
+                    <td>{{ transaction.date | date:'shortDate' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getTransactionTypeClass(transaction.type)">
+                        {{ transaction.invoice_no }}
+                      </span>
+                    </td>
+                    <td>{{ transaction.description }}</td>
+                    <td class="text-end" [ngClass]="{'text-danger': transaction.debit > 0}">
+                      {{ transaction.debit > 0 ? (transaction.debit | number:'1.2-2') : '-' }}
+                    </td>
+                    <td class="text-end" [ngClass]="{'text-success': transaction.credit > 0}">
+                      {{ transaction.credit > 0 ? (transaction.credit | number:'1.2-2') : '-' }}
+                    </td>
+                    <td class="text-end fw-bold" [ngClass]="getBalanceClass(transaction.balance)">
+                      {{ transaction.balance | number:'1.2-2' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Customer Selected -->
+        <div *ngIf="!selectedCustomer" class="card">
+          <div class="card-body text-center text-muted py-5">
+            <i class="bi bi-people fs-1 d-block mb-3"></i>
+            <h5>Select a Customer</h5>
+            <p>Choose a customer from the list to view their ledger details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

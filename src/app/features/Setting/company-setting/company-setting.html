@@ -1,0 +1,512 @@
+<div class="settings-container">
+  <!-- Side Tabs -->
+  <div class="side-tabs">
+
+    <div class="tab-item" [class.active]="activeTab === 'company'" (click)="switchTab('company')">
+      <i class="bi bi-building me-2"></i>
+      Company Setting
+    </div>
+    <div class="tab-item" [class.active]="activeTab === 'invoice'" (click)="switchTab('invoice')">
+      <i class="bi bi-receipt me-2"></i>
+      Invoice Setting
+    </div>
+    <!-- <div class="tab-item" [class.active]="activeTab === 'invoice-template'" (click)="switchTab('invoice-template')">
+      <i class="bi bi-file-earmark-text me-2"></i>
+      Invoice Template
+    </div> -->
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <!-- Company Setting Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'company'">
+      <div class="tab-header">
+        <h3 class="tab-title">Company Settings</h3>
+        <p class="tab-description">Manage your company information and preferences</p>
+      </div>
+      <div class="tab-body">
+        <form [formGroup]="companyForm" class="setting-form-compact" (ngSubmit)="saveCompanySettings()">
+          <!-- Logo Management Section -->
+          <div class="setting-section logo-section">
+            <div class="section-header">
+              <span class="section-icon">🖼️</span>
+              <h4 class="section-title">Company Logo</h4>
+            </div>
+            <div class="form-row four-columns">
+              <div class="form-group logo-group">
+                <label class="form-label">Current Logo</label>
+                <div class="logo-container" (click)="onEditLogo()">
+                  <div class="logo-preview" *ngIf="companyLogo; else logoPlaceholder">
+                    <img [src]="companyLogo" alt="Company Logo" class="logo-image">
+                  </div>
+                  <ng-template #logoPlaceholder>
+                    <div class="logo-placeholder">
+                      <i class="bi bi-image"></i>
+                    </div>
+                  </ng-template>
+                </div>
+                <div class="logo-actions">
+                  <button type="button" class="btn btn-primary btn-sm me-2" (click)="onEditLogo()">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" (click)="onRemoveLogo()" 
+                          [disabled]="!companyLogo">
+                    <i class="bi bi-trash me-1"></i>Remove
+                  </button>
+                </div>
+                <input type="file" #logoFileInput (change)="onLogoFileChange($event)" 
+                       accept="image/*" style="display: none;">
+              </div>
+              
+              <div class="form-group signature-group">
+                <label class="form-label">Digital Signature</label>
+                <div class="signature-container" (click)="onEditSignature()">
+                  <div class="signature-preview" *ngIf="companySignature; else signaturePlaceholder">
+                    <img [src]="companySignature" alt="Digital Signature" class="signature-image">
+                  </div>
+                  <ng-template #signaturePlaceholder>
+                    <div class="signature-placeholder">
+                      <i class="bi bi-pen"></i>
+                    </div>
+                  </ng-template>
+                </div>
+                <div class="signature-actions">
+                  <button type="button" class="btn btn-primary btn-sm me-2" (click)="onEditSignature()">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" (click)="onRemoveSignature()" 
+                          [disabled]="!companySignature">
+                    <i class="bi bi-trash me-1"></i>Remove
+                  </button>
+                </div>
+                <input type="file" #signatureFileInput (change)="onSignatureFileChange($event)" 
+                       accept="image/*" style="display: none;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Business Information Section -->
+          <div class="setting-section business-section">
+            <div class="section-header">
+              <span class="section-icon">🏢</span>
+              <h4 class="section-title">Business Information</h4>
+            </div>
+            <div class="form-row four-columns">
+              <div class="form-group">
+                <label for="business_name" class="form-label">Business Name <span class="required">*</span></label>
+                <input id="business_name" type="text" class="form-control" formControlName="business_name"
+                  placeholder="Business Name">
+              </div>
+              <div class="form-group">
+                <label for="business_name_arabic" class="form-label">Business Name (Arabic)</label>
+                <input id="business_name_arabic" type="text" class="form-control" formControlName="business_name_arabic"
+                  placeholder="Business Name in Arabic" style="direction: rtl; text-align: right;">
+              </div>
+              <div class="form-group">
+                <label for="phone_no" class="form-label">Phone Number <span class="required">*</span></label>
+                <input id="phone_no" type="tel" class="form-control" formControlName="phone_no"
+                  placeholder="Phone Number">
+              </div>
+              <div class="form-group">
+                <label for="alternate_business_no" class="form-label">Alternate Phone</label>
+                <input id="alternate_business_no" type="tel" class="form-control"
+                  formControlName="alternate_business_no" placeholder="Alternate Phone">
+              </div>
+            </div>
+            <div class="form-row three-columns">
+              <div class="form-group">
+                <label for="email" class="form-label">Email <span class="required">*</span></label>
+                <input id="email" type="email" class="form-control" formControlName="email" placeholder="Email Address">
+              </div>
+              <div class="form-group">
+                <label for="alternate_email" class="form-label">Alternate Email</label>
+                <input id="alternate_email" type="text" class="form-control" formControlName="alternate_email"
+                  placeholder="Alternate Email">
+              </div>
+            </div>
+          </div>
+
+          <!-- Address Section -->
+          <div class="setting-section address-section">
+            <div class="section-header">
+              <span class="section-icon">📍</span>
+              <h4 class="section-title">Address Information</h4>
+            </div>
+            <div class="form-row four-columns">
+              <div class="form-group">
+                <label for="address1" class="form-label">Address Line 1 <span class="required">*</span></label>
+                <input id="address1" type="text" class="form-control" formControlName="address1"
+                  placeholder="Address Line 1">
+              </div>
+              <div class="form-group">
+                <label for="address2" class="form-label">Address Line 2</label>
+                <input id="address2" type="text" class="form-control" formControlName="address2"
+                  placeholder="Address Line 2">
+              </div>
+              <div class="form-group">
+                <label for="po_box" class="form-label">P.O. Box</label>
+                <input id="po_box" type="text" class="form-control" formControlName="po_box" placeholder="P.O. Box">
+              </div>
+
+            </div>
+          </div>
+
+          <!-- License Section -->
+          <div class="setting-section license-section">
+            <div class="section-header">
+              <span class="section-icon">📋</span>
+              <h4 class="section-title">License Information</h4>
+            </div>
+            <div class="form-row four-columns">
+              <div class="form-group">
+                <label for="license_number" class="form-label">License Number</label>
+                <input id="license_number" type="text" class="form-control" formControlName="license_number"
+                  placeholder="License Number">
+              </div>
+              <div class="form-group">
+                <label for="license_type" class="form-label">License Type</label>
+                <input id="license_type" type="text" class="form-control" formControlName="license_type"
+                  placeholder="License Type">
+              </div>
+              <div class="form-group">
+                <label for="issued_by" class="form-label">Issued By</label>
+                <input id="issued_by" type="text" class="form-control" formControlName="issued_by"
+                  placeholder="Issued By">
+              </div>
+              <div class="form-group">
+                <label for="license_expiry" class="form-label">License Expiry</label>
+                <input id="license_expiry" type="date" class="form-control" formControlName="license_expiry">
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Owner Section -->
+          <div class="setting-section owner-section">
+            <div class="section-header">
+              <span class="section-icon">👤</span>
+              <h4 class="section-title">Owner Information</h4>
+            </div>
+            <div class="form-row four-columns">
+              <div class="form-group">
+                <label for="owner_name" class="form-label">Owner Name <span class="required">*</span></label>
+                <input id="owner_name" type="text" class="form-control" formControlName="owner_name"
+                  placeholder="Owner Name">
+              </div>
+              <div class="form-group">
+                <label for="owner_nationality" class="form-label">Nationality</label>
+                <input id="owner_nationality" type="text" class="form-control" formControlName="owner_nationality"
+                  placeholder="Nationality">
+              </div>
+              <div class="form-group">
+                <label for="owner_emirates_id" class="form-label">Emirates ID</label>
+                <input id="owner_emirates_id" type="text" class="form-control" formControlName="owner_emirates_id"
+                  placeholder="Emirates ID">
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Tax Section -->
+          <div class="setting-section tax-section">
+            <div class="section-header">
+              <span class="section-icon">💰</span>
+              <h4 class="section-title">Tax Information</h4>
+            </div>
+            <div class="form-row four-columns">
+
+              <div class="form-group">
+                <label for="vat_trn" class="form-label">VAT TRN</label>
+                <input id="vat_trn" type="text" class="form-control" formControlName="vat_trn" placeholder="VAT TRN">
+              </div>
+              <div class="form-group">
+                <label for="corporate_tax_trn" class="form-label">Corporate Tax TRN</label>
+                <input id="corporate_tax_trn" type="text" class="form-control" formControlName="corporate_tax_trn"
+                  placeholder="Corporate Tax TRN">
+              </div>
+              <div class="form-group">
+                <label for="vat_registered" class="form-label">VAT Registered</label>
+                <div class="form-check">
+                  <input id="vat_registered" type="checkbox" class="form-check-input" formControlName="vat_registered">
+                  <label for="vat_registered" class="form-check-label">Yes, this company is VAT registered</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid mt-3">
+            <button type="submit" class="btn btn-primary btn-save-setting">
+              <i class="bi bi-save me-2"></i>Save Company Settings
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Invoice Setting Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'invoice'">
+      <div class="tab-header">
+        <h3 class="tab-title">Invoice Settings</h3>
+        <p class="tab-description">Configure invoice format and currency settings</p>
+      </div>
+      <div class="tab-body">
+        <!-- Existing invoice form content -->
+        <form [formGroup]="invoiceForm" class="setting-form-compact" (ngSubmit)="saveInvoiceSetting()">
+          <div class="setting-section invoice-section">
+            <div class="section-header">
+              <span class="section-icon">🧾</span>
+              <h4 class="section-title">Invoice Format</h4>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="prefix" class="form-label">Prefix</label>
+                <input id="prefix" type="text" class="form-control" formControlName="prefix" placeholder="Prefix">
+              </div>
+              <div class="form-group">
+                <label for="invoice_no" class="form-label">Invoice No <span class="required">*</span></label>
+                <input id="invoice_no" type="text" class="form-control" formControlName="invoice_no"
+                  placeholder="Number" inputmode="numeric" (keypress)="onInvoiceNoKeyPress($event)">
+                <div *ngIf="invoiceForm.get('invoice_no')?.touched && invoiceForm.get('invoice_no')?.invalid"
+                  class="error-message">
+                  <span *ngIf="invoiceForm.get('invoice_no')?.errors?.['required']">Invoice number is required</span>
+                  <span *ngIf="invoiceForm.get('invoice_no')?.errors?.['pattern']">Please enter a valid number</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="suffix" class="form-label">Suffix</label>
+                <input id="suffix" type="text" class="form-control" formControlName="suffix" placeholder="Suffix">
+              </div>
+            </div>
+            <div class="preview-panel">
+              <label class="preview-label">Preview:</label>
+              <div class="preview-output">
+                <span class="preview-text">{{ invoiceOutput }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-section currency-section">
+            <div class="section-header">
+              <span class="section-icon">💱</span>
+              <h4 class="section-title">Default Currency</h4>
+            </div>
+
+            <!-- Primary Currency Selection -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Set Primary Currency</label>
+                <div class="currency-row">
+                  <div class="simple-currency-select">
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="Search currency..."
+                      [(ngModel)]="currencySearchText"
+                      [ngModelOptions]="{standalone: true}"
+                      (input)="filterCurrencies()"
+                      (focus)="onInputFocus()"
+                    >
+                    <button 
+                      *ngIf="invoiceForm.get('default_currency')?.value" 
+                      type="button" 
+                      class="clear-btn"
+                      (click)="clearCurrency()"
+                    >
+                      ×
+                    </button>
+                    
+                    <div class="dropdown" *ngIf="showDropdown && filteredCurrencies.length > 0">
+                      <div 
+                        *ngFor="let currency of filteredCurrencies" 
+                        class="dropdown-item"
+                        (click)="selectCurrency(currency)"
+                      >
+                        <div class="checkbox-wrapper">
+                          <input 
+                            type="checkbox" 
+                            [checked]="isCurrencySelected(currency)"
+                            (click)="$event.stopPropagation()"
+                            (change)="selectCurrency(currency)"
+                          >
+                        </div>
+                        <div class="currency-text">
+                          {{ currency.code }} - {{ currency.name }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="default-currency-toggle">
+                    <div class="form-check">
+                      <input 
+                        id="is_default_currency" 
+                        type="checkbox" 
+                        class="form-check-input"
+                        formControlName="is_default_currency"
+                      >
+                      <label for="is_default_currency" class="form-check-label">
+                        Set as Default
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Currency Conversion Toggle -->
+            <div class="form-row">
+              <div class="form-group">
+                <div class="form-check">
+                  <input id="is_currency_conversion" type="checkbox" class="form-check-input"
+                    formControlName="is_currency_conversion" (change)="onCurrencyConversionToggle()">
+                  <label for="is_currency_conversion" class="form-check-label">
+                    Enable dual currency
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <a class="history-link" (click)="openHistoryModal(historyModal)">
+                  <i class="fas fa-history"></i> View History
+                </a>
+              </div>
+            </div>
+
+            <!-- Currency Conversion Settings -->
+            <div class="currency-settings" *ngIf="invoiceForm.get('is_currency_conversion')?.value">
+              <div class="sub-section-header">
+                <h5 class="sub-section-title">Currency Conversion Settings</h5>
+              </div>
+
+              <!-- Date Range Section -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="start_date" class="form-label">Start Date</label>
+                  <input id="start_date" type="date" class="form-control" formControlName="start_date">
+                </div>
+                <div class="form-group">
+                  <label for="end_date" class="form-label">End Date</label>
+                  <input id="end_date" type="date" class="form-control" formControlName="end_date">
+                </div>
+              </div>
+
+              <!-- Currency Conversion Selection -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Currency Conversion</label>
+                  <div class="currency-row">
+                    <div class="simple-currency-select">
+                      <input 
+                        type="text" 
+                        class="form-control" 
+                        placeholder="Search currency..."
+                        [(ngModel)]="conversionCurrencySearchText"
+                        [ngModelOptions]="{standalone: true}"
+                        (input)="filterConversionCurrencies()"
+                        (focus)="onConversionInputFocus()"
+                      >
+                      <button 
+                        *ngIf="invoiceForm.get('curency_conversion')?.value" 
+                        type="button" 
+                        class="clear-btn"
+                        (click)="clearConversionCurrency()"
+                      >
+                        ×
+                      </button>
+                      
+                      <div class="dropdown" *ngIf="showConversionDropdown && filteredConversionCurrencies.length > 0">
+                        <div 
+                          *ngFor="let currency of filteredConversionCurrencies" 
+                          class="dropdown-item"
+                          (click)="selectConversionCurrency(currency)"
+                        >
+                          <div class="checkbox-wrapper">
+                            <input 
+                              type="checkbox" 
+                              [checked]="isConversionCurrencySelected(currency)"
+                              (click)="$event.stopPropagation()"
+                              (change)="selectConversionCurrency(currency)"
+                            >
+                          </div>
+                          <div class="currency-text">
+                            {{ currency.code }} - {{ currency.name }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <!-- Exchange Rate Section -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="currency_conversion_rate" class="form-label">Exchange Rate</label>
+                  <div class="exchange-rate-input">
+                    <span class="rate-prefix">1 {{ getSelectedCurrencyName() }} =</span>
+                    <input id="currency_conversion_rate" type="number" class="form-control"
+                      formControlName="currency_conversion_rate" min="0" step="0.0001" placeholder="0.0000">
+                    <span class="rate-suffix"> {{ getSelectedCurrencyCode() }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="save-button-container">
+            <button type="submit" class="btn-save-setting">
+              <i class="bi bi-save"></i> Save Settings
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Invoice Template Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'invoice-template'">
+      <!-- <div class="tab-header">
+        <h3 class="tab-title">Invoice Templates</h3>
+        <p class="tab-description">Configure your invoice templates and company information</p>
+      </div> -->
+      <div class="tab-body">
+        <!-- <app-invoice-setting></app-invoice-setting> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #historyModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Currency Conversion History</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="closeModal(modal)"></button>
+  </div>
+  <div class="modal-body">
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <!-- <th>Time</th> -->
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Rate (1 USD = AED)</th>
+            <!-- <th>Currency</th> -->
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of historyRecords">
+            <!-- <td>{{ record.created_at | date:'short' }}</td> -->
+            <td>{{ record.start_date | date:'shortDate' }}</td>
+            <td>{{ record.end_date | date:'shortDate' }}</td>
+            <td>{{ record.currency_rate }}</td>
+            <!-- <td>{{ getCurrencyName(record.currency) }}</td> -->
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="historyRecords.length === 0" class="text-center text-muted">
+      <p>No conversion history available.</p>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal(modal)">Close</button>
+  </div>
+</ng-template>

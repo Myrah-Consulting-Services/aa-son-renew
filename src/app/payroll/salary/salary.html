@@ -1,0 +1,668 @@
+<div class="salary-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Payroll Heads</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="salary-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="salary-logo">
+          <i class="bi bi-cash-coin"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Payroll Heads</h1>
+          <p class="header-subtitle">Manage earnings, benefits, and deductions</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="dropdown">
+          <button class="btn-primary" type="button" (click)="toggleAddDropdown()">
+            <i class="bi bi-plus-lg"></i>
+            Add Payroll Head
+          </button>
+          <ul class="dropdown-menu" [class.show]="showAddDropdown">
+            <li><a class="dropdown-item" (click)="selectComponentType('Earning')">Earning</a></li>
+            <li><a class="dropdown-item" (click)="openDeductionModal()">Deduction</a></li>
+            <li><a class="dropdown-item" (click)="openBenefitModal()">Benefits</a></li>
+            <li><a class="dropdown-item" (click)="selectComponentType('Correction')">Correction</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-arrow-up-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Earnings</h3>
+          <p class="stat-number">{{ earnings.length }}</p>
+          <p class="stat-change positive">Active earnings</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-gift"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Benefits</h3>
+          <p class="stat-number">{{ benefits.length }}</p>
+          <p class="stat-change positive">Active benefits</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-arrow-down-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Deductions</h3>
+          <p class="stat-number">{{ deductions.length }}</p>
+          <p class="stat-change negative">Active deductions</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Heads</h3>
+          <p class="stat-number">{{ earnings.length + benefits.length + deductions.length }}</p>
+          <p class="stat-change positive">All payroll heads</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Tabs Navigation -->
+    <ul class="nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'earnings'" (click)="setActiveTab('earnings')">
+          <i class="bi bi-arrow-up-circle me-2"></i>Earnings
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'benefits'" (click)="setActiveTab('benefits')">
+          <i class="bi bi-gift me-2"></i>Benefits
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'deductions'" (click)="setActiveTab('deductions')">
+          <i class="bi bi-arrow-down-circle me-2"></i>Deductions
+        </a>
+      </li>
+    </ul>
+
+    <!-- Earnings Tab Content -->
+    <div *ngIf="activeTab === 'earnings'" class="tab-content">
+      <div class="table-section">
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">
+              <i class="bi bi-table me-2"></i>Earnings
+            </h3>
+          </div>
+          <div class="table-body">
+            <!-- Loading State -->
+            <div *ngIf="isLoading" class="empty-state">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2 text-muted">Loading payroll heads...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!isLoading && earnings.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No earnings found</p>
+              <button class="btn-primary" (click)="selectComponentType('Earning')">
+                <i class="bi bi-plus"></i> Add First Earning
+              </button>
+            </div>
+
+            <!-- Data Table -->
+            <table *ngIf="!isLoading && earnings.length > 0" class="compact-table">
+              <thead>
+                <tr>
+                  <th>NAME</th>
+                  <th>TYPE</th>
+                  <th>CALCULATION TYPE</th>
+                  <th>STATUS</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let e of earnings">
+                  <td><a class="text-primary" (click)="openModal(e)">{{ e.head_name }}</a></td>
+                  <td>{{ e.earning_type_name }}</td>
+                  <td>{{e.pay_type_name}};{{e.calculation_type_name}}</td>
+                  <td>
+                    <span class="badge" [class.completed]="e.active" [class.inactive]="!e.active">
+                      {{ e.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <button class="btn-action-icon edit" (click)="openModal(e)" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="btn-action-icon delete" (click)="deletePayrollHead(e.id, e.head_name)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benefits Tab Content -->
+    <div *ngIf="activeTab === 'benefits'" class="tab-content">
+      <div class="table-section">
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">
+              <i class="bi bi-table me-2"></i>Benefits
+            </h3>
+          </div>
+          <div class="table-body">
+            <!-- Loading State -->
+            <div *ngIf="isLoading" class="empty-state">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2 text-muted">Loading payroll heads...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!isLoading && benefits.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No benefits found</p>
+              <button class="btn-primary" (click)="openBenefitModal()">
+                <i class="bi bi-plus"></i> Add Benefit
+              </button>
+            </div>
+
+            <!-- Data Table -->
+            <table *ngIf="!isLoading && benefits.length > 0" class="compact-table">
+              <thead>
+                <tr>
+                  <th>NAME</th>
+                  <th>BENEFIT TYPE</th>
+                  <th>BENEFIT FREQUENCY</th>
+                  <th>STATUS</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let b of benefits">
+                  <td><a class="text-primary" (click)="openBenefitEditModal(b)">{{ b.head_type_name }}</a></td>
+                  <td>{{ b.earning_type_name }}</td>
+                  <td>{{ b.deduction_frequency === '1' ? 'One Time' : b.deduction_frequency === '2' ? 'Recurring' : b.deduction_frequency_name }}</td>
+                  <td>
+                    <span class="badge" [class.completed]="b.active" [class.inactive]="!b.active">
+                      {{ b.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <button class="btn-action-icon edit" (click)="openBenefitEditModal(b)" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="btn-action-icon delete" (click)="deletePayrollHead(b.id, b.head_name)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deductions Tab Content -->
+    <div *ngIf="activeTab === 'deductions'" class="tab-content">
+      <div class="table-section">
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">
+              <i class="bi bi-table me-2"></i>Deductions
+            </h3>
+          </div>
+          <div class="table-body">
+            <!-- Loading State -->
+            <div *ngIf="isLoading" class="empty-state">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2 text-muted">Loading payroll heads...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!isLoading && deductions.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No deductions found</p>
+              <button class="btn-primary" (click)="openDeductionModal()">
+                <i class="bi bi-plus"></i> Add Deduction
+              </button>
+            </div>
+
+            <!-- Data Table -->
+            <table *ngIf="!isLoading && deductions.length > 0" class="compact-table">
+              <thead>
+                <tr>
+                  <th>NAME</th>
+                  <th>TYPE</th>
+                  <th>DEDUCTION FREQUENCY</th>
+                  <th>STATUS</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let d of deductions">
+                  <td><a class="text-primary" (click)="openDeductionEditModal(d)">{{ d.payslip_name }}</a></td>
+                  <td>{{ d.earning_type_name }}</td>
+                  <td>{{ d.deduction_frequency === '1' ? 'One Time' : d.deduction_frequency === '2' ? 'Recurring' : d.deduction_frequency_name }}</td>
+                  <td>
+                    <span class="badge" [class.completed]="d.active" [class.inactive]="!d.active">
+                      {{ d.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <button class="btn-action-icon edit" (click)="openDeductionEditModal(d)" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="btn-action-icon delete" (click)="deletePayrollHead(d.id, d.head_name)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ getModalTitle() }}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+
+      <form [formGroup]="salaryForm">
+        <div class="modal-body">
+          <div class="row">
+            <!-- Left Column - Payroll Head Details -->
+            <div class="col-md-8">
+              <div class="mb-3">
+                <label for="earning_type" class="form-label">Earning Type <span class="text-danger">*</span></label>
+                <div ngbDropdown class="dropdown">
+                  <input type="text" class="form-control" id="earning_type"
+                    [value]="getEarningTypeDisplayName(salaryForm.get('earning_type')?.value)" placeholder="Select"
+                    ngbDropdownToggle (click)="resetEarningTypeFilter()" readonly
+                    [disabled]="salaryForm.get('earning_type')?.disabled">
+
+                  <div ngbDropdownMenu class="dropdown-menu w-100" style="max-height: 300px; overflow-y: auto;">
+                    <div class="px-3 py-2">
+                      <div class="input-group">
+                        <span class="input-group-text">
+                          <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" placeholder="Search earning types..."
+                          (input)="filterEarningTypes($event)">
+                      </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <button *ngFor="let type of filteredEarningTypes" ngbDropdownItem class="dropdown-item"
+                      (click)="selectEarningType(type)">
+                      {{ type.name }}
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button ngbDropdownItem class="dropdown-item" (click)="addCustomEarningType()">
+                      <i class="bi bi-plus-circle me-2"></i> New Custom Allowance
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- All form fields (shown only when earning type is selected) -->
+              <div *ngIf="salaryForm.get('earning_type')?.value">
+                <!-- Earning Name -->
+                <div class="mb-3">
+                  <label for="earning_name" class="form-label">Earning Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="earning_name" formControlName="head_name"
+                    [class.is-invalid]="salaryForm.get('head_name')?.invalid && salaryForm.get('head_name')?.touched"
+                    placeholder="Enter earning name">
+                  <div class="invalid-feedback" *ngIf="getErrorMessage('Earning name')">
+                    {{ getErrorMessage('Earning name') }}
+                  </div>
+                </div>
+
+                <!-- Name in Payslip -->
+                <div class="mb-3">
+                  <label for="payslip_name" class="form-label">Name in Payslip <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="payslip_name" formControlName="payslip_name"
+                    [class.is-invalid]="salaryForm.get('payslip_name')?.invalid && salaryForm.get('payslip_name')?.touched"
+                    placeholder="Enter name to display in payslip">
+                  <div class="invalid-feedback" *ngIf="getErrorMessage('Payslip name')">
+                    {{ getErrorMessage('Payslip name') }}
+                  </div>
+                </div>
+
+                <!-- pay type - Show if can change pay type -->
+                <div class="mb-3" *ngIf="getSelectedEarningType()?.can_change_pay_type">
+                  <label for="payType" class="form-label">Pay Type <span class="text-danger">*</span></label>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="fixed" [value]="1" formControlName="pay_type">
+                    <label class="form-check-label" for="fixed">Fixed Pay (Fixed amount paid at the end of every month.)</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="percentage" [value]="2" formControlName="pay_type">
+                    <label class="form-check-label" for="percentage">Variable Pay (Variable amount paid during any payroll.)</label>
+                  </div>
+                </div>
+
+                <!-- Calculation Type -->
+                <div class="mb-3" *ngIf="salaryForm.get('earning_type')?.value == '2' || 
+                                        salaryForm.get('earning_type')?.value == '3' || 
+                                        salaryForm.get('earning_type')?.value == '4' || 
+                                        salaryForm.get('earning_type')?.value == '5' || 
+                                        salaryForm.get('earning_type')?.value == '6' || 
+                                        salaryForm.get('earning_type')?.value == '7' || 
+                                        salaryForm.get('earning_type')?.value == '8' || 
+                                        salaryForm.get('earning_type')?.value == '11' || 
+                                        salaryForm.get('earning_type')?.value == '12' || 
+                                        salaryForm.get('earning_type')?.value == '13' || 
+                                        salaryForm.get('earning_type')?.value == '14' || 
+                                        salaryForm.get('earning_type')?.value == '15' || 
+                                        salaryForm.get('earning_type')?.value == '16' || 
+                                        salaryForm.get('earning_type')?.value == '17' || 
+                                        salaryForm.get('earning_type')?.value == '18' || 
+                                        salaryForm.get('earning_type')?.value == '21' || 
+                                        salaryForm.get('earning_type')?.value == '22' || 
+                                        salaryForm.get('earning_type')?.value == '23' || 
+                                        salaryForm.get('earning_type')?.value == '24'">
+                  <label class="form-label">Calculation Type {{salaryForm.get('earning_type')?.value}}<span class="text-danger">*</span></label>
+
+                  <!-- Show options based on pay_type -->
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="fixed" [value]="1"
+                      formControlName="calculation_type">
+                    <label class="form-check-label" for="fixed">Flat Amount</label>
+                  </div>
+                  <div class="form-check" *ngIf="salaryForm.get('pay_type')?.value == 1 || salaryForm.get('earning_type')?.value != 11">
+                    <input class="form-check-input" type="radio" id="percentage" [value]="2"
+                      formControlName="calculation_type">
+                    <label class="form-check-label" for="percentage">Percentage of Basic Salary</label>
+                  </div>
+                  <div class="form-check" *ngIf="salaryForm.get('pay_type')?.value == 2 || salaryForm.get('earning_type')?.value == 11">
+                    <input class="form-check-input" type="radio" id="custom-formula" [value]="3"
+                      formControlName="calculation_type">
+                    <label class="form-check-label" for="custom-formula">Custom Formula</label>
+                  </div>
+                </div>
+
+                <!-- Calculation Value -->
+                <div class="mb-3" *ngIf="showcalculation">
+                  <label for="calculationValue" class="form-label">Calculation Value <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text" *ngIf="salaryForm.get('calculation_type')?.value === 1">AED</span>
+                    <span class="input-group-text" *ngIf="salaryForm.get('calculation_type')?.value !== 1">%</span>
+                    <input type="number" class="form-control" id="calculationValue" formControlName="calculation_value"
+                      [class.is-invalid]="salaryForm.get('calculation_value')?.invalid && salaryForm.get('calculation_value')?.touched"
+                      [placeholder]="salaryForm.get('calculation_type')?.value === 2 ? 'Enter percentage (e.g., 25)' : 'Enter amount'">
+                  </div>
+                  <div class="invalid-feedback" *ngIf="getErrorMessage('calculation_value')">
+                    {{ getErrorMessage('calculation_value') }}
+                  </div>
+                </div>
+                  <div class="mb-3" *ngIf="salaryForm.get('earning_type')?.value == 19">
+                  <label for="calculationValue" class="form-label">Enter Maximum Amount <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text">AED</span>
+                    <input type="number" class="form-control" id="calculationValue" formControlName="calculation_value"
+                      [class.is-invalid]="salaryForm.get('calculation_value')?.invalid && salaryForm.get('calculation_value')?.touched"
+                      [placeholder]="'Enter amount'">
+                  </div>
+                  <div class="invalid-feedback" *ngIf="getErrorMessage('calculation_value')">
+                    {{ getErrorMessage('calculation_value') }}
+                  </div>
+                </div>
+                <div class="mb-3" *ngIf="!showcalculation">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_scheduled_earning"
+                      formControlName="is_scheduled_earning">
+                    <label class="form-check-label" for="is_scheduled_earning">This is a scheduled earning</label>
+                  </div>
+                </div>
+                <div class="mb-3" *ngIf="showairticket">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="one_time" [value]="1"
+                      formControlName="deduction_frequency">
+                    <label class="form-check-label" for="one_time">One time</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="recurring" [value]="2"
+                      formControlName="deduction_frequency">
+                    <label class="form-check-label" for="recurring">Recurring</label>
+                  </div>
+                </div>
+                <!-- Pro-rata calculation - Show if supported by earning type -->
+                <div class="mb-3" *ngIf="getSelectedEarningType()?.is_pro_rata">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="calculateOnProRata"
+                      formControlName="calculate_on_pro_rata">
+                    <label class="form-check-label" for="calculateOnProRata">Calculate on Pro-rata basis
+                      <i class="bi bi-info-circle text-muted" placement="right"
+                        ngbTooltip="Pay will be adjusted based on employee working days."></i>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Formula-based calculation - Show if supported by earning type -->
+                <div class="mb-3"
+                  *ngIf="getSelectedEarningType()?.is_formula_based_calculation_supported && salaryForm.get('calculation_type')?.value==3">
+                  <label for="description" class="form-label">Custom Formula</label>
+
+                  <div class="card shadow-sm p-4">
+                    <!-- Toolbar -->
+                    <div class="gap-1 mb-3" style="display:flex">
+                      <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                          data-bs-toggle="dropdown">
+                          Add Component
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li *ngFor="let v of variables"><a class="dropdown-item"
+                              (click)="insertOperator(v.earning_type)">{{v.earning_type_formatted}}</a></li>
+                              <h6 style="margin-left: 10px;">Time Variables</h6>
+                          <li *ngFor="let t of time_variables"><a class="dropdown-item"
+                              (click)="insertOperator(t.head_name)">{{t.head_name}}</a></li>
+                              <h6 style="margin-left: 10px;">Input Variables</h6>
+                          <li *ngFor="let c of input_variables"><a class="dropdown-item"
+                              (click)="insertOperator(c.head_name)">{{c.head_name}}</a></li>
+                        </ul>
+                      </div>
+
+                      <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                          data-bs-toggle="dropdown">
+                          Add Function
+                        </button>
+                        <ul class="dropdown-menu" *ngFor="let f of functions">
+                          <li *ngFor="let f of functions"><a class="dropdown-item"
+                              (click)="insertOperator(f.syntax)">{{f.name}}</a></li>
+                        </ul>
+                      </div>
+
+                      <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                          data-bs-toggle="dropdown">
+                          Add Operator
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li *ngFor="let op of operators">
+                            <a class="dropdown-item" (click)="insertOperator(op.symbol)">{{op.symbol}}</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <!-- Formula Input -->
+                    <textarea id="formulaInput" class="form-control mb-3" rows="3" [ngModelOptions]="{standalone: true}"
+                      [(ngModel)]="formula" placeholder="Write your formula here..."></textarea>
+
+                    <!-- Check Syntax Button -->
+                    <button class="btn btn-primary btn-sm" (click)="checkSyntax()">Check Syntax</button>
+
+                    <!-- Syntax Result -->
+                    <div *ngIf="syntaxMessage" class="mt-2">
+                      <small [class.text-success]="syntaxValid" [class.text-danger]="!syntaxValid">
+                        {{ syntaxMessage }}
+                      </small>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column - Options -->
+            <div class="col-md-4">
+              <h6 class="mb-3">Options</h6>
+
+              <!-- Customizable Checkbox - Show if user configurable -->
+              <div class="mb-3" *ngIf="getSelectedEarningType()?.is_user_configurable">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="isCustomizable" formControlName="is_customizable">
+                  <label class="form-check-label" for="isCustomizable">
+                    Allow customization at employee level
+                    <i class="bi bi-info-circle ms-1"
+                      title="If checked, this payroll head can be overridden for individual employees"></i>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Active Checkbox - Show if included in salary structure -->
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="active" formControlName="active">
+                  <label class="form-check-label" for="active">Mark this as Active</label>
+                </div>
+              </div>
+              <div *ngIf="salaryForm.get('earning_type')?.value && salaryForm.get('pay_type')?.value==1">
+              <!-- Social Security Benefits - Always show all, but disable non-applicable ones -->
+              <div class="mt-4" *ngIf="salaryForm.get('earning_type')?.value">
+                <h6 class="mb-3">Social Security Benefits</h6>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="is_gpssa" formControlName="is_gpssa">
+                  <label class="form-check-label" for="is_gpssa"
+                    [class.text-muted]="disabledSocialSecurityBenefits['is_gpssa']">
+                    General Pension And Social Security Authority (GPSSA)
+                  </label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="is_adrpbf" formControlName="is_adrpbf">
+                  <label class="form-check-label" for="is_adrpbf"
+                    [class.text-muted]="disabledSocialSecurityBenefits['is_adrpbf']">
+                    Abu Dhabi Retirement Pension and Benefit Fund (ADRPBF)
+                  </label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="is_gosi" formControlName="is_gosi">
+                  <label class="form-check-label" for="is_gosi"
+                    [class.text-muted]="disabledSocialSecurityBenefits['is_gosi']">
+                    General Organization for Social Insurance (GOSI)
+                  </label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="is_sio" formControlName="is_sio">
+                  <label class="form-check-label" for="is_sio"
+                    [class.text-muted]="disabledSocialSecurityBenefits['is_sio']">
+                    Social Insurance Organization (SIO)
+                  </label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="is_pasi" formControlName="is_pasi">
+                  <label class="form-check-label" for="is_pasi"
+                    [class.text-muted]="disabledSocialSecurityBenefits['is_pasi']">
+                    Public Authority for Social Insurance (PASI)
+                  </label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="is_piss" formControlName="is_piss">
+                  <label class="form-check-label" for="is_piss"
+                    [class.text-muted]="disabledSocialSecurityBenefits['is_piss']">
+                    Public Institution for Social Security (PISS)
+                  </label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="is_grsia" formControlName="is_grsia">
+                  <label class="form-check-label" for="is_grsia"
+                    [class.text-muted]="disabledSocialSecurityBenefits['is_grsia']">
+                    General Retirement and Social Insurance Authority (GRSIA)
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          </div>
+
+          <!-- Warning Note -->
+          <div class="alert alert-warning mt-3">
+            <small>
+              <strong>Note:</strong> Once you associate this payroll head with an employee, you will only be able to
+              edit the calculation value if it's customizable. The change will be reflected in both new and existing
+              employees.
+            </small>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="d-flex justify-content-between align-items-center w-100">
+            <div>
+              <button type="button" class="btn btn-secondary me-2" (click)="closeModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary" [disabled]="salaryForm.invalid" (click)="onSubmit()">
+                {{ isEditing ? 'Update' : 'Save' }}
+              </button>
+            </div>
+            <small class="text-danger">* indicates mandatory fields</small>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showModal"></div>

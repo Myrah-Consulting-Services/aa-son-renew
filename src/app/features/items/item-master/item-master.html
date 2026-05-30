@@ -1,0 +1,230 @@
+<div class="container-fluid mb-5">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="mb-0">Item Master</h2>
+      <p class="text-muted">Manage your inventory items</p>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" (click)="openCreateItemModal()">
+        <i class="bi bi-plus-lg me-2"></i>Add New Item
+      </button>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <input 
+          type="text" 
+          class="form-control" 
+          placeholder="Search items..." 
+          [(ngModel)]="searchText"
+          (keyup.enter)="onSearch()">
+        <button 
+          class="btn btn-outline-secondary" 
+          type="button" 
+          (click)="onSearch()">
+          <i class="bi bi-search"></i>
+        </button>
+        <button 
+          class="btn btn-outline-secondary" 
+          type="button" 
+          *ngIf="searchText" 
+          (click)="clearSearch()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    </div>
+    <div class="col-md-6 text-end">
+      <span class="text-muted">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }} items
+      </span>
+    </div>
+  </div>
+
+  <!-- Items Table -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="ps-3">Item Name</th>
+              <th scope="col">Item Code</th>
+              <th scope="col">Barcode</th>
+              <th scope="col">Category</th>
+              <th scope="col">Current Stock</th>
+              <th scope="col">Sale Price</th>
+              <th scope="col">Purchase Price</th>
+              <th scope="col">VAT %</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="text-end pe-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="loading">
+              <td colspan="10" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!loading && items.length === 0">
+              <td colspan="10" class="text-center py-4">
+                <div class="text-muted">
+                  <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                  No items found
+                </div>
+              </td>
+            </tr>
+            <tr *ngFor="let item of items" class="align-middle">
+              <td class="ps-3">
+                <div class="d-flex align-items-center">
+                  <div class="me-3">
+                    <img 
+                      [src]="item.image" 
+                      alt="Item Image"
+                      class="rounded"
+                      style="width: 40px; height: 40px; object-fit: cover;"
+                      onerror="this.src='assets/images/placeholder-item.svg'">
+                  </div>
+                  <div>
+                    <div class="fw-semibold">{{ item.name }}</div>
+                    <small class="text-muted">{{ item.item_description }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark">{{ item.item_code }}</span>
+              </td>
+              <td>
+                <span class="badge bg-secondary text-white" *ngIf="item.barcode1">{{ item.barcode1 }}</span>
+                <span class="text-muted" *ngIf="!item.barcode1">N/A</span>
+              </td>
+              <td>
+                <span class="text-muted">{{ item.category?.name || 'N/A' }}</span>
+              </td>
+              <td>
+                <span 
+                  class="badge"
+                  [ngClass]="{
+                    'bg-success': item.current_stock > 10,
+                    'bg-warning': item.current_stock > 0 && item.current_stock <= 10,
+                    'bg-danger': item.current_stock === 0
+                  }">
+                  {{ item.current_stock }}
+                </span>
+              </td>
+              <td>
+                <span class="fw-semibold text-success">
+                  {{ item.sales_price ? 'AED ' + item.sales_price : 'N/A' }}
+                </span>
+              </td>
+              <td>
+                <span class="fw-semibold text-primary">
+                  {{ item.purchase_price ? 'AED ' + item.purchase_price : 'N/A' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-info">{{ item.vat_per }}%</span>
+              </td>
+              <td>
+                <span 
+                  class="badge"
+                  [ngClass]="{
+                    'bg-success': !item.deleted,
+                    'bg-danger': item.deleted
+                  }">
+                  {{ item.deleted ? 'Deleted' : 'Active' }}
+                </span>
+              </td>
+              <td class="text-end pe-3">
+                <div class="btn-group" role="group">
+                  <button 
+                    class="btn btn-sm btn-outline-primary" 
+                    (click)="editItem(item)"
+                    title="Edit Item">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-outline-danger" 
+                    (click)="deleteItem(item)"
+                    title="Delete Item">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="row mt-3 mb-4">
+    <div class="col-md-6">
+      <div class="d-flex align-items-center">
+        <label class="me-2">Items per page:</label>
+        <select 
+          class="form-select form-select-sm" 
+          style="width: auto;"
+          [(ngModel)]="pageSize"
+          (change)="loadItems(1)">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <nav aria-label="Item pagination" class="d-flex justify-content-end">
+        <ul class="pagination pagination-sm mb-0">
+          <!-- Previous Page -->
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button 
+              class="page-link" 
+              (click)="onPageChange(currentPage - 1)"
+              [disabled]="currentPage === 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+
+          <!-- Page Numbers -->
+          <li 
+            class="page-item" 
+            *ngFor="let page of getPageNumbers()"
+            [class.active]="page === currentPage">
+            <button 
+              class="page-link" 
+              (click)="onPageChange(page)">
+              {{ page }}
+            </button>
+          </li>
+
+          <!-- Next Page -->
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button 
+              class="page-link" 
+              (click)="onPageChange(currentPage + 1)"
+              [disabled]="currentPage === totalPages">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+<ng-template #createItemModal>
+    <div class="modal-header">
+        <h5 class="modal-title">{{ modalMode === 'edit' ? 'Edit' : 'Create New' }} Item</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+    </div>
+    <div class="modal-body">
+        <app-create-item [itemId]="itemId" (addItem)="handleItemSubmit($event)" [modalRef]="modalRef" (close)="closeModal()"></app-create-item>
+    </div>
+</ng-template>

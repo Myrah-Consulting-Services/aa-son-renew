@@ -1,0 +1,305 @@
+<div class="salary-structure-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Salary Structure</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="salary-structure-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="salary-structure-logo">
+          <i class="bi bi-diagram-3"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Salary Structure Management</h1>
+          <p class="header-subtitle">Create and manage salary structures for different employee groups</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" (click)="openModal()">
+          <i class="bi bi-plus-lg"></i>
+          Add Salary Structure
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Structures</h3>
+          <p class="stat-number">{{ salaryStructures.length }}</p>
+          <p class="stat-change positive">All structures</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Active Structures</h3>
+          <p class="stat-number">{{ getActiveStructuresCount() }}</p>
+          <p class="stat-change positive">Currently active</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-x-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Inactive Structures</h3>
+          <p class="stat-number">{{ getInactiveStructuresCount() }}</p>
+          <p class="stat-change negative">Currently inactive</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-puzzle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Components</h3>
+          <p class="stat-number">{{ getTotalComponentsCount() }}</p>
+          <p class="stat-change positive">Across all structures</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-table me-2"></i>Existing Salary Structures
+          </h3>
+        </div>
+        <div class="table-body">
+          <table class="compact-table">
+            <thead>
+              <tr>
+                <th>Structure Name</th>
+                <th>Description</th>
+                <th>Components</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let structure of salaryStructures; let i = index">
+                <td>
+                  <strong>{{ structure.name }}</strong>
+                </td>
+                <td>{{ structure.description }}</td>
+                <td>
+                  <span class="badge">{{ structure.total_components }} components</span>
+                </td>
+                <td>
+                  <span class="badge" [class.completed]="structure.active" [class.inactive]="!structure.active">
+                    {{ structure.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="actions">
+                    <button class="btn-action-icon view" (click)="editStructure(structure)" title="Edit">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn-action-icon delete" (click)="deleteStructure(structure.id)" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="salaryStructures.length === 0">
+                <td colspan="5" class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <p>No salary structures found. Create your first one!</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Salary Structure Modal -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ isEditing ? 'Edit Salary Structure' : 'Add Salary Structure' }}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      
+      <form [formGroup]="salaryStructureForm" (ngSubmit)="onSubmit()">
+        <div class="modal-body">
+          <div class="row">
+            <!-- Structure Name -->
+            <div class="col-md-6 mb-3">
+              <label for="structureName" class="form-label">Structure Name <span class="text-danger">*</span></label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="structureName"
+                formControlName="name"
+                [class.is-invalid]="salaryStructureForm.get('name')?.invalid && salaryStructureForm.get('name')?.touched"
+                placeholder="e.g., Senior Management">
+              <div class="invalid-feedback" *ngIf="getErrorMessage(salaryStructureForm, 'name')">
+                {{ getErrorMessage(salaryStructureForm, 'name') }}
+              </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="col-md-6 mb-3">
+              <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+              <textarea 
+                class="form-control" 
+                id="description"
+                formControlName="description"
+                [class.is-invalid]="salaryStructureForm.get('description')?.invalid && salaryStructureForm.get('description')?.touched"
+                rows="3"
+                placeholder="Describe this salary structure..."></textarea>
+              <div class="invalid-feedback" *ngIf="getErrorMessage(salaryStructureForm, 'description')">
+                {{ getErrorMessage(salaryStructureForm, 'description') }}
+              </div>
+            </div>
+            
+            <!-- Active Status -->
+            <div class="col-12 mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="active" formControlName="active">
+                <label class="form-check-label" for="active">
+                  Mark this structure as Active
+                </label>
+              </div>
+            </div>
+
+            <!-- Earnings Section -->
+            <div class="col-12 mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-success fw-bold mb-0">Earnings</h6>
+                <button type="button" class="btn btn-outline-success btn-sm" (click)="addEarningsRow()">
+                  <i class="bi bi-plus me-1"></i>Add Row
+                </button>
+              </div>
+              <div class="">
+                <table class="table table-bordered">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 25%;">Salary Components</th>
+                      <th style="width: 25%;">Calculation Type</th>
+                      <th style="width: 25%;">Monthly Amount</th>
+                      <th style="width: 25%;">Annual Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody formArrayName="earnings" *ngIf="showModal">
+                   
+                    <!-- Dynamic Earnings Rows -->
+                    <tr *ngFor="let row of earningsArray.controls; let i = index" [formGroupName]="i">
+                      <td>
+                        <div class="position-relative">
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            placeholder="Component Name" 
+                            formControlName="head_name"
+                            (focus)="onEarningsFocus(i)"
+                            (input)="onEarningsInput(i, $event)"
+                            (blur)="onEarningsBlur(i)"
+                          />
+                          <!-- Dropdown for earnings search -->
+                          <div class="dropdown-menu show position-absolute w-100" 
+                               *ngIf="showEarningsDropdown[i] && (filteredEarnings[i]?.length || 0) > 0"
+                               style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                            <div class="dropdown-item" 
+                                 *ngFor="let earning of filteredEarnings[i]" 
+                                 (mousedown)="selectEarning(i, earning)"
+                                 style="cursor: pointer; padding: 8px 12px;">
+                              {{ earning.head_name }} ({{ earning.category_name }})
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="input-group">
+                          <!-- Show "Fixed" as text when calculation type is Fixed -->
+                          <span class="form-control-plaintext border rounded p-2" *ngIf="row.get('calculation_type')?.value == 1">Fixed</span>
+                          
+                          <!-- Show calculation value input and calculation type as text for other types -->
+                          <div class="d-flex" *ngIf="row.get('calculation_type')?.value != 1">
+                            <input type="text" class="form-control" formControlName="calculation_value" style="width: 60px;" (input)="onCalculationValueChange(i)">
+                            <span class="form-control-plaintext border rounded p-2" style="min-width: 80px; text-align: center; border-left: none; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                              <span *ngIf="row.get('calculation_type')?.value == 2">% of Basic</span>
+                              <span *ngIf="row.get('calculation_type')?.value == 3">% of CTC</span>
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td><input type="text" class="form-control" formControlName="monthly_value" (input)="onMonthlyAmountChange(i)"></td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <input type="text" class="form-control me-2" formControlName="annual_value">
+                          <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeEarningsRow(i)">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Total Gross Pay Row -->
+              <div class="row mt-3">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-center p-3 bg-light border rounded">
+                    <div class="fw-bold">Total Gross Pay</div>
+                    <div class="d-flex gap-4">
+                      <div>
+                        <span class="text-muted me-2">Monthly Amount:</span>
+                        <span class="fw-bold">AED {{ getTotalMonthlyAmount() | number:'1.2-2' }}</span>
+                      </div>
+                      <div>
+                        <span class="text-muted me-2">Annual Amount:</span>
+                        <span class="fw-bold">AED {{ getTotalAnnualAmount() | number:'1.2-2' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="salaryStructureForm.invalid">
+            {{ isEditing ? 'Update Structure' : 'Create Structure' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showModal"></div>

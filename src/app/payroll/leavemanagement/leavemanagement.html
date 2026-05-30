@@ -1,0 +1,341 @@
+<div class="leave-management-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Leave Management</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="leave-management-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="leave-management-logo">
+          <i class="bi bi-calendar-event"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Leave Management</h1>
+          <p class="header-subtitle">Manage employee leave requests and approvals efficiently</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clock"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Pending Requests</h3>
+          <p class="stat-number">{{ totalPending }}</p>
+          <p class="stat-change negative">Awaiting approval</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Approved</h3>
+          <p class="stat-number">{{ totalApproved }}</p>
+          <p class="stat-change positive">Total approved</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-x-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Rejected</h3>
+          <p class="stat-number">{{ totalRejected }}</p>
+          <p class="stat-change negative">Total rejected</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Requests</h3>
+          <p class="stat-number">{{ totalRequests }}</p>
+          <p class="stat-change positive">All requests</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <div class="search-wrapper">
+          <i class="bi bi-search"></i>
+          <input type="text" 
+                 class="search-input" 
+                 placeholder="Search employees..."
+                 [(ngModel)]="searchTerm">
+        </div>
+        <button class="btn-primary" (click)="showAddForm(createLeaveRequestModal)">
+          <i class="bi bi-plus-lg"></i>
+          Create Leave Request
+        </button>
+        <button class="btn-secondary" (click)="refreshData()">
+          <i class="bi bi-arrow-clockwise"></i>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-table me-2"></i>Leave Requests
+          </h3>
+        </div>
+        <div class="table-body">
+          <table class="compact-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Leave Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Days</th>
+                <th>Status</th>
+                <th>Applied On</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let leave of filteredLeaveRequests">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar me-2">
+                      <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div>
+                      <div class="fw-bold">{{ leave.employee_full_name }}</div>
+                      <small class="text-muted">{{ leave.department }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [class]="'bg-' + (leave.attendance_type_name == 'Annual Leave' ? 'primary' : 
+                                        leave.attendance_type_name == 'Sick Leave' ? 'danger' : 
+                                        leave.attendance_type_name == 'Casual Leave' ? 'warning' : 
+                                        leave.attendance_type_name == 'Maternity Leave' ? 'info' : 'secondary')">
+                    {{ leave.attendance_type_name }}
+                  </span>
+                </td>
+                <td>{{ leave.start_date | date:'MMM dd, yyyy' }}</td>
+                <td>{{ leave.end_date | date:'MMM dd, yyyy' }}</td>
+                <td><span class="badge">{{ leave.total_days }} days</span></td>
+                <td>
+                  <span class="badge" [class]="'bg-' + (leave.status_name == 'Pending' ? 'warning' : 
+                                        leave.status_name == 'Approved' ? 'success' : 'danger')">
+                    {{ leave.status_name }}
+                  </span>
+                </td>
+                <td>{{ leave.created_at | date:'MMM dd, yyyy' }}</td>
+                <td>
+                  <div class="actions">
+                    <button class="btn-action-icon edit" (click)="showeditForm(createLeaveRequestModal,leave)" title="View & Edit">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn-action-icon delete" (click)="deleteLeaveRequest(leave)" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-section">
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          <span class="info-text">
+            Showing {{ (currentPage * pageSize) + 1 }} to {{ Math.min((currentPage + 1) * pageSize, totalData) }} of {{ totalData }} employees
+          </span>
+        </div>
+        <div class="pagination-controls">
+          <div class="page-size-selector">
+            <label class="page-size-label">Show:</label>
+            <select class="page-size" 
+                    [(ngModel)]="pageSize" 
+                    (change)="onPageChange({pageIndex: 0, pageSize: pageSize})">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+          <div class="page-navigation">
+            <button class="btn-page" 
+                    [disabled]="currentPage == 0"
+                    (click)="onPageChange({pageIndex: currentPage - 1, pageSize: pageSize})">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="page-number">
+              Page {{ currentPage + 1 }} of {{ Math.ceil(totalData / pageSize) }}
+            </span>
+            <button class="btn-page" 
+                    [disabled]="(currentPage + 1) * pageSize >= totalData"
+                    (click)="onPageChange({pageIndex: currentPage + 1, pageSize: pageSize})">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3" *ngIf="notifications.length > 0">
+  <div *ngFor="let notification of notifications" class="toast show"
+    [class]="'bg-' + (notification.type === 'success' ? 'success' : notification.type === 'error' ? 'danger' : 'info') + ' text-white'">
+    <div class="toast-header">
+      <i
+        class="bi bi-{{ notification.type === 'success' ? 'check-circle' : notification.type === 'error' ? 'exclamation-circle' : 'info-circle' }} me-2"></i>
+      <strong class="me-auto">{{ notification.type | titlecase }}</strong>
+      <button type="button" class="btn-close btn-close-white" (click)="removeNotification(notification.id)"></button>
+    </div>
+    <div class="toast-body">
+      {{ notification.message }}
+    </div>
+  </div>
+</div>
+
+<ng-template #createLeaveRequestModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" *ngIf="selectedLeave==''">
+        <i class="bi bi-plus-square me-2"></i>Create Leave Request
+      </h5>
+      <h5 class="modal-title" *ngIf="selectedLeave!=''">
+        <i class="bi bi-plus-square me-2"></i>Edit Leave Request
+      </h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="leaveForm" (ngSubmit)="addLeaveRequest()">
+        <!-- Section: Employee & Type -->
+        <div class="row g-3 align-items-end">
+          <div class="col-12">
+            <h6 class="text-primary mb-2"><i class="bi bi-person-badge me-2"></i>Employee & Type</h6>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label form-label-sm">Employee</label>
+            <select class="form-select form-select-sm" formControlName="employee">
+              <option value="">Select employee...</option>
+              <option *ngFor="let emp of employees" [value]="emp.id">
+                {{ emp.first_name }} {{ emp.last_name }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label form-label-sm">Leave Type</label>
+            <select class="form-select form-select-sm" formControlName="attendance_type">
+              <option value="">Select type...</option>
+              <option [value]="leaveType.id" *ngFor="let leaveType of leaveTypes" [style.color]="leaveType.color_code">{{ leaveType.title }}</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <div class="form-check mt-4">
+              <input class="form-check-input" type="checkbox" formControlName="is_lop" id="isLop">
+              <label class="form-check-label" for="isLop">Loss of Pay (LOP)</label>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- Section: Duration -->
+        <div class="row g-3 align-items-end">
+          <div class="col-12">
+            <h6 class="text-primary mb-2"><i class="bi bi-calendar-range me-2"></i>Duration</h6>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">From</label>
+            <input type="date" class="form-control form-control-sm" formControlName="start_date" (change)="onLeaveDateChange()">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">To</label>
+            <input type="date" class="form-control form-control-sm" formControlName="end_date" (change)="onLeaveDateChange()">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Total Days</label>
+            <input type="number" class="form-control form-control-sm" formControlName="total_days">
+          </div>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- Section: Reason -->
+        <div class="row g-3">
+          <div class="col-12">
+            <h6 class="text-primary mb-2"><i class="bi bi-chat-left-text me-2"></i>Reason</h6>
+          </div>
+          <div class="col-12">
+            <textarea rows="3" class="form-control" placeholder="Reason for leave..." formControlName="reason"></textarea>
+            <small class="text-muted">Provide clear details to expedite the approval process.</small>
+          </div>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- Section: Approval -->
+        <div class="row g-3 align-items-end">
+          <div class="col-12">
+            <h6 class="text-primary mb-2"><i class="bi bi-person-check me-2"></i>Approval</h6>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Status</label>
+            <select class="form-select form-select-sm" formControlName="status">
+              <option value="">Select status...</option>
+              <option value="1">Pending</option>
+              <option value="2">Approved</option>
+              <option value="3">Rejected</option>
+              <option value="4">Cancelled</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Approved By/Rejected By</label>
+            <select class="form-select form-select-sm" formControlName="action_by">
+              <option value="">Select approver...</option>
+              <option *ngFor="let approver of approvers" [value]="approver.id">{{ approver.name }}</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label form-label-sm">Approval Remarks</label>
+            <input type="text" class="form-control form-control-sm" placeholder="Approval remarks..." formControlName="approval_remarks">
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+          <button type="button" class="btn btn-light me-2" (click)="modal.dismiss()">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</ng-template>

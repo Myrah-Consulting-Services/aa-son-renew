@@ -1,0 +1,50 @@
+<div class="inward-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Inward</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="inward-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="inward-logo">
+          <i class="bi bi-box-arrow-in-down"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Inward Management</h1>
+          <p class="header-subtitle">Manage incoming inventory receipts and transactions</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary btn-sm" routerLink="/warehouse/inward">
+          <i class="bi bi-list-ul me-1"></i>View Receipts
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <div class="info-card">
+      <div class="info-icon">
+        <i class="bi bi-info-circle"></i>
+      </div>
+      <div class="info-content">
+        <h3>Inward Management</h3>
+        <p>This section manages all inward receipts and transactions. Use the navigation to access specific features.</p>
+        <div class="info-actions">
+          <button class="btn btn-primary" routerLink="/warehouse/inward">
+            <i class="bi bi-list-ul me-1"></i>View All Receipts
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

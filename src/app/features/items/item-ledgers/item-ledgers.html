@@ -1,0 +1,185 @@
+<div class="ledger-report-page">
+  <!-- Header Section -->
+  <div class="report-header">
+    <div class="header-content">
+      <div class="header-title-section">
+        <div class="title-icon">
+          <i class="bi bi-bar-chart-square"></i>
+        </div>
+        <div>
+          <h1 class="report-title">Item Ledger Report</h1>
+          <p class="report-subtitle">Track quantity movements and transactional history for the selected item.</p>
+        </div>
+      </div>
+      
+      <!-- Summary Cards (Top Right) -->
+      <div class="summary-cards-top" *ngIf="hasData">
+        <div class="summary-card">
+          <div class="summary-label">OPENING QTY</div>
+          <div class="summary-value">{{ openingBalance || 0 }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">CURRENT QTY</div>
+          <div class="summary-value">{{ currentBalance || 0 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Date Selection Section -->
+  <div class="date-section">
+    <form [formGroup]="itemLedgerForm" (ngSubmit)="onSubmit()" class="date-form">
+      <div class="date-inputs">
+        <div class="date-field">
+          <label class="date-label">FROM DATE <span class="required">*</span></label>
+          <div class="date-input-wrapper">
+            <i class="bi bi-calendar date-icon"></i>
+            <input 
+              type="date" 
+              formControlName="start_date"
+              class="date-input"
+              [class.is-invalid]="itemLedgerForm.get('start_date')?.invalid && itemLedgerForm.get('start_date')?.touched">
+          </div>
+          <div 
+            *ngIf="itemLedgerForm.get('start_date')?.invalid && itemLedgerForm.get('start_date')?.touched"
+            class="error-message">
+            From date is required
+          </div>
+        </div>
+
+        <div class="date-field">
+          <label class="date-label">TO DATE <span class="required">*</span></label>
+          <div class="date-input-wrapper">
+            <i class="bi bi-calendar date-icon"></i>
+            <input 
+              type="date" 
+              formControlName="end_date"
+              class="date-input"
+              [class.is-invalid]="itemLedgerForm.get('end_date')?.invalid && itemLedgerForm.get('end_date')?.touched">
+            <i class="bi bi-check-circle check-icon" *ngIf="itemLedgerForm.get('end_date')?.valid && itemLedgerForm.get('end_date')?.touched"></i>
+          </div>
+          <div 
+            *ngIf="itemLedgerForm.get('end_date')?.invalid && itemLedgerForm.get('end_date')?.touched"
+            class="error-message">
+            To date is required
+          </div>
+        </div>
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn-generate"
+        [disabled]="itemLedgerForm.invalid || isLoading">
+        <span *ngIf="isLoading" class="spinner"></span>
+        <span *ngIf="!isLoading">Generate Report</span>
+        <span *ngIf="isLoading">Loading...</span>
+      </button>
+    </form>
+
+    <!-- Summary Cards (Below Date Selection) -->
+    <div class="summary-cards-bottom" *ngIf="hasData">
+      <div class="summary-card">
+        <div class="summary-label">OPENING QTY</div>
+        <div class="summary-value">{{ openingBalance || 0 }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">CURRENT QTY</div>
+        <div class="summary-value">{{ currentBalance || 0 }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Item Selected Message -->
+  <div *ngIf="!itemId" class="no-item-message">
+    <i class="bi bi-info-circle"></i>
+    <p>Please select an item from the list above to view their ledger.</p>
+  </div>
+
+  <!-- Ledger Table -->
+  <div class="table-section" *ngIf="itemId">
+    <div class="table-container">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>DATE</th>
+            <th class="text-end">SALES</th>
+            <th class="text-end">SALES QTY</th>
+            <th class="text-end">PURCHASE</th>
+            <th class="text-end">PURCHASE QTY</th>
+            <th class="text-end">STOCK</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="hasData">
+          <tr *ngFor="let entry of ledgerData">
+            <td>
+              <div class="date-cell">
+                <i class="bi bi-calendar"></i>
+                <span>{{ formatDate(entry.date) }}</span>
+              </div>
+            </td>
+            <td class="text-end sales-amount">{{ formatAmount(entry.sales_amount) }}</td>
+            <td class="text-end">{{ formatAmount(entry.sales_quantity) }}</td>
+            <td class="text-end">{{ formatAmount(entry.purchase_amount) }}</td>
+            <td class="text-end">{{ formatAmount(entry.purchase_quantity) }}</td>
+            <td class="text-end stock-balance">{{ entry.stock_balance }}</td>
+          </tr>
+        </tbody>
+        <tbody *ngIf="!hasData">
+          <tr>
+            <td colspan="6" class="empty-table">
+              <div class="empty-content">
+                <i class="bi bi-inbox"></i>
+                <p>No ledger data available</p>
+                <small>Select date range and click Generate Report to load data</small>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-section" *ngIf="paginationData && paginationData.total_pages > 1">
+      <div class="pagination-info">
+        <span class="page-range">{{ getPageRange() }}</span>
+        <div class="items-per-page">
+          <label>Items per page:</label>
+          <select 
+            class="limit-select" 
+            [(ngModel)]="currentLimit"
+            (ngModelChange)="onLimitChange($event)">
+            <option *ngFor="let limit of getLimitOptions()" [ngValue]="limit">
+              {{ limit }}
+            </option>
+          </select>
+        </div>
+      </div>
+      
+      <nav class="pagination-nav">
+        <button 
+          class="page-btn" 
+          [disabled]="!paginationData.previous_page"
+          (click)="onPageChange(currentPage - 1)">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        
+        <div class="page-numbers">
+          <button 
+            *ngFor="let page of getPageNumbers()" 
+            class="page-number"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+        </div>
+        
+        <button 
+          class="page-btn" 
+          [disabled]="!paginationData.next_page"
+          (click)="onPageChange(currentPage + 1)">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </nav>
+    </div>
+  </div>
+</div>

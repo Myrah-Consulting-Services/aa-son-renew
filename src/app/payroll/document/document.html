@@ -1,0 +1,61 @@
+<div class="document-container">
+  <!-- Top section for file upload -->
+  <div class="upload-section">
+    <div class="drop-zone" 
+         (drop)="onFileDrop($event)" 
+         (dragover)="onDragOver($event)" 
+         (dragleave)="onDragLeave($event)"
+         [class.drag-over]="isDragOver">
+      <div class="icon-container">
+        <i class="bi bi-cloud-upload"></i>
+      </div>
+      <p>Drag & Drop File Here</p>
+      <p>- or -</p>
+      <input type="file" #fileInput hidden (change)="onFileSelected($event)">
+      <button class="btn btn-primary" (click)="fileInput.click()">Choose file to upload</button>
+    </div>
+    <p class="upload-note">
+      While uploading .zip ensure that files are of type .pdf and the names of the files correspond to the employee ID of employees (file size should not exceed 50MB)
+    </p>
+    <div *ngIf="selectedFile" class="file-preview">
+        <div class="file-info">
+            <i [class]="'bi ' + getFileIcon(selectedFile.name)"></i>
+            <span>{{ selectedFile.name }} ({{ selectedFile.size | number:'1.0-2' }} bytes)</span>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-primary btn-sm" (click)="saveFile()">Save File</button>
+            <button class="btn btn-secondary btn-sm" (click)="cancelUpload()">Cancel</button>
+        </div>
+    </div>
+  </div>
+  <hr class="separator">
+  <!-- Bottom section for document list -->
+  <div class="document-list-section">
+    <div class="list-header">
+      <h3>All Documents</h3>
+      <button class="btn btn-primary">Add Documents</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th><input type="checkbox"></th>
+            <th>FILE NAME</th>
+            <th>FOLDER NAME</th>
+            <th>EMPLOYEE NAME</th>
+            <th>UPLOADED ON</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let doc of documentList">
+            <td><input type="checkbox"></td>
+            <td><i [class]="'bi ' + getFileIcon(doc.fileName)"></i> {{ doc.fileName }}</td>
+            <td>{{ doc.folderName }}</td>
+            <td>{{ doc.employeeName }}</td>
+            <td>{{ doc.uploadedOn }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

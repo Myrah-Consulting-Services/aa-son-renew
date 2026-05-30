@@ -1,0 +1,192 @@
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="revision-header">
+    <div class="header-content">
+      <h2 class="revision-title">Salary Revision for {{ employee?.first_name }} {{ employee?.last_name }}</h2>
+      <button class="close-btn" (click)="closeRevision()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    
+    <!-- Previous Salary Information -->
+    <div class="previous-salary-info">
+      <div class="salary-item">
+        <span class="label">Previous Pay:</span>
+        <span class="value">{{ formatCurrency(previousSalary?.annual) }}</span>
+        <span class="period">(annual)</span>
+      </div>
+      <div class="salary-item">
+        <span class="label">Previous Monthly Salary:</span>
+        <span class="value">{{ formatCurrency(previousSalary?.monthly) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="salaryForm">
+
+  <!-- Salary Templates Section -->
+  <div class="form-section">
+    <div class="form-group">
+      <label class="form-label">Salary Templates</label>
+      <div class="position-relative">
+        <input type="text" 
+               class="form-control" formControlName="salaryStructureName"
+               placeholder="Search and select salary structure..." 
+               [value]="salaryStructureSearchTerm"
+               (focus)="onSalaryStructureFocus()" 
+               (input)="onSalaryStructureInput($event)"
+               (blur)="onSalaryStructureBlur()" />
+        <!-- Dropdown for salary structure search -->
+        <div class="dropdown-menu show position-absolute w-100"
+             *ngIf="showSalaryStructureDropdown && filteredSalaryStructures.length > 0"
+             style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+          <div class="dropdown-item" 
+               *ngFor="let structure of filteredSalaryStructures"
+               (mousedown)="selectSalaryStructure(structure)" 
+               style="cursor: pointer; padding: 8px 12px;">
+            <div class="fw-bold">{{ structure.name }}</div>
+            <div class="small text-muted">{{ structure.description }}</div>
+            <div class="small text-primary">{{ structure.total_components }} components</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Salary Components Section -->
+  <div class="form-section">
+    <div class="section-header">
+      <h3>Salary Components</h3>
+    </div>
+    
+    <div class="components-table">
+      <div class="table-header">
+        <div class="header-cell">SALARY COMPONENTS</div>
+        <div class="header-cell">CALCULATION TYPE</div>
+        <div class="header-cell">MONTHLY AMOUNT</div>
+        <div class="header-cell">ANNUAL AMOUNT</div>
+      </div>
+      
+      <!-- Earnings Section -->
+      <div class="section-subheader">
+        <span>Earnings</span>
+      </div>
+      
+      <div class="component-row" *ngFor="let earning of earningsArray.controls; let i = index" [formGroup]="earning">
+        <div class="component-name">
+          <!-- Dropdown only if category has heads -->
+          <select *ngIf="earning.get('isDropdown')?.value; else noHeads" 
+                  class="form-select" 
+                  formControlName="head_name" 
+                  (change)="onHeadChange(i)">
+            <option value="">Select</option>
+            <option *ngFor="let head of salaryData[i]?.heads" [ngValue]="head.head_name">
+              {{ head.head_name }}
+            </option>
+          </select>
+          <!-- Otherwise show plain text -->
+          <ng-template #noHeads>
+            <span>{{ earning.get('category_name')?.value }}</span>
+          </ng-template>
+        </div>
+        <div class="calculation-type">
+          <div class="d-flex w-100" *ngIf="earning.get('calculation_type')?.value != 1">
+            <!-- Percentage value input -->
+            <input type="number" 
+                   class="form-control form-control-sm text-end"
+                   formControlName="calculation_value" 
+                   style="width: 80px;"
+                   (input)="onCalculationValueChange(i)" />
+            <!-- Label -->
+            <span class="form-control-plaintext border rounded p-2 text-center"
+                  style="min-width: 120px; border-left: none; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+              <ng-container [ngSwitch]="earning.get('calculation_type')?.value">
+                <span *ngSwitchCase="2">% of Basic</span>
+                <span *ngSwitchDefault>Other</span>
+              </ng-container>
+            </span>
+          </div>
+          <span class="form-control-plaintext border rounded p-2 w-100"
+                *ngIf="earning.get('calculation_type')?.value == 1">
+            Fixed
+          </span>
+        </div>
+        <div class="amount-input">
+          <input type="number" 
+                 class="form-control" 
+                 formControlName="monthly_value"
+                 (input)="onMonthlyAmountChange(i)"
+                 step="0.01">
+        </div>
+        <div class="amount-display">{{ formatCurrency(earning.get('annual_value')?.value || 0) }}</div>
+      </div>
+      
+      <!-- Total Gross Pay Row -->
+      <div class="total-row">
+        <div class="total-label">Total Gross Pay</div>
+        <div class="total-spacer"></div>
+        <div class="total-monthly">{{ formatCurrency(grossMonthlyEarnings) }}</div>
+        <div class="total-annual">{{ formatCurrency(grossAnnualEarnings) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payout Preferences Section -->
+  <div class="form-section">
+    <div class="section-header">
+      <h3>Payout Preferences <span class="required">*</span></h3>
+    </div>
+    
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Revised Salary effective from</label>
+            <div class="position-relative">
+              <input type="month" 
+                     class="form-control month-input" 
+                     [value]="getMonthInputValue(salaryForm.get('revised_salary_effective_from')?.value)"
+                     (change)="onEffectiveFromChange($event)">
+              <i class="bi bi-info-circle position-absolute top-50 end-0 translate-middle-y me-3 text-primary" 
+                 style="pointer-events: none; z-index: 5;"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Payout Month</label>
+            <div class="position-relative">
+              <input type="month" 
+                     class="form-control month-input" 
+                     [value]="getMonthInputValue(salaryForm.get('payout_month')?.value)"
+                     (change)="onPayoutMonthChange($event)">
+              <i class="bi bi-info-circle position-absolute top-50 end-0 translate-middle-y me-3 text-muted" 
+                 style="pointer-events: none; z-index: 5;"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6"> 
+          <div class="form-group">
+            <label class="form-label">Reason</label>
+            <input type="text" class="form-control" formControlName="reason">
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <!-- Informational Note -->
+  <!-- <div class="info-note">
+    <p>Note: Esarwa Payroll will automatically calculate any arrears in the salary and process them in the payout month, eliminating the need for manually adding arrear components.</p>
+  </div> -->
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="btn btn-primary save-approve-btn" (click)="saveAndApprove()">
+      Save & Approve
+    </button>
+    <button class="btn btn-secondary cancel-btn" (click)="cancelRevision()">
+      Cancel
+    </button>
+  </div>
+  </form>
+</div>
+

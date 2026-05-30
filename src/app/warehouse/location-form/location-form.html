@@ -1,0 +1,203 @@
+<!-- Modal Header (only shown in modal mode) -->
+<div class="modal-header" *ngIf="isModalMode">
+  <h4 class="modal-title">{{ isEditMode ? 'Edit Location' : 'New Location' }}</h4>
+  <button type="button" class="btn-close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<!-- Page Header (only shown in route mode) -->
+<div class="container-fluid" *ngIf="!isModalMode">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>{{ isEditMode ? 'Edit Location' : 'New Location' }}</h2>
+      <p class="text-muted">{{ isEditMode ? 'Update location information' : 'Create a new location' }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Form Content -->
+<div [class]="isModalMode ? 'modal-body' : 'container-fluid'">
+  <div class="card" *ngIf="!isModalMode">
+    <div class="card-body">
+      <form [formGroup]="form">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="name" class="form-label">Location Name *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="name" 
+                formControlName="name"
+                [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+              >
+              <div class="invalid-feedback" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+                <div *ngIf="form.get('name')?.errors?.['required']">Location name is required.</div>
+                <div *ngIf="form.get('name')?.errors?.['minlength']">Must be at least 2 characters.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="warehouse" class="form-label">Warehouse *</label>
+              <select 
+                class="form-select" 
+                id="warehouse" 
+                formControlName="warehouse"
+                [class.is-invalid]="form.get('warehouse')?.invalid && form.get('warehouse')?.touched"
+              >
+                <option value="">Select Warehouse</option>
+                <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+                  {{ warehouse.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="form.get('warehouse')?.invalid && form.get('warehouse')?.touched">
+                <div *ngIf="form.get('warehouse')?.errors?.['required']">Please select a warehouse.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea 
+            class="form-control" 
+            id="description" 
+            rows="2"
+            formControlName="description"
+          ></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="capacity" class="form-label">Capacity</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                id="capacity" 
+                formControlName="capacity"
+                [class.is-invalid]="form.get('capacity')?.invalid && form.get('capacity')?.touched"
+              >
+              <div class="invalid-feedback" *ngIf="form.get('capacity')?.invalid && form.get('capacity')?.touched">
+                <div *ngIf="form.get('capacity')?.errors?.['min']">Capacity must be 0 or greater.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 d-flex align-items-center">
+            <div class="form-check">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="isActive" 
+                formControlName="isActive"
+              >
+              <label class="form-check-label" for="isActive">
+                Active Location
+              </label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Form (only shown in modal mode) -->
+  <form [formGroup]="form" *ngIf="isModalMode">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label for="name" class="form-label">Location Name *</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="name" 
+            formControlName="name"
+            [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+          >
+          <div class="invalid-feedback" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+            <div *ngIf="form.get('name')?.errors?.['required']">Location name is required.</div>
+            <div *ngIf="form.get('name')?.errors?.['minlength']">Must be at least 2 characters.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label for="warehouse" class="form-label">Warehouse *</label>
+          <select 
+            class="form-select" 
+            id="warehouse" 
+            formControlName="warehouse"
+            [class.is-invalid]="form.get('warehouse')?.invalid && form.get('warehouse')?.touched"
+          >
+            <option value="">Select Warehouse</option>
+            <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="form.get('warehouse')?.invalid && form.get('warehouse')?.touched">
+            <div *ngIf="form.get('warehouse')?.errors?.['required']">Please select a warehouse.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="description" class="form-label">Description</label>
+      <textarea 
+        class="form-control" 
+        id="description" 
+        rows="2"
+        formControlName="description"
+      ></textarea>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label for="capacity" class="form-label">Capacity</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            id="capacity" 
+            formControlName="capacity"
+            [class.is-invalid]="form.get('capacity')?.invalid && form.get('capacity')?.touched"
+          >
+          <div class="invalid-feedback" *ngIf="form.get('capacity')?.invalid && form.get('capacity')?.touched">
+            <div *ngIf="form.get('capacity')?.errors?.['min']">Capacity must be 0 or greater.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 d-flex align-items-center">
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="checkbox" 
+            id="isActive" 
+            formControlName="isActive"
+          >
+          <label class="form-check-label" for="isActive">
+            Active Location
+          </label>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Modal Footer (only shown in modal mode) -->
+<div class="modal-footer" *ngIf="isModalMode">
+  <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+  <button type="button" class="btn btn-primary" (click)="save()" [disabled]="form.invalid">
+    {{ isEditMode ? 'Update' : 'Save' }}
+  </button>
+</div>
+
+<!-- Page Footer (only shown in route mode) -->
+<div class="container-fluid" *ngIf="!isModalMode">
+  <div class="row">
+    <div class="col">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="save()" [disabled]="form.invalid">
+          {{ isEditMode ? 'Update' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

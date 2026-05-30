@@ -1,0 +1,109 @@
+<div class="container-fluid py-4" *ngIf="reportSummary">
+  <div class="card shadow-sm border-0 p-4">
+    <!-- Header and Date Filter -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-file-earmark-spreadsheet me-2"></i>VAT Return Summary
+      </h3>
+      <button class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-download me-1"></i>Export as FTA File
+      </button>
+    </div>
+    <div class="row g-3 align-items-end mb-4">
+      <div class="col-md-3">
+        <label for="dateFrom" class="form-label fw-semibold small">From</label>
+        <input type="date" class="form-control" id="dateFrom" [(ngModel)]="dateFrom">
+      </div>
+      <div class="col-md-3">
+        <label for="dateTo" class="form-label fw-semibold small">To</label>
+        <input type="date" class="form-control" id="dateTo" [(ngModel)]="dateTo">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" (click)="fetchVatReport()">
+          <i class="bi bi-filter me-1"></i>Generate
+        </button>
+      </div>
+    </div>
+
+    <!-- VAT on Sales and other Outputs -->
+    <div class="mb-5">
+      <h5 class="mb-3 fw-bold text-dark">VAT on Sales and other Outputs</h5>
+      <div class="table-responsive">
+        <table class="table table-bordered">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Description</th>
+              <th scope="col" class="text-end">Amount (AED )</th>
+              <th scope="col" class="text-end">VAT Amount (AED )</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reportSummary.sales_by_emirate">
+              <td>Standard rated supplies in {{item.emirate}}</td>
+              <td class="text-end">{{item.taxable_amount | number:'1.2-2'}}</td>
+              <td class="text-end">{{item.vat_amount | number:'1.2-2'}}</td>
+            </tr>
+            <tr>
+              <td>Zero rated supplies</td>
+              <td class="text-end">{{reportSummary.zero_rated_supplies | number:'1.2-2'}}</td>
+              <td class="text-end">0.00</td>
+            </tr>
+            <tr>
+              <td>Exempt supplies</td>
+              <td class="text-end">{{reportSummary.exempt_supplies | number:'1.2-2'}}</td>
+              <td class="text-end">0.00</td>
+            </tr>
+          </tbody>
+          <tfoot class="fw-bold table-group-divider">
+            <tr>
+              <td class="text-end">Total Sales and All Outputs</td>
+              <td class="text-end"></td>
+              <td class="text-end text-success fs-5">{{reportSummary.total_output_vat | number:'1.2-2'}}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- VAT on Expenses and other Inputs -->
+    <div class="mb-5">
+      <h5 class="mb-3 fw-bold text-dark">VAT on Expenses and other Inputs</h5>
+      <div class="table-responsive">
+        <table class="table table-bordered">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Description</th>
+              <th scope="col" class="text-end">Amount (AED )</th>
+              <th scope="col" class="text-end">VAT Amount (AED )</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Standard rated expenses</td>
+              <td class="text-end">{{reportSummary.purchases_standard_rated | number:'1.2-2'}}</td>
+              <td class="text-end">{{reportSummary.total_input_vat | number:'1.2-2'}}</td>
+            </tr>
+          </tbody>
+          <tfoot class="fw-bold table-group-divider">
+            <tr>
+              <td class="text-end">Total Expenses and All Inputs</td>
+              <td class="text-end"></td>
+              <td class="text-end text-danger fs-5">{{reportSummary.total_input_vat | number:'1.2-2'}}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Net VAT Due -->
+    <div class="card bg-primary-subtle border-0 p-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4 class="fw-bold text-primary mb-0">Net VAT Due</h4>
+        <div class="text-end">
+          <div class="fs-2 fw-bold text-primary">{{reportSummary.net_vat_due | number:'1.2-2'}}</div>
+          <small class="text-muted fw-semibold">AED </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

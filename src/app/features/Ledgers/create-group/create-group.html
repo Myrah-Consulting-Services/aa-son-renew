@@ -1,0 +1,41 @@
+<form [formGroup]="groupForm" (ngSubmit)="onSubmit()" class="group-form">
+  <div class="form-section">
+    <div class="form-row-2">
+      <div class="form-field-group">
+        <label class="form-label">
+          <i class="bi bi-tag"></i>
+          Group Name <span class="required">*</span>
+        </label>
+        <input 
+          type="text" 
+          class="form-control" 
+          formControlName="ledger_name" 
+          placeholder="Enter group name" />
+        <div class="validation-error" *ngIf="groupForm.get('ledger_name')?.touched && groupForm.get('ledger_name')?.errors?.['required']">
+          Group name is required
+        </div>
+      </div>
+
+      <div class="form-field-group">
+        <label class="form-label">
+          <i class="bi bi-diagram-3"></i>
+          Under <span class="required">*</span>
+        </label>
+        <select class="form-select" formControlName="ledger_under">
+          <option value="">Select Parent Group</option>
+          <option *ngFor="let parent of parentGroups" [value]="parent.id">{{parent.payment_under_name}}</option>
+        </select>
+        <div class="validation-error" *ngIf="groupForm.get('ledger_under')?.touched && groupForm.get('ledger_under')?.errors?.['required']">
+          Please select a parent group
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-submit">
+      <i class="bi bi-check-circle"></i>
+      Submit
+    </button>
+  </div>
+</form>

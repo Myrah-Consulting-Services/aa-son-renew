@@ -1,0 +1,188 @@
+<div class="expense-page-container">
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <span class="breadcrumb-link active">
+        <i class="bi bi-receipt-cutoff"></i>
+        <span>Expenses</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="expense-content-card">
+    <div class="expense-header">
+      <div class="header-left">
+        <h1 class="page-title">Expense List</h1>
+        <p class="page-subtitle">Manage and track your expense categories</p>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn btn-secondary" (click)="openExpenseCategoryModal(exmodal)">
+          <i class="bi bi-tags"></i> Create Category
+        </button>
+        <button class="action-btn btn-primary" (click)="createExpense(expenseModal)">
+          <i class="bi bi-plus-lg"></i> Create Expense
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <form [formGroup]="expenselistform" (ngSubmit)="onSubmit()" class="filter-form">
+        <div class="date-fields">
+          <div class="date-field">
+            <label for="startDate" class="date-label">Start Date</label>
+            <input 
+              type="date" 
+              id="startDate" 
+              class="form-control" 
+              formControlName="start_date">
+          </div>
+          <div class="date-field">
+            <label for="endDate" class="date-label">End Date</label>
+            <input 
+              type="date" 
+              id="endDate" 
+              class="form-control" 
+              formControlName="end_date">
+          </div>
+          <div class="date-field">
+            <button type="submit" class="btn-apply-filter">
+              <i class="bi bi-funnel"></i> Apply Filter
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="table-section">
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>
+                  <i class="bi bi-receipt"></i> Particulars
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-currency-dollar"></i> Net Balance
+                </th>
+                <th class="text-center">
+                  <i class="bi bi-gear"></i> Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody *ngIf="paginatedExpenses.length > 0">
+              <tr *ngFor="let expense of paginatedExpenses">
+                <td>
+                  <div class="expense-name">{{ expense.category }}</div>
+                </td>
+                <td class="text-end">
+                  <span class="balance-amount">{{getcurrency()}} {{ expense.amount | number:'1.2-2' }}</span>
+                </td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="action-btn btn-view" (click)="openExpenseLedgerModal(expenseLedgerModal, expense)" title="View Ledger">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="action-btn btn-edit" (click)="openExpenseCategoryModal(exmodal, expense)" title="Edit Category">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="action-btn btn-delete" (click)="deleteExpenseCategory(expense.id)" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tbody *ngIf="paginatedExpenses.length === 0">
+              <tr>
+                <td colspan="3" class="empty-table">
+                  <div class="empty-content">
+                    <i class="bi bi-inbox"></i>
+                    <p>No expenses found for the selected period.</p>
+                    <small>Try adjusting your date range or create a new expense category.</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pagination-section" *ngIf="expenses.length > 0">
+        <div class="pagination-info">
+          <span class="page-range">{{ startItem }} – {{ endItem }} of {{ expenses.length }}</span>
+          <div class="items-per-page">
+            <label>Items per page:</label>
+            <select 
+              class="limit-select" 
+              [(ngModel)]="pageSize" 
+              (change)="changePage(1)">
+              <option [value]="10">10</option>
+              <option [value]="20">20</option>
+              <option [value]="50">50</option>
+            </select>
+          </div>
+        </div>
+        <nav class="pagination-nav">
+          <button 
+            class="page-btn" 
+            [disabled]="currentPage === 1" 
+            (click)="changePage(currentPage - 1)">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="page-numbers">
+            <button 
+              *ngFor="let page of getPageNumbers()" 
+              class="page-number"
+              [class.active]="page === currentPage"
+              (click)="changePage(page)">
+              {{ page }}
+            </button>
+          </div>
+          <button 
+            class="page-btn" 
+            [disabled]="currentPage === totalPages" 
+            (click)="changePage(currentPage + 1)">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #exmodal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">
+      {{expenseSelected ? 'Edit Expense category' : 'Create Expense category'}}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <app-expense-category [modalRef]="modalRef" [expenseSelected]="expenseSelected" (emitdata)="getExpenseCategory($event)"></app-expense-category>
+  </div>
+</ng-template>
+
+<ng-template #expenseModal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">Create Expense</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-expense [modalRef]="modalRef"></app-create-expense>
+  </div>
+</ng-template>
+
+<ng-template #expenseLedgerModal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">Expense Ledger</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <app-expense-ledger [modalRef]="modalRef" [expenseId]="expenseSelected"></app-expense-ledger>
+  </div>
+</ng-template>

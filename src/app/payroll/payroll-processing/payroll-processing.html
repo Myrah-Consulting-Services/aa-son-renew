@@ -1,0 +1,283 @@
+<div class="container-fluid p-4">
+  <h2 class="h2 mb-4">Payroll Processing</h2>
+
+  <ul class="nav nav-tabs" id="payrollTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="processing-tab" data-bs-toggle="tab" data-bs-target="#processing" type="button" role="tab" (click)="setActiveTab('processing')">Processing</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="configuration-tab" data-bs-toggle="tab" data-bs-target="#configuration" type="button" role="tab" (click)="setActiveTab('configuration')">Configuration</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab" (click)="setActiveTab('reports')">Reports</button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="payrollTabsContent">
+    <div class="tab-pane fade show active" id="processing" role="tabpanel">
+      <div class="mt-4">
+        <!-- Payroll Processing Form -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Process Payroll</h5>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="payrollForm" (ngSubmit)="processPayroll()" class="row g-3">
+              <div class="col-md-6 col-lg-4">
+                <label for="month" class="form-label">Month</label>
+                <select class="form-select" formControlName="month" (change)="onPeriodChange()" required>
+                  <option value="">Select Month</option>
+                  <option *ngFor="let month of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="month">
+                    {{ month | date:'MMMM':'':'' }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="payrollForm.get('month')?.hasError('required')">
+                  Month is required
+                </div>
+              </div>
+
+              <div class="col-md-6 col-lg-4">
+                <label for="year" class="form-label">Year</label>
+                <input type="number" class="form-control" formControlName="year" (input)="onPeriodChange()" placeholder="Enter year">
+                <div class="invalid-feedback" *ngIf="payrollForm.get('year')?.hasError('required')">
+                  Year is required
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="includeLOP" id="includeLOP">
+                  <label class="form-check-label" for="includeLOP">
+                    Include LOP Deductions
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="includeOvertime" id="includeOvertime">
+                  <label class="form-check-label" for="includeOvertime">
+                    Include Overtime Pay
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="includeLoans" id="includeLoans">
+                  <label class="form-check-label" for="includeLoans">
+                    Include Loan Deductions
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary me-2" [disabled]="payrollForm.invalid || isProcessing">
+                  <i class="bi bi-arrow-clockwise" *ngIf="isProcessing"></i>
+                  {{ isProcessing ? 'Processing...' : 'Process Payroll' }}
+                </button>
+                <button type="button" class="btn btn-secondary" (click)="exportPayrollReport()" [disabled]="processingResults.length === 0">
+                  Export Report
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Processing Results -->
+        <div class="card" *ngIf="processingResults.length > 0">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Processing Results</h5>
+            <p class="card-subtitle mb-0">
+              Period: {{ selectedPeriod.startDate | date:'MMMM yyyy' }} 
+              ({{ selectedPeriod.daysInMonth }} days)
+            </p>
+          </div>
+          <div class="card-body">
+            <!-- Summary -->
+            <div class="row mb-4">
+              <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-primary text-white text-center">
+                  <div class="card-body">
+                    <h4 class="card-title">{{ getcurrency() }} {{ getTotalGrossPay() | number:'1.0-0' }}</h4>
+                    <p class="card-text">Total Gross Pay</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-danger text-white text-center">
+                  <div class="card-body">
+                    <h4 class="card-title">{{ getcurrency() }} {{ getTotalLOPDeduction() | number:'1.0-0' }}</h4>
+                    <p class="card-text">Total LOP Deduction</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-success text-white text-center">
+                  <div class="card-body">
+                    <h4 class="card-title">{{ getcurrency() }} {{ getTotalOvertimePay() | number:'1.0-0' }}</h4>
+                    <p class="card-text">Total Overtime Pay</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-warning text-white text-center">
+                  <div class="card-body">
+                    <h4 class="card-title">{{ getcurrency() }} {{ getTotalLoanDeductions() | number:'1.0-0' }}</h4>
+                    <p class="card-text">Total Loan Deductions</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Gross Salary</th>
+                    <th>LOP Deduction</th>
+                    <th>Overtime Pay</th>
+                    <th>Loan Deductions</th>
+                    <th>Net Salary</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let calc of processingResults">
+                    <td>{{ calc.employeeName }}</td>
+                        <td>{{ getcurrency() }} {{ calc.grossSalary | number:'1.0-0' }}</td>
+                    <td>{{ getLOPDisplay(calc) }}</td>
+                    <td>{{ getOvertimeDisplay(calc) }}</td>
+                    <td>{{ getLoanDeductionsDisplay(calc) }}</td>
+                        <td class="fw-bold">{{ getcurrency() }} {{ calc.netSalary | number:'1.0-0' }}</td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary" title="View Details">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Final Summary -->
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h6 class="card-title">Summary</h6>
+                    <p class="mb-1"><strong>Total Employees:</strong> {{ processingResults.length }}</p>
+                    <p class="mb-1"><strong>Total Net Pay:</strong> {{ getcurrency() }} {{ getTotalNetPay() | number:'1.0-0' }}</p>
+                    <p class="mb-0"><strong>Average Net Pay:</strong> {{ getcurrency() }} {{ (getTotalNetPay() / processingResults.length) | number:'1.0-0' }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h6 class="card-title">Processing Info</h6>
+                    <p class="mb-0"><strong>Processing Date:</strong> {{ currentDate | date:'medium' }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="configuration" role="tabpanel">
+      <div class="mt-4">
+        <!-- OT Multipliers Configuration -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Overtime Configuration</h5>
+            <p class="card-subtitle mb-0">Configure overtime multipliers for different scenarios</p>
+          </div>
+          <div class="card-body">
+            <form class="row g-3">
+              <div class="col-md-4">
+                <label for="regularMultiplier" class="form-label">Regular Overtime Multiplier</label>
+                <input type="number" class="form-control" [(ngModel)]="otMultipliers.regular" 
+                       [ngModelOptions]="{standalone: true}" step="0.01" min="1" id="regularMultiplier">
+                <div class="form-text">e.g., 1.25 for 25% extra pay</div>
+              </div>
+
+              <div class="col-md-4">
+                <label for="holidayMultiplier" class="form-label">Holiday Overtime Multiplier</label>
+                <input type="number" class="form-control" [(ngModel)]="otMultipliers.holiday" 
+                       [ngModelOptions]="{standalone: true}" step="0.01" min="1" id="holidayMultiplier">
+                <div class="form-text">e.g., 1.5 for 50% extra pay</div>
+              </div>
+
+              <div class="col-md-4">
+                <label for="weekendMultiplier" class="form-label">Weekend Overtime Multiplier</label>
+                <input type="number" class="form-control" [(ngModel)]="otMultipliers.weekend" 
+                       [ngModelOptions]="{standalone: true}" step="0.01" min="1" id="weekendMultiplier">
+                <div class="form-text">e.g., 1.5 for 50% extra pay</div>
+              </div>
+
+              <div class="col-12">
+                <button type="button" class="btn btn-primary" (click)="updateOTMultipliers()">
+                  Update Configuration
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="reports" role="tabpanel">
+      <div class="mt-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Payroll Reports</h5>
+            <p class="card-subtitle mb-0">Generate and export payroll reports</p>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <div class="card border">
+                  <div class="card-body">
+                    <h6 class="card-title">LOP Report</h6>
+                    <p class="card-text text-muted">Generate report showing all LOP deductions for the selected period.</p>
+                    <button class="btn btn-primary">Generate LOP Report</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <div class="card border">
+                  <div class="card-body">
+                    <h6 class="card-title">Overtime Report</h6>
+                    <p class="card-text text-muted">Generate report showing all overtime hours and payments.</p>
+                    <button class="btn btn-primary">Generate OT Report</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <div class="card border">
+                  <div class="card-body">
+                    <h6 class="card-title">Loan Deduction Report</h6>
+                    <p class="card-text text-muted">Generate report showing all loan EMI deductions.</p>
+                    <button class="btn btn-primary">Generate Loan Report</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <div class="card border">
+                  <div class="card-body">
+                    <h6 class="card-title">Comprehensive Report</h6>
+                    <p class="card-text text-muted">Generate complete payroll report with all components.</p>
+                    <button class="btn btn-primary" (click)="exportPayrollReport()">
+                      Generate Comprehensive Report
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

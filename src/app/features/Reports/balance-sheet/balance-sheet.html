@@ -1,0 +1,143 @@
+<div class="balance-sheet-page-container">
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <a routerLink="/reports/report-list" class="breadcrumb-link">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Reports</span>
+      </a>
+      <span class="separator">/</span>
+      <span class="breadcrumb-link active">
+        <i class="bi bi-file-earmark-post"></i>
+        <span>Balance Sheet</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="balance-sheet-content-card">
+    <div class="balance-sheet-header">
+      <div class="header-left">
+        <h1 class="page-title">Balance Sheet</h1>
+        <p class="page-subtitle">As of {{ reportDate | date:'longDate' }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn btn-secondary" (click)="exportReport()">
+          <i class="bi bi-download"></i>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-card">
+      <div class="row g-3 align-items-end mb-0">
+        <div class="col-md-3">
+          <label for="reportDate" class="form-label fw-semibold small">As of Date</label>
+          <input type="date" class="form-control" id="reportDate" [(ngModel)]="reportDate" (change)="onDateChange()">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" (click)="generateReport()" [disabled]="isLoading">
+            <i class="bi bi-arrow-repeat me-1" [class.spinner-border]="isLoading" [class.spinner-border-sm]="isLoading"></i>
+            {{isLoading ? 'Loading...' : 'Refresh'}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Generating Balance Sheet...</p>
+    </div>
+
+    <div class="row g-5" *ngIf="reportData && !isLoading">
+      <!-- Assets Column -->
+      <div class="col-md-6">
+        <h4 class="fw-bold mb-3">Assets</h4>
+        <table class="table">
+          <!-- Current Assets -->
+          <thead class="table-light">
+            <tr>
+              <th>Current Assets</th>
+              <th class="text-end">{{reportData.assets.total_current | currency:currencyCode:'symbol':'1.2-2'}}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reportData.assets.current">
+              <td class="ps-4">{{item.account}}</td>
+              <td class="text-end">{{item.amount | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            </tr>
+          </tbody>
+          <!-- Non-Current Assets -->
+          <thead class="table-light">
+            <tr>
+              <th>Non-Current Assets</th>
+              <th class="text-end">{{reportData.assets.total_non_current | currency:currencyCode:'symbol':'1.2-2'}}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reportData.assets.non_current">
+              <td class="ps-4">{{item.account}}</td>
+              <td class="text-end">{{item.amount | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            </tr>
+          </tbody>
+          <!-- Total Assets -->
+          <tfoot class="table-group-divider fw-bold bg-primary-subtle fs-5">
+            <tr>
+              <td class="text-end">Total Assets</td>
+              <td class="text-end">{{reportData.assets.total | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Liabilities and Equity Column -->
+      <div class="col-md-6">
+        <h4 class="fw-bold mb-3">Liabilities & Equity</h4>
+        <table class="table">
+          <!-- Liabilities -->
+          <thead class="table-light">
+            <tr>
+              <th>Liabilities</th>
+              <th class="text-end">{{reportData.liabilities_and_equity.total_liabilities | currency:currencyCode:'symbol':'1.2-2'}}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reportData.liabilities_and_equity.liabilities">
+              <td class="ps-4">{{item.account}}</td>
+              <td class="text-end">{{item.amount | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            </tr>
+          </tbody>
+          <!-- Equity -->
+          <thead class="table-light">
+            <tr>
+              <th>Equity</th>
+              <th class="text-end">{{reportData.liabilities_and_equity.total_equity | currency:currencyCode:'symbol':'1.2-2'}}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reportData.liabilities_and_equity.equity">
+              <td class="ps-4">{{item.account}}</td>
+              <td class="text-end">{{item.amount | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            </tr>
+          </tbody>
+          <!-- Total Liabilities and Equity -->
+          <tfoot class="table-group-divider fw-bold bg-primary-subtle fs-5">
+            <tr>
+              <td class="text-end">Total Liabilities & Equity</td>
+              <td class="text-end">{{reportData.liabilities_and_equity.total | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="!reportData && !isLoading" class="text-center py-4">
+      <p class="text-muted">No balance sheet data available for the selected date.</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,207 @@
+<div class="ledger-report-page">
+  <!-- Header Section -->
+  <div class="report-header">
+    <div class="header-content">
+      <div class="header-title-section">
+        <div class="title-icon">
+          <i class="bi bi-journal-text"></i>
+        </div>
+        <div>
+          <h1 class="report-title">Party Ledger Report</h1>
+          <p class="report-subtitle">Track financial transactions and balance history for the selected party.</p>
+        </div>
+      </div>
+      
+      <!-- Summary Cards (Top Right) -->
+      <div class="summary-cards-top" *ngIf="hasData && partyId">
+        <div class="summary-card">
+          <div class="summary-label">OPENING BALANCE</div>
+          <div class="summary-value">{{ openingBalance?.bank_balance || '0.0 Cr' }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">CLOSING BALANCE</div>
+          <div class="summary-value">{{ closingBalance?.bank_balance || '0.0 Cr' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Date Selection Section -->
+  <div class="date-section" *ngIf="partyId">
+    <form [formGroup]="partyLedgerForm" (ngSubmit)="onSubmit()" class="date-form">
+      <div class="date-inputs">
+        <div class="date-field">
+          <label class="date-label">FROM DATE <span class="required">*</span></label>
+          <div class="date-input-wrapper">
+            <i class="bi bi-calendar date-icon"></i>
+            <input 
+              type="date" 
+              formControlName="start_date"
+              class="date-input"
+              [class.is-invalid]="partyLedgerForm.get('start_date')?.invalid && partyLedgerForm.get('start_date')?.touched">
+          </div>
+          <div 
+            *ngIf="partyLedgerForm.get('start_date')?.invalid && partyLedgerForm.get('start_date')?.touched"
+            class="error-message">
+            From date is required
+          </div>
+        </div>
+
+        <div class="date-field">
+          <label class="date-label">TO DATE <span class="required">*</span></label>
+          <div class="date-input-wrapper">
+            <i class="bi bi-calendar date-icon"></i>
+            <input 
+              type="date" 
+              formControlName="end_date"
+              class="date-input"
+              [class.is-invalid]="partyLedgerForm.get('end_date')?.invalid && partyLedgerForm.get('end_date')?.touched">
+            <i class="bi bi-check-circle check-icon" *ngIf="partyLedgerForm.get('end_date')?.valid && partyLedgerForm.get('end_date')?.touched"></i>
+          </div>
+          <div 
+            *ngIf="partyLedgerForm.get('end_date')?.invalid && partyLedgerForm.get('end_date')?.touched"
+            class="error-message">
+            To date is required
+          </div>
+        </div>
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn-generate"
+        [disabled]="partyLedgerForm.invalid || isLoading">
+        <span *ngIf="isLoading" class="spinner"></span>
+        <span *ngIf="!isLoading">Generate Report</span>
+        <span *ngIf="isLoading">Loading...</span>
+      </button>
+    </form>
+
+    <!-- Summary Cards (Below Date Selection) -->
+    <div class="summary-cards-bottom" *ngIf="hasData">
+      <div class="summary-card">
+        <div class="summary-label">OPENING BALANCE</div>
+        <div class="summary-value">{{ openingBalance?.bank_balance || '0.0 Cr' }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">CLOSING BALANCE</div>
+        <div class="summary-value">{{ closingBalance?.bank_balance || '0.0 Cr' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Party Selected Message -->
+  <div *ngIf="!partyId" class="no-party-message">
+    <i class="bi bi-info-circle"></i>
+    <p>Please select a party from the list above to view their ledger.</p>
+  </div>
+
+  <!-- Ledger Table -->
+  <div class="table-section" *ngIf="partyId">
+    <div class="table-container">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>DATE</th>
+            <th>REFERENCE NO</th>
+            <th>PARTICULAR</th>
+            <th class="text-end">DEBIT</th>
+            <th class="text-end">CREDIT</th>
+            <th class="text-end">BALANCE</th>
+            <th>ACTION</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="hasData">
+          <tr *ngFor="let entry of ledgerData">
+            <td>
+              <div class="date-cell">
+                <i class="bi bi-calendar"></i>
+                <span>{{ entry.invoice_date }}</span>
+              </div>
+            </td>
+            <td>{{ entry.invoice_no }}</td>
+            <td>{{ entry.particular }}</td>
+            <td class="text-end">{{ formatAmount(entry.debit) }}</td>
+            <td class="text-end">{{ formatAmount(entry.credit) }}</td>
+            <td class="text-end" [ngClass]="getBalanceClass(entry.balance_final)">
+              {{ entry.balance_final }}
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="action-btn btn-edit" title="Edit" (click)="viewInvoice(entry)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="action-btn btn-delete" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody *ngIf="!hasData">
+          <tr>
+            <td colspan="7" class="empty-table">
+              <div class="empty-content">
+                <i class="bi bi-inbox"></i>
+                <p>No ledger data available</p>
+                <small>Select date range and click Generate Report to load data</small>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-section" *ngIf="paginationData && paginationData.total_pages > 1">
+      <div class="pagination-info">
+        <span class="page-range">{{ getPageRange() }}</span>
+        <div class="items-per-page">
+          <label>Items per page:</label>
+          <select 
+            class="limit-select" 
+            [(ngModel)]="currentLimit"
+            (ngModelChange)="onLimitChange($event)">
+            <option *ngFor="let limit of getLimitOptions()" [ngValue]="limit">
+              {{ limit }}
+            </option>
+          </select>
+        </div>
+      </div>
+      
+      <nav class="pagination-nav">
+        <button 
+          class="page-btn" 
+          [disabled]="!paginationData.previous_page"
+          (click)="onPageChange(currentPage - 1)">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        
+        <div class="page-numbers">
+          <button 
+            *ngFor="let page of getPageNumbers()" 
+            class="page-number"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+        </div>
+        
+        <button 
+          class="page-btn" 
+          [disabled]="!paginationData.next_page"
+          (click)="onPageChange(currentPage + 1)">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<ng-template #viewModal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">View Details</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+  </div>
+</ng-template>

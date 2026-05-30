@@ -1,0 +1,139 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-arrow-repeat me-2"></i>Reverse Charge Report
+      </h3>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-printer me-1"></i>Print
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card bg-primary text-white">
+          <div class="card-body text-center">
+            <h6 class="card-title">Total Transactions</h6>
+            <h4 class="mb-0">{{ calculateTotals().total_transactions }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-info text-white">
+          <div class="card-body text-center">
+            <h6 class="card-title">Amount (Excl. VAT)</h6>
+            <h4 class="mb-0">{{ calculateTotals().total_amount_excl_vat | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+          <div class="card-body text-center">
+            <h6 class="card-title">VAT Amount</h6>
+            <h4 class="mb-0">{{ calculateTotals().total_vat_amount | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success text-white">
+          <div class="card-body text-center">
+            <h6 class="card-title">Reverse Charge VAT</h6>
+            <h4 class="mb-0">{{ calculateTotals().total_reverse_charge_vat | number:'1.2-2' }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <label class="form-label">From Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFrom">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">To Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateTo">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">VAT Rate</label>
+        <select class="form-select" [(ngModel)]="selectedVatRate">
+          <option value="All">All Rates</option>
+          <option *ngFor="let rate of getVatRates()" [value]="rate">{{ rate }}%</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Search</label>
+        <input type="text" class="form-control" placeholder="Invoice, Supplier, TRN..." [(ngModel)]="searchTerm">
+      </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-primary">
+          <tr>
+            <th>Date</th>
+            <th>Invoice No</th>
+            <th>Supplier Name</th>
+            <th>Supplier TRN</th>
+            <th>Description</th>
+            <th class="text-end">Amount (Excl. VAT)</th>
+            <th class="text-end">VAT Rate</th>
+            <th class="text-end">VAT Amount</th>
+            <th class="text-end">Total Amount</th>
+            <th class="text-end">Reverse Charge VAT</th>
+            <th class="text-end">Net Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let transaction of filterTransactions()">
+            <td>{{ formatDate(transaction.date) }}</td>
+            <td class="fw-semibold text-primary">{{ transaction.invoice_no }}</td>
+            <td>{{ transaction.supplier_name }}</td>
+            <td class="font-monospace">{{ transaction.supplier_trn }}</td>
+            <td>{{ transaction.description }}</td>
+            <td class="text-end">{{ transaction.amount_excl_vat | number:'1.2-2' }}</td>
+            <td class="text-end">{{ transaction.vat_rate }}%</td>
+            <td class="text-end text-warning">{{ transaction.vat_amount | number:'1.2-2' }}</td>
+            <td class="text-end">{{ transaction.total_amount | number:'1.2-2' }}</td>
+            <td class="text-end text-success fw-bold">{{ transaction.reverse_charge_vat | number:'1.2-2' }}</td>
+            <td class="text-end fw-bold">{{ transaction.net_amount | number:'1.2-2' }}</td>
+          </tr>
+          <tr *ngIf="filterTransactions().length === 0">
+            <td colspan="11" class="text-center text-muted py-4">
+              <i class="bi bi-search fs-1 d-block mb-2"></i>
+              No reverse charge transactions found.
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-secondary">
+          <tr>
+            <td colspan="5" class="fw-bold">Totals</td>
+            <td class="text-end fw-bold">{{ calculateTotals().total_amount_excl_vat | number:'1.2-2' }}</td>
+            <td></td>
+            <td class="text-end fw-bold">{{ calculateTotals().total_vat_amount | number:'1.2-2' }}</td>
+            <td class="text-end fw-bold">{{ calculateTotals().total_amount_excl_vat + calculateTotals().total_vat_amount | number:'1.2-2' }}</td>
+            <td class="text-end fw-bold">{{ calculateTotals().total_reverse_charge_vat | number:'1.2-2' }}</td>
+            <td class="text-end fw-bold">{{ calculateTotals().total_net_amount | number:'1.2-2' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Notes -->
+    <div class="alert alert-info mt-4">
+      <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Reverse Charge Information</h6>
+      <p class="mb-0">
+        This report shows transactions where VAT is reverse charged. Under UAE VAT law, reverse charge applies to:
+        imports of goods and services, supplies from unregistered suppliers, and certain specified supplies.
+        The VAT amount shown is both payable and recoverable in your VAT return.
+      </p>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,120 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">{{ title }}</h5>
+    <div class="btn-group" *ngIf="showExport">
+      <button class="btn btn-sm btn-outline-success" (click)="exportCSV()">
+        <i class="bi bi-download me-1"></i> CSV
+      </button>
+      <button class="btn btn-sm btn-outline-primary" (click)="exportPDF()">
+        <i class="bi bi-file-pdf me-1"></i> PDF
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th *ngFor="let column of columns" 
+                [class]="getColumnClass(column)"
+                [style.width]="column.width"
+                (click)="sort(column.key)"
+                [class.sortable]="column.sortable">
+              {{ column.label }}
+              <i *ngIf="column.sortable" 
+                 class="bi ms-1"
+                 [class.bi-arrow-up]="sortColumn === column.key && sortDirection === 'asc'"
+                 [class.bi-arrow-down]="sortColumn === column.key && sortDirection === 'desc'"
+                 [class.bi-arrow-down-up]="sortColumn !== column.key">
+              </i>
+            </th>
+            <th *ngIf="actions.length > 0" class="text-center" style="width: 120px;">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of paginatedData; let i = index">
+            <td *ngFor="let column of columns" 
+                [class]="getColumnClass(column)">
+              
+              <!-- Text/Default -->
+              <span *ngIf="column.type === 'text' || !column.type">
+                {{ getFormattedValue(row, column) }}
+              </span>
+              
+              <!-- Number -->
+              <span *ngIf="column.type === 'number'" class="fw-bold">
+                {{ getFormattedValue(row, column) }}
+              </span>
+              
+              <!-- Date -->
+              <span *ngIf="column.type === 'date'">
+                {{ row[column.key] | date:'mediumDate' }}
+              </span>
+              
+              <!-- Currency -->
+              <span *ngIf="column.type === 'currency'" class="fw-bold">
+                AED{{ (row[column.key] || 0).toFixed(2) }}
+              </span>
+              
+              <!-- Badge -->
+              <span *ngIf="column.type === 'badge'" 
+                    class="badge"
+                    [class]="getBadgeClass(row[column.key])">
+                {{ row[column.key] }}
+              </span>
+            </td>
+            
+            <!-- Actions -->
+            <td *ngIf="actions.length > 0" class="text-center">
+              <div class="btn-group btn-group-sm">
+                <button *ngFor="let action of actions"
+                        class="btn btn-outline-{{ action.color || 'primary' }}"
+                        [disabled]="action.disabled"
+                        (click)="onAction(action.action, row)"
+                        [title]="action.label">
+                  <i class="bi {{ action.icon }}"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Empty State -->
+          <tr *ngIf="paginatedData.length === 0">
+            <td [attr.colspan]="columns.length + (actions.length > 0 ? 1 : 0)" class="text-center text-muted py-4">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+              No data found
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="showPagination && totalPages > 1">
+      <div class="text-muted">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} entries
+      </div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">
+              Previous
+            </button>
+          </li>
+          <li *ngFor="let page of getPageNumbers()" 
+              class="page-item" 
+              [class.active]="page === currentPage">
+            <button class="page-link" (click)="changePage(page)">{{ page }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">
+              Next
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div> 

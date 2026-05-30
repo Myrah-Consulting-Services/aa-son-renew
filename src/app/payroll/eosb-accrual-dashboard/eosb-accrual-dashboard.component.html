@@ -1,0 +1,242 @@
+<div class="eosb-accrual-dashboard-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">EOSB Accrual Dashboard</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="eosb-accrual-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="eosb-accrual-logo">
+          <i class="bi bi-graph-up"></i>
+        </span>
+        <div>
+          <h1 class="header-title">EOSB Accrual Dashboard</h1>
+          <p class="header-subtitle">Real-time accrued gratuity tracking</p>
+        </div>
+        <span class="badge completed">
+          <i class="bi bi-info-circle me-1"></i>UAE Law Compliant
+        </span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-secondary" (click)="toggleFilters()">
+          <i class="bi bi-eye me-1"></i>{{ showFilters ? 'Hide' : 'Show' }}
+        </button>
+        <button class="btn-secondary" (click)="refreshData()">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+        <button class="btn-primary" (click)="generateAccrualReport()" [disabled]="isGeneratingReport">
+          <i class="bi bi-file-earmark-text me-1"></i>{{ isGeneratingReport ? 'Generating...' : 'Report' }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Employees</h3>
+          <p class="stat-number">{{ totalEmployees }}</p>
+          <p class="stat-change positive">All employees</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Eligible for EOSB</h3>
+          <p class="stat-number">{{ eligibleEmployees }}</p>
+          <p class="stat-change positive">Eligible employees</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calculator"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Accrued EOSB</h3>
+          <p class="stat-number">{{ getCurrencyFormat(totalAccruedGratuity) }}</p>
+          <p class="stat-change positive">Total accrued</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-graph-up"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Average Accrued EOSB</h3>
+          <p class="stat-number">{{ getCurrencyFormat(averageAccruedGratuity) }}</p>
+          <p class="stat-change positive">Average per employee</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section" *ngIf="showFilters">
+      <div class="filters-bar">
+        <form [formGroup]="filterForm" (ngSubmit)="onFilterChange()">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label">Search</label>
+              <input type="text" class="form-control form-control-sm" formControlName="searchTerm" placeholder="Search by name">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Department</label>
+              <select class="form-select form-select-sm" formControlName="department">
+                <option value="">All</option>
+                <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Designation</label>
+              <select class="form-select form-select-sm" formControlName="designation">
+                <option value="">All</option>
+                <option *ngFor="let desig of designationOptions" [value]="desig">{{ desig }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Service Years</label>
+              <select class="form-select form-select-sm" formControlName="serviceYearRange">
+                <option value="">All</option>
+                <option *ngFor="let range of serviceYearRanges" [value]="range.label">{{ range.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Calc. Date</label>
+              <input type="date" class="form-control form-control-sm" formControlName="calculationDate" (change)="calculateAccrualForAllEmployees()">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Min Basic</label>
+              <input type="number" class="form-control form-control-sm" formControlName="minBasicSalary" [placeholder]="'Min ' + (getcurrency() || '')">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Max Basic</label>
+              <input type="number" class="form-control form-control-sm" formControlName="maxBasicSalary" [placeholder]="'Max ' + (getcurrency() || '')">
+            </div>
+            <div class="col-md-2">
+              <button type="button" class="btn-secondary w-100" (click)="clearFilters()">
+                <i class="bi bi-x-circle me-1"></i>Clear
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="results-summary-section">
+      <div class="summary-info">
+        <span class="summary-text">Showing <strong>{{ filteredEmployees.length }}</strong> of <strong>{{ totalEmployees }}</strong></span>
+        <span class="summary-text">Total Accrued: <strong>{{ getCurrencyFormat(totalAccruedGratuity) }}</strong></span>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-table me-2"></i>Employee Accrual Details
+          </h3>
+        </div>
+        <div class="table-body">
+          <!-- Loading State -->
+          <div class="loading-state" *ngIf="isLoading">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Loading employee accrual data...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" *ngIf="!isLoading && filteredEmployees.length === 0">
+            <i class="bi bi-inbox"></i>
+            <h6>No employees found</h6>
+            <small>Try adjusting your filters or search criteria.</small>
+          </div>
+
+          <!-- Table -->
+          <table class="compact-table" *ngIf="!isLoading && filteredEmployees.length > 0">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Designation</th>
+                <th>Joining Date</th>
+                <th>Basic Salary</th>
+                <th>Service Years</th>
+                <th>Monthly Accrual</th>
+                <th>Yearly Accrual</th>
+                <th>Total Accrued</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let employee of getPaginatedEmployees()" [ngClass]="{'table-warning': !employee.eligible}">
+                <td>
+                  <div class="employee-info">
+                    <div class="employee-name">{{ employee.employee_name }}</div>
+                    <small class="text-muted">ID: {{ employee.employee_id }}</small>
+                  </div>
+                </td>
+                <td><span class="department-badge">{{ employee.department || 'N/A' }}</span></td>
+                <td><span class="designation-text">{{ employee.designation || 'N/A' }}</span></td>
+                <td><span class="date-text">{{ employee.joining_date | date:'shortDate' }}</span></td>
+                <td><span class="salary-text">{{ getCurrencyFormat(employee.basic_salary) }}</span></td>
+                <td><span class="service-years" [ngClass]="getServiceYearClass(employee.serviceYears)">{{ employee.serviceYears.toFixed(2) }} years</span></td>
+                <td><span class="accrual-text">{{ getCurrencyFormat(employee.monthlyAccrual) }}</span></td>
+                <td><span class="accrual-text">{{ getCurrencyFormat(employee.yearlyAccrual) }}</span></td>
+                <td><span class="total-accrual" [ngClass]="{'text-danger': !employee.eligible}">{{ getCurrencyFormat(employee.accruedGratuity) }}</span></td>
+                <td>
+                  <span class="badge" [ngClass]="employee.eligible ? 'completed' : 'rejected'">
+                    {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-section" *ngIf="filteredEmployees.length > 0">
+      <div class="pagination-bar">
+        <div class="page-info">
+          <small class="text-muted">
+            Showing {{ (currentPage * pageSize) + 1 }} to {{ Math.min((currentPage + 1) * pageSize, totalItems) }} of {{ totalItems }} results
+          </small>
+        </div>
+        <div class="pagination-controls">
+          <div class="page-navigation">
+            <button class="btn-page" (click)="onPageChange({pageIndex: currentPage - 1, pageSize: pageSize})" [disabled]="currentPage === 0">
+              <i class="bi bi-chevron-left"></i>Prev
+            </button>
+            <span class="page-info">Page {{ currentPage + 1 }} of {{ Math.ceil(totalItems / pageSize) }}</span>
+            <button class="btn-page" (click)="onPageChange({pageIndex: currentPage + 1, pageSize: pageSize})" [disabled]="(currentPage + 1) * pageSize >= totalItems">
+              Next <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

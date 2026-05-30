@@ -1,0 +1,345 @@
+<div class="sales-register-page-container">
+  <!-- Compact Header -->
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <a routerLink="/reports/report-list" class="breadcrumb-link">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Reports</span>
+      </a>
+      <span class="separator">/</span>
+      <span class="breadcrumb-link active">
+        <i class="bi bi-journal-text"></i>
+        <span>{{dictionary_name}} Register</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="sales-register-content-card">
+    <div class="sales-register-header">
+      <div class="header-left">
+        <h1 class="page-title">{{dictionary_name}} Register</h1>
+        <p class="page-subtitle">View and manage your sales invoices</p>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn btn-secondary" (click)="getSalesRegister(currentPage)" [disabled]="loading">
+          <i class="bi bi-arrow-clockwise" [class.spin]="loading"></i>
+          {{ loading ? 'Loading...' : 'Refresh' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="filter-card">
+      <form [formGroup]="filterForm" (ngSubmit)="onFilterSubmit()" class="filter-form">
+        <div class="filter-fields">
+          <div class="filter-field">
+            <label class="form-label">
+              <i class="bi bi-calendar"></i>
+              Start Date <span class="required">*</span>
+            </label>
+            <div class="date-input-wrapper">
+              <input 
+                type="date" 
+                class="form-control date-input" 
+                formControlName="start_date"
+                [max]="filterForm.get('end_date')?.value">
+              <i class="bi bi-calendar3 date-icon"></i>
+            </div>
+          </div>
+
+          <div class="filter-field">
+            <label class="form-label">
+              <i class="bi bi-calendar-check"></i>
+              End Date <span class="required">*</span>
+            </label>
+            <div class="date-input-wrapper">
+              <input 
+                type="date" 
+                class="form-control date-input" 
+                formControlName="end_date"
+                [min]="filterForm.get('start_date')?.value">
+              <i class="bi bi-calendar3 date-icon"></i>
+            </div>
+          </div>
+
+          <div class="filter-field">
+            <label class="form-label">
+              <i class="bi bi-search"></i>
+              Search
+            </label>
+            <div class="search-input-wrapper">
+              <input 
+                type="text" 
+                class="form-control search-input" 
+                formControlName="search"
+                placeholder="Invoice no, party name..."
+                (input)="onSearchChange()">
+              <button 
+                type="button" 
+                class="btn-clear-search" 
+                (click)="clearSearch()"
+                *ngIf="filterForm.get('search')?.value"
+                title="Clear search">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-field">
+            <button 
+              type="submit" 
+              class="btn-apply-filter" 
+              [disabled]="filterForm.invalid || loading">
+              <i class="bi bi-funnel"></i>
+              {{ loading ? 'Loading...' : 'Apply Filter' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-alert" *ngIf="error">
+      <i class="bi bi-exclamation-triangle"></i>
+      <span>{{ error }}</span>
+      <button type="button" class="btn-close-alert" (click)="error = ''">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-section" *ngIf="!loading && salesInvoices.length > 0">
+      <div class="kpi-card">
+        <div class="kpi-icon">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Total Invoices</div>
+          <div class="kpi-value">{{ pagination.total_data }}</div>
+          <div class="kpi-subtext">Showing {{ salesInvoices.length }} on this page</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon taxable-icon">
+          <i class="bi bi-calculator"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Total Taxable</div>
+          <div class="kpi-value taxable-value">{{getcurrency()}} {{ totalTaxableAmount | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon vat-icon">
+          <i class="bi bi-percent"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Total VAT</div>
+          <div class="kpi-value vat-value">{{getcurrency()}} {{ totalVAT | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon discount-icon">
+          <i class="bi bi-tag"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Total Discount</div>
+          <div class="kpi-value discount-value">{{getcurrency()}} {{ totalDiscount | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon total-icon">
+          <i class="bi bi-currency-dollar"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Total Amount</div>
+          <div class="kpi-value total-value">{{getcurrency()}} {{ totalAmount | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon status-icon">
+          <i class="bi bi-wallet2"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Payment Status</div>
+          <div class="kpi-status-badges">
+            <span class="status-badge paid">{{ paidInvoices }} Paid</span>
+            <span class="status-badge partial">{{ partialInvoices }} Partial</span>
+            <span class="status-badge unpaid">{{ unpaidInvoices }} Unpaid</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Loading sales register data...</p>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-section" *ngIf="!loading">
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>
+                  <i class="bi bi-hash"></i> #
+                </th>
+                <th>
+                  <i class="bi bi-receipt"></i> Invoice No
+                </th>
+                <th>
+                  <i class="bi bi-calendar"></i> Date
+                </th>
+                <th>
+                  <i class="bi bi-calendar-check"></i> Due Date
+                </th>
+                <th>
+                  <i class="bi bi-building"></i> Party
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-calculator"></i> Taxable Amount
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-percent"></i> VAT
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-tag"></i> Discount
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-currency-dollar"></i> Total Amount
+                </th>
+                <th class="text-center">
+                  <i class="bi bi-wallet2"></i> Payment Status
+                </th>
+                <th class="text-center">
+                  <i class="bi bi-gear"></i> Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody *ngIf="salesInvoices.length > 0">
+              <tr *ngFor="let invoice of salesInvoices; let i = index">
+                <td>{{ (pagination.current_page - 1) * pagination.page_size + i + 1 }}</td>
+                <td>
+                  <div class="invoice-no">{{ invoice.invoice_no }}</div>
+                </td>
+                <td>{{ formatDate(invoice.invoice_date) }}</td>
+                <td>{{ formatDate(invoice.due_date) }}</td>
+                <td class="party-name">{{ invoice.party_name }}</td>
+                <td class="text-end">
+                  <span class="amount-value">{{getcurrency()}} {{ invoice.taxable_amt | number:'1.2-2' }}</span>
+                </td>
+                <td class="text-end">
+                  <span class="vat-amount">{{getcurrency()}} {{ invoice.total_vat | number:'1.2-2' }}</span>
+                </td>
+                <td class="text-end">
+                  <span class="discount-amount">{{getcurrency()}} {{ invoice.total_discount | number:'1.2-2' }}</span>
+                </td>
+                <td class="text-end">
+                  <span class="total-amount">{{getcurrency()}} {{ invoice.final_total_amount | number:'1.2-2' }}</span>
+                </td>
+                <td class="text-center">
+                  <span class="status-badge" [ngClass]="getStatusBadgeClass(invoice.payment_status)">
+                    {{ getPaymentStatus(invoice.payment_status) }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="action-btn btn-view" title="View Invoice" (click)="viewInvoice(invoice.id)">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="action-btn btn-delete" title="Delete Invoice" (click)="deleteInvoice(invoice.id)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tbody *ngIf="salesInvoices.length === 0">
+              <tr>
+                <td colspan="11" class="empty-table">
+                  <div class="empty-content">
+                    <i class="bi bi-inbox"></i>
+                    <p>No sales records found for the selected period.</p>
+                    <small>Try adjusting your date range or search filters</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination Section -->
+      <div class="pagination-section" *ngIf="pagination.total_pages > 1">
+        <div class="pagination-info">
+          <span class="page-range">
+            Showing {{ (pagination.current_page - 1) * pagination.page_size + 1 }} to {{ Math.min(pagination.current_page * pagination.page_size, pagination.total_data) }} of {{ pagination.total_data }} entries
+          </span>
+          <div class="items-per-page">
+            <label>Items per page:</label>
+            <select 
+              class="limit-select" 
+              [value]="pageSize" 
+              (change)="onPageSizeChange(+$any($event.target).value)">
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
+          </div>
+        </div>
+        <nav class="pagination-nav">
+          <button 
+            class="page-btn" 
+            (click)="onPageChange(1)" 
+            [disabled]="pagination.current_page === 1"
+            title="First Page">
+            <i class="bi bi-chevron-double-left"></i>
+          </button>
+          <button 
+            class="page-btn" 
+            (click)="onPageChange(pagination.current_page - 1)" 
+            [disabled]="pagination.current_page === 1"
+            title="Previous Page">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="page-numbers">
+            <button 
+              *ngFor="let page of getPageNumbers()" 
+              class="page-number"
+              [class.active]="page === pagination.current_page"
+              (click)="onPageChange(page)">
+              {{ page }}
+            </button>
+          </div>
+          <button 
+            class="page-btn" 
+            (click)="onPageChange(pagination.current_page + 1)" 
+            [disabled]="pagination.current_page === pagination.total_pages"
+            title="Next Page">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+          <button 
+            class="page-btn" 
+            (click)="onPageChange(pagination.total_pages)" 
+            [disabled]="pagination.current_page === pagination.total_pages"
+            title="Last Page">
+            <i class="bi bi-chevron-double-right"></i>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,49 @@
+<div class="reports-layout-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Reports</li>
+      </ol>
+    </nav>
+  </section>
+
+  <div class="reports-layout-wrapper">
+    <!-- Sidebar Navigation -->
+    <div class="reports-sidebar">
+      <div class="sidebar-header">
+        <div class="d-flex align-items-center justify-content-between">
+          <h5 class="sidebar-title">
+            <i class="bi bi-graph-up me-2"></i>Reports
+          </h5>
+          <button class="btn btn-sm btn-secondary" (click)="goToDashboard()" title="Dashboard">
+            <i class="bi bi-house"></i>
+          </button>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div *ngFor="let category of reportCategories" class="nav-category">
+          <div class="nav-category-header">
+            <i class="bi {{ category.icon }} me-2"></i>
+            {{ category.title }}
+          </div>
+          <a *ngFor="let report of category.reports" 
+             (click)="navigateToReport(report)" 
+             class="nav-item"
+             [class.active]="isActiveReport(report)">
+            <i class="bi {{ report.icon }} me-2"></i>
+            <span>{{ report.name }}</span>
+            <i *ngIf="isActiveReport(report)" class="bi bi-check-circle-fill ms-auto"></i>
+          </a>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="reports-content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div> 

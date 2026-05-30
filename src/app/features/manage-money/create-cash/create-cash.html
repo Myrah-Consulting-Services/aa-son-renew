@@ -1,0 +1,50 @@
+
+<form [formGroup]="reactiveForm" (ngSubmit)="onCashLedger()">
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col-md-6">
+                <label for="ledger_name">Ledger Name<a style="color: red;"> *</a></label>
+                <input type="text" formControlName="ledger_name" class="form-control" name="ledger_name"
+                    [class.is-invalid]="reactiveForm.controls['ledger_name'].invalid && reactiveForm.controls['ledger_name'].touched">
+                <span
+                    *ngIf=" reactiveForm.controls['ledger_name'].touched &&  reactiveForm.controls['ledger_name'].invalid"
+                    style="color:red;">Ledger Name Required</span>
+            </div>
+            <div class="col-md-6">
+                <label for="opening_balance">Opening Balance<a style="color: red;">
+                        *</a></label>
+                <div class="input-group mb-2">
+                    <input type="number" (keypress)="OnlyNumbers($event)" formControlName="opening_balance"
+                        class="form-control border-end-0" name="opening_balance">
+                    <select class="form-select border-start" 
+                            formControlName="cash_type"
+                            style="max-width: 83px;">
+                        <option value="" disabled selected>Currency</option>
+                        <option *ngFor="let c of currencies" [value]="c.id">{{c.code}}</option>
+                    </select>
+                </div>
+                <span
+                    *ngIf=" reactiveForm.controls['opening_balance'].touched &&  reactiveForm.controls['opening_balance'].invalid"
+                    style="color:red;">Opening Balance Is Required</span>
+                <span
+                    *ngIf=" reactiveForm.controls['cash_type'].touched &&  reactiveForm.controls['cash_type'].invalid"
+                    style="color:red;">Currency is required</span>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-6">
+                <label for="">As On<a style="color: red;"> *</a></label>
+                <input type="date" formControlName="as_on" class="form-control" name="as_on">
+                <span *ngIf=" reactiveForm.controls['as_on'].touched &&  reactiveForm.controls['as_on'].invalid"
+                    style="color:red;">Date Required</span>
+                    <div *ngIf="reactiveForm.get('as_on')?.hasError('dateError')">
+                        <p class="text-danger">Selected date cannot be earlier than the company's start date.</p>
+                      </div>
+            </div>
+        </div>
+        <div style="text-align: center ">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+</form>
+

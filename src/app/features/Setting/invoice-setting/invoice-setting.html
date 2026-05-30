@@ -1,0 +1,263 @@
+<div class="invoice-settings-container">
+  <!-- <div class="header">
+    <h2>Invoice Templates</h2>
+    <p>Select and preview your invoice templates</p>
+  </div> -->
+
+  <!-- Template Tabs with Professional Design -->
+  <div class="template-header-section">
+    <div class="template-tabs">
+      <div 
+        class="tab" 
+        [class.active]="activeTab === 1"
+        (click)="setActiveTab(1)"
+      >
+        <i class="fas fa-file-invoice"></i>
+        <span>Template 1</span>
+      </div>
+      <div 
+        class="tab" 
+        [class.active]="activeTab === 2"
+        (click)="setActiveTab(2)"
+      >
+        <i class="fas fa-file-invoice-dollar"></i>
+        <span>Template 2</span>
+      </div>
+    </div>
+    
+    <div class="template-actions">
+      <button class="use-template-btn" (click)="useTemplate()">
+        <i class="fas fa-check"></i>
+        Use This Template
+      </button>
+    </div>
+  </div>
+
+  <!-- Template Preview -->
+  <div class="template-preview-container">
+    <!-- <div class="template-info">
+      <h3>{{ activeTemplate.name }}</h3>
+      <p class="template-description">Company: {{ activeTemplate.companyName }}</p>
+    </div> -->
+    
+    <!-- Template 1 Layout - Traditional -->
+    <div class="invoice-preview template-1" *ngIf="activeTab === 1">
+      <div class="invoice-header">
+        <div class="company-info">
+          <div class="logo-section">
+            <div class="logo-placeholder">🏢</div>
+            <h2 class="company-name">{{ activeTemplate.companyName }}</h2>
+          </div>
+          <p class="company-address">{{ activeTemplate.companyAddress }}</p>
+          <p class="company-location">{{ activeTemplate.companyCity }}, {{ activeTemplate.companyState }}, {{ activeTemplate.companyCountry }}</p>
+          <p class="company-contact">Phone: {{ activeTemplate.companyPhone }} | Email: {{ activeTemplate.companyEmail }}</p>
+          <p class="company-website">{{ activeTemplate.companyWebsite }}</p>
+          <p class="company-tax">VAT: {{ activeTemplate.vatNumber }} | TRN: {{ activeTemplate.trnNumber }}</p>
+        </div>
+        <div class="invoice-details">
+          <h1>INVOICE</h1>
+          <p><strong>Invoice #:</strong> {{ activeTemplate.invoicePrefix }}001</p>
+          <p><strong>Date:</strong> {{ currentDate | date:'dd/MM/yyyy' }}</p>
+          <p><strong>Due Date:</strong> {{ dueDate | date:'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+      
+      <hr class="divider">
+      
+      <div class="bill-to-section">
+        <h3>BILL TO</h3>
+        <p><strong>Client Name</strong></p>
+        <p>Client Address</p>
+        <p>Client City, State, Country</p>
+        <p>Phone: Client Phone</p>
+        <p>Email: client&#64;email.com</p>
+      </div>
+      
+      <div class="invoice-items">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Rate</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sample Service</td>
+              <td>1</td>
+              <td>AED 500.00</td>
+              <td>AED 500.00</td>
+            </tr>
+            <tr>
+              <td>Sample Product</td>
+              <td>2</td>
+              <td>AED 250.00</td>
+              <td>AED 500.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="invoice-summary connected">
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span>AED 1,000.00</span>
+        </div>
+        <div class="summary-row">
+          <span>VAT (5%):</span>
+          <span>AED 50.00</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total:</span>
+          <span>AED 1,050.00</span>
+        </div>
+      </div>
+      
+      <div class="invoice-footer">
+        <p class="terms"><strong>Terms:</strong> {{ activeTemplate.terms }}</p>
+        <p class="footer-message">{{ activeTemplate.footer }}</p>
+      </div>
+      
+      <div class="signature-section">
+        <div class="signature-box">
+          <p class="signature-label">Authorized Signature</p>
+          <div class="signature-line">_________________</div>
+        </div>
+        <div class="stamp-box">
+          <p class="stamp-label">Company Stamp</p>
+          <div class="stamp-placeholder">🔴</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Template 2 Layout - Modern Different Structure -->
+    <div class="invoice-preview template-2" *ngIf="activeTab === 2">
+      <!-- Different Header Layout - Logo centered, company info below -->
+      <div class="invoice-header template2-header">
+        <div class="logo-center">
+          <div class="logo-placeholder">🏭</div>
+          <h2 class="company-name">{{ activeTemplate.companyName }}</h2>
+        </div>
+        <div class="company-details">
+          <p class="company-address">{{ activeTemplate.companyAddress }}</p>
+          <p class="company-location">{{ activeTemplate.companyCity }}, {{ activeTemplate.companyState }}, {{ activeTemplate.companyCountry }}</p>
+          <p class="company-contact">Phone: {{ activeTemplate.companyPhone }} | Email: {{ activeTemplate.companyEmail }}</p>
+          <p class="company-website">{{ activeTemplate.companyWebsite }}</p>
+          <p class="company-tax">VAT: {{ activeTemplate.vatNumber }} | TRN: {{ activeTemplate.trnNumber }}</p>
+        </div>
+      </div>
+      
+      <!-- Different Invoice Details Layout - Side by side -->
+      <div class="invoice-info-row">
+        <div class="invoice-details-left">
+          <h1>INVOICE</h1>
+          <p><strong>Invoice #:</strong> {{ activeTemplate.invoicePrefix }}001</p>
+        </div>
+        <div class="invoice-details-right">
+          <p><strong>Date:</strong> {{ currentDate | date:'dd/MM/yyyy' }}</p>
+          <p><strong>Due Date:</strong> {{ dueDate | date:'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+      
+      <!-- Different Bill To Layout - Boxed design -->
+      <div class="bill-to-section template2-billto">
+        <div class="bill-to-header">
+          <h3>BILL TO</h3>
+          <div class="client-info">
+            <p><strong>Client Name</strong></p>
+            <p>Client Address</p>
+            <p>Client City, State, Country</p>
+            <p>Phone: Client Phone</p>
+            <p>Email: client&#64;email.com</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Different Items Layout - With subtotals per row -->
+      <div class="invoice-items template2-items">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Rate</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sample Service</td>
+              <td>1</td>
+              <td>AED 500.00</td>
+              <td>AED 500.00</td>
+            </tr>
+            <tr>
+              <td>Sample Product</td>
+              <td>2</td>
+              <td>AED 250.00</td>
+              <td>AED 500.00</td>
+            </tr>
+            <tr class="additional-row">
+              <td>Additional Charges</td>
+              <td>1</td>
+              <td>AED 100.00</td>
+              <td>AED 100.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Different Summary Layout - Side by side with notes -->
+      <div class="summary-notes-row">
+        <div class="notes-section">
+          <h4>Notes:</h4>
+          <p>• Payment due within 30 days</p>
+          <p>• Late payment may incur additional charges</p>
+          <p>• All amounts are in UAE Dirhams (AED)</p>
+        </div>
+        <div class="invoice-summary template2-summary">
+          <div class="summary-row">
+            <span>Subtotal:</span>
+            <span>AED 1,100.00</span>
+          </div>
+          <div class="summary-row">
+            <span>VAT (5%):</span>
+            <span>AED 55.00</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total:</span>
+            <span>AED 1,155.00</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Different Footer Layout - Three columns -->
+      <div class="invoice-footer template2-footer">
+        <div class="footer-content">
+          <div class="terms-section">
+            <p class="terms"><strong>Terms:</strong> {{ activeTemplate.terms }}</p>
+          </div>
+          <div class="payment-section">
+            <h4>Payment Methods:</h4>
+            <p>• Bank Transfer</p>
+            <p>• Credit Card</p>
+            <p>• Cash</p>
+          </div>
+          <div class="signature-section">
+            <div class="signature-box">
+              <p class="signature-label">Authorized Signature</p>
+              <div class="signature-line">_________________</div>
+            </div>
+            <div class="stamp-box">
+              <p class="stamp-label">Company Stamp</p>
+              <div class="stamp-placeholder">🔴</div>
+            </div>
+          </div>
+        </div>
+        <p class="footer-message">{{ activeTemplate.footer }}</p>
+      </div>
+    </div>
+  </div>
+</div>

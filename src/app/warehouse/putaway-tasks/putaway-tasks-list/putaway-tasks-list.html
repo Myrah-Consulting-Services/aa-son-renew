@@ -1,0 +1,318 @@
+<div class="putaway-tasks-list-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse/putaway-tasks">Putaway Tasks</a></li>
+        <li class="breadcrumb-item active" aria-current="page">List</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="putaway-tasks-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="putaway-logo">
+          <i class="bi bi-arrow-up-right-square"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Putaway Tasks</h1>
+          <p class="header-subtitle">Manage loading bay to rack putaway operations</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" (click)="refreshData()">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="autoAssignAll()">
+          <i class="bi bi-magic me-1"></i>Auto Assign All
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="createTask()">
+          <i class="bi bi-plus-lg me-1"></i>New Task
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Pending Tasks</h3>
+          <p class="stat-number">{{ stats.pendingTasks }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-person-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Assigned Tasks</h3>
+          <p class="stat-number">{{ stats.assignedTasks }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-play-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>In Progress</h3>
+          <p class="stat-number">{{ stats.inProgressTasks }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Completed Today</h3>
+          <p class="stat-number">{{ stats.completedToday }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-bar">
+        <div class="filter-item">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search tasks..." 
+              [(ngModel)]="searchText"
+              (input)="getTasks(1)"
+            >
+          </div>
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            placeholder="Start Date"
+            [(ngModel)]="startDate"
+          >
+        </div>
+        <div class="filter-item">
+          <input 
+            type="date" 
+            class="form-control form-control-sm" 
+            placeholder="End Date"
+            [(ngModel)]="endDate"
+          >
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-primary btn-sm w-100" type="button" (click)="triggerSearch()">
+            <i class="bi bi-search me-1"></i>Search
+          </button>
+        </div>
+        <div class="filter-item">
+          <button class="btn btn-secondary btn-sm w-100" type="button" (click)="clearFilters()">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-list-ul me-2"></i>Putaway Tasks ({{ filteredTasks?.length }})
+          </h3>
+          <div class="table-actions">
+            <button class="btn btn-secondary btn-sm"
+                    [disabled]="selectedTasks.length === 0"
+                    (click)="bulkAssign(bulkAssignModal)">
+              <i class="bi bi-people me-1"></i>
+              Bulk Assign ({{ selectedTasks.length }})
+            </button>
+          </div>
+        </div>
+        <div class="table-body">
+          <!-- Loading State -->
+          <div *ngIf="!filteredTasks" class="loading-state">
+            <i class="bi bi-arrow-repeat spinner"></i>
+            <p>Loading tasks...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="filteredTasks?.length === 0" class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h6>No putaway tasks found</h6>
+            <p>Tasks will appear here when items are placed in loading bay.</p>
+          </div>
+
+          <!-- Table -->
+          <form *ngIf="filteredTasks?.length > 0" [formGroup]="tableForm">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>
+                    <input type="checkbox" class="form-check-input" 
+                           (change)="toggleSelectAll($event)" 
+                           [checked]="isAllSelected()">
+                  </th>
+                  <th>Task ID</th>
+                  <th>Date</th>
+                  <th>GRN Ref</th>
+                  <th>Items</th>
+                  <th>Assigned Worker</th>
+                  <th>Status</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody formArrayName="taskFormArray">
+                <tr *ngFor="let task of filteredTasks; let i = index" [formGroupName]="i">
+                  <td>
+                    <ng-container *ngIf="task.statusName !== 'Completed' && task.statusName !== 'Assigned'; else noCheckbox">
+                      <input type="checkbox" class="form-check-input" 
+                             [checked]="isTaskSelected(task.id)"
+                             (change)="toggleTaskSelection(task.id)">
+                    </ng-container>
+                    <ng-template #noCheckbox></ng-template>
+                  </td>
+                  <td>
+                    <div class="task-id">#{{ task.id }}</div>
+                  </td>
+                  <td>
+                    <div class="date-text">{{ task.date | date:'dd/MM/yyyy' }}</div>
+                  </td>
+                  <td>
+                    <div class="grn-ref">{{ task.grnRef || '-' }}</div>
+                  </td>
+                  <td>
+                    <div class="items-info">
+                      <div><span class="fw-semibold">{{ task.total_items }}</span> items</div>
+                      <div><span class="fw-semibold">{{ task.total_quantity }}</span> qty</div>
+                    </div>
+                  </td>
+                  <td>
+                    <ng-container *ngIf="task.statusName !== 'Assigned' && task.statusName !== 'Completed'; else showWorker">
+                      <select class="form-select form-select-sm assigned-worker-select" formControlName="assignedWorker">
+                        <option value="">Select Worker</option>
+                        <option *ngFor="let worker of workers" [value]="worker.id">
+                          {{ worker.first_name }} {{ worker.last_name }}
+                        </option>
+                      </select>
+                    </ng-container>
+                    <ng-template #showWorker>
+                      <span *ngIf="task.assignedWorker; else unassigned" class="worker-name">
+                        {{ getWorkerName(task.assignedWorker) }}
+                      </span>
+                      <ng-template #unassigned>
+                        <span class="text-muted">Unassigned</span>
+                      </ng-template>
+                    </ng-template>
+                  </td>
+                  <td>
+                    <span class="badge"
+                          [ngClass]="{
+                            'badge-status-pending': task.statusName === 'Pending',
+                            'badge-status-assigned': task.statusName === 'Assigned',
+                            'badge-status-inprogress': task.statusName === 'In Progress',
+                            'badge-status-completed': task.statusName === 'Completed'
+                          }">
+                      {{ task.statusName }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <ng-container *ngIf="task.statusName !== 'Completed' && task.statusName !== 'Assigned'">
+                      <button class="btn-action-icon assign" (click)="assignTask(i)" title="Assign Task">
+                        <i class="bi bi-person-plus"></i>
+                      </button>
+                    </ng-container>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-section" *ngIf="filteredTasks?.length > 0 && totalPages > 1">
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          <label class="me-2">Tasks per page:</label>
+          <select 
+            class="form-select form-select-sm page-size" 
+            [(ngModel)]="pageSize"
+            (change)="onPageSizeChange()">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <div class="pagination-controls">
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            class="btn-page"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+          <button 
+            class="btn-page" 
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Bulk Assign Modal -->
+<ng-template #bulkAssignModal let-modal>
+  <form [formGroup]="bulkAssignForm" (ngSubmit)="submitBulkAssign(modal)">
+    <div class="modal-header">
+      <h5 class="modal-title">Bulk Assign Worker</h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group mb-3">
+            <label for="worker">Assign To</label>
+            <select class="form-control" id="worker" formControlName="workerId" required>
+              <option value="">Select Worker</option>
+              <option *ngFor="let worker of workers" [value]="worker.id">
+                {{ worker.first_name }} {{ worker.last_name }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel')">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="bulkAssignForm.invalid">Assign</button>
+    </div>
+  </form>
+</ng-template>

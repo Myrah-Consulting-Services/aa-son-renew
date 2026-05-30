@@ -1,0 +1,152 @@
+<div>
+    <div class="modal-header">
+      <h5 class="modal-title mt-0" style="font-size: large; font-weight: 500;">Bank Reconciliation</h5>
+      <button type="button" class="btn-close" (click)="modal.close()" aria-hidden="true"></button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="bankStatementForm" (ngSubmit)="getPreviousdata()" enctype="multipart/form-data">
+  
+        <div class="upload-container">
+          <h2>Upload Bank Statement</h2>
+          <div class="file-upload-section">
+            <div>
+              <input
+                type="file"
+                #fileInput
+                (change)="onFileSelect($event)"
+                accept=".pdf,.doc"
+                class="file-input"
+                style="display: none;">
+              <button
+                class="btn btn-outline-primary"
+                type="button"
+                (click)="fileInput.click()">
+                Choose File
+              </button>
+              <div class="attachments-list" *ngIf="bankStatementForm.get('file')?.value">
+                <span class="file-name">{{ bankStatementForm.get('file')?.value.name }}</span>
+                <button
+                  class="btn btn-sm btn-danger"
+                  type="button"
+                  (click)="removeAttachment()">
+                  &times;
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group col-6">
+              <label for="startDate">Statement Period Start:</label>
+              <input class="form-control" type="date" id="startDate" formControlName="from_date" />
+            </div>
+            <div class="form-group col-6">
+              <label for="to_date">Statement Period End:</label>
+              <input class="form-control" type="date" id="to_date" formControlName="to_date" />
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 1rem;">
+            <button
+              class="btn btn-primary"
+              type="submit">
+              Submit
+            </button>
+          </div>
+        </div>
+      </form>
+      <div *ngIf="reconciliation">
+  
+      <div style="text-align: end; margin: 1rem 0;">
+        <button class="btn btn-primary me-2" (click)="LinkAllTrans()">Link All</button>
+        <button class="btn btn-primary me-2" (click)="unlinkTrans()">Unlink All</button>
+        <button class="btn btn-danger me-2" (click)="deleteStatement()">Delete Statement</button>
+        <button class="btn btn-outline-primary" (click)="compareAndLink()">Link Transaction</button>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <label for="">Bank Statements</label>
+          <div class="table-container">
+            <table class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" (change)="selectAll($event)"></th>
+                  <th>Date</th>
+                  <th>Transaction Info</th>
+                  <th>Reference No</th>
+                  <th>Debit</th>
+                  <th>Credit</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let element of paginatedBankDataSource" [class.selected-row]="element.selected || element.linked" [attr.disabled]="element.linked ? true : null">
+                  <td>
+                    <input type="checkbox"
+                           (change)="toggleSelection($any($event.target).checked, element)"
+                           [checked]="element.selected"
+                           [disabled]="element.linked">
+                  </td>
+                  <td>{{ element.date }}</td>
+                  <td>{{ element.transaction_info }}</td>
+                  <td>{{ element.reference_no }}</td>
+                  <td>{{ element.debit }}</td>
+                  <td>{{ element.credit }}</td>
+                  <td>{{ element.balance }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="d-flex justify-content-between p-2">
+                <ngb-pagination
+                    [collectionSize]="bankDataSource.length"
+                    [(page)]="bankStatementPage"
+                    [pageSize]="bankStatementPageSize"
+                    (pageChange)="onBankStatementPageChange($event)">
+                </ngb-pagination>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label>Payments</label>
+          <div class="table-container">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" (change)="selectAll1($event)"></th>
+                        <th>Date</th>
+                        <th>Reference No</th>
+                        <th>Particulars</th>
+                        <th>Debit</th>
+                        <th>Credit</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let element1 of dataSource" [class.selected-row]="element1.selected || element1.linked">
+                        <td>
+                            <input type="checkbox"
+                                   (change)="toggleSelection1($any($event.target).checked, element1)"
+                                   [checked]="element1.selected"
+                                   [disabled]="element1.linked">
+                        </td>
+                        <td>{{element1.date}}</td>
+                        <td>{{element1.receipt_no}}</td>
+                        <td>{{element1.particular}}</td>
+                        <td>{{element1.debit }}</td>
+                        <td>{{element1.credit }}</td>
+                        <td>{{element1.balance_final}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between p-2">
+                <ngb-pagination
+                    [collectionSize]="paymentsCollectionSize"
+                    [(page)]="paymentsPage"
+                    [pageSize]="paymentsPageSize"
+                    (pageChange)="onPaymentsPageChange($event)">
+                </ngb-pagination>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

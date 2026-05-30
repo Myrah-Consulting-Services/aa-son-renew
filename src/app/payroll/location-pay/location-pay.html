@@ -1,0 +1,127 @@
+<div class="location-pay-container">
+  <div class="row">
+    <!-- Add/Edit Location Form -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{{ isEditing ? 'Edit' : 'Add' }} Work Location</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="locationForm" (ngSubmit)="onSubmit()">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Location Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="Location_name" placeholder="Enter location name">
+                  <div *ngIf="locationForm.get('Location_name')?.invalid && locationForm.get('Location_name')?.touched" class="text-danger small mt-1">
+                    <div *ngIf="locationForm.get('Location_name')?.errors?.['required']">Location name is required</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Branch</label>
+                  <div class="d-flex gap-2">
+                    <select class="form-select" formControlName="branch">
+                      <option value="">Select Branch</option>
+                      <option *ngFor="let branch of branchList" [value]="branch.id">{{branch.branchName}}</option>
+                    </select>
+                    <button type="button" class="btn btn-outline-primary" (click)="openBranchModal()">
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Department</label>
+                  <div class="d-flex gap-2">
+                    <select class="form-select" formControlName="department">
+                      <option value="">Select Department</option>
+                      <option *ngFor="let department of departmentList" [value]="department.id">{{department.department_name}}</option>
+                    </select>
+                    <button type="button" class="btn btn-outline-primary" (click)="openDepartmentModal()">
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Emirate</label>
+                  <select class="form-select" formControlName="emirate">
+                    <option value="">Select Emirate</option>
+                    <option *ngFor="let emirate of uaeEmirates" [value]="emirate.value">{{emirate.label}}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12">
+                <div class="mb-3">
+                  <label class="form-label">Address</label>
+                  <textarea class="form-control" formControlName="address" rows="3" placeholder="Enter full address"></textarea>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="locationForm.invalid">
+                {{ isEditing ? 'Update' : 'Add' }} Location
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="cancelEdit()" *ngIf="isEditing">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Department Modal -->
+<div class="modal" [class.show]="showDepartmentModal" [style.display]="showDepartmentModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="departmentModalLabel" (click)="onBackdropClick($event)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="departmentModalLabel">Manage Departments</h5>
+        <button type="button" class="btn-close" (click)="closeDepartmentModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <app-department (closeModal)="closeDepartmentModal()"></app-department>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDepartmentModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Branch Modal -->
+<div class="modal" [class.show]="showBranchModal" [style.display]="showBranchModal ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="branchModalLabel" (click)="onBackdropClick($event)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="branchModalLabel">Manage Branches</h5>
+        <button type="button" class="btn-close" (click)="closeBranchModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <app-branch (closeModal)="closeBranchModal()"></app-branch>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeBranchModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showDepartmentModal || showBranchModal"></div>

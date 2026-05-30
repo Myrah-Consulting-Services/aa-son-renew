@@ -1,0 +1,238 @@
+<div class="pay-schedule-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Pay Schedule</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="pay-schedule-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="pay-schedule-logo">
+          <i class="bi bi-calendar-week"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Pay Schedule</h1>
+          <p class="header-subtitle">Configure your organization's payroll schedule and payment dates</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section" *ngIf="schedule?.created">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Schedule Status</h3>
+          <p class="stat-number">{{ schedule?.created ? 'Active' : 'Not Set' }}</p>
+          <p class="stat-change positive">Current status</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-event"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Upcoming Payrolls</h3>
+          <p class="stat-number">{{ upcomingPayrolls?.length || 0 }}</p>
+          <p class="stat-change positive">Scheduled payments</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Pay Frequency</h3>
+          <p class="stat-number">Monthly</p>
+          <p class="stat-change positive">Payment cycle</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Working Days</h3>
+          <p class="stat-number">{{ getWorkingDaysCount() }}</p>
+          <p class="stat-change positive">Per week</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section - Form View -->
+  <section class="main-content-section" *ngIf="!schedule?.created">
+    <div class="form-section-card">
+      <h3 class="form-section-title">
+        <i class="bi bi-gear me-2"></i>Pay Schedule Configuration
+      </h3>
+      
+      <form [formGroup]="scheduleForm" (ngSubmit)="onSubmitSchedule()">
+        <div class="form-group">
+          <label class="form-label required">Select your work week</label>
+          <div class="btn-group d-flex work-week-group" role="group" formGroupName="work_week">
+            <ng-container *ngFor="let day of daysOfWeek">
+              <input type="checkbox" class="btn-check" [id]="'day' + day" [formControlName]="day" autocomplete="off">
+              <label class="btn btn-outline-primary" [for]="'day' + day">{{ day }}</label>
+            </ng-container>
+          </div>
+        </div>
+        
+        <div class="form-group mt-4">
+          <label class="form-label required">Calculate monthly salary based on</label>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="actualDays" value="1" formControlName="salary_basis">
+            <label class="form-check-label" for="actualDays">Actual days in a month</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="workingDays" value="2" formControlName="salary_basis">
+            <label class="form-check-label" for="workingDays">
+              Organisation working days -
+              <input type="number" class="form-control d-inline-block ms-2" style="width: 70px;" formControlName="org_working_days"> days per month
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group mt-4">
+          <label class="form-label required">Pay on</label>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="lastDay" value="3" formControlName="pay_on">
+            <label class="form-check-label" for="lastDay">The last working day of every month</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="specificDay" value="4" formControlName="pay_on">
+            <label class="form-check-label" for="specificDay">
+              Day <input type="number" class="form-control d-inline-block mx-2" style="width: 70px;" formControlName="fixed_day"> of every month
+            </label>
+          </div>
+          <small class="form-text text-muted d-block mt-2">Note: When payday falls on a non-working day or a holiday, employees will get paid on the previous working day.</small>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-md-6">
+            <label for="first_payroll_month" class="form-label required">Start your first payroll from</label>
+            <input type="month" id="first_payroll_month" class="form-select" formControlName="first_payroll_month">
+          </div>
+          <div class="col-md-6">
+            <label for="first_pay_date" class="form-label required">Select a pay date for your first payroll</label>
+            <label>Pay Period: {{ firstPayrollMonthLabel }}</label>
+            <input type="date" id="first_pay_date" class="form-select" [min]="dateMin" [max]="dateMax" formControlName="first_pay_date">
+          </div>
+        </div>
+
+        <div class="form-footer mt-4">
+          <p class="text-danger me-auto small">* All fields are mandatory</p>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Main Content Section - Summary View -->
+  <section class="main-content-section" *ngIf="schedule?.created">
+    <div class="alert alert-warning py-2 small mb-4">
+      <strong>Note:</strong> Pay Schedule cannot be edited once you process the first pay run.
+    </div>
+    
+    <div class="schedule-summary-card">
+      <h3 class="form-section-title">
+        <i class="bi bi-info-circle me-2"></i>Schedule Details
+      </h3>
+      
+      <div class="row">
+        <div class="col-md-7">
+          <h6 class="mb-3">This Organization's payroll runs on this schedule.</h6>
+          <div class="row g-2 align-items-start">
+            <div class="col-5 text-muted">Pay Frequency</div>
+            <div class="col-7">Every month</div>
+            <div class="col-5 text-muted">Working Days</div>
+            <div class="col-7">{{ workingDaysLabel }}</div>
+            <div class="col-5 text-muted">Pay Day</div>
+            <div class="col-7">{{ payDayLabel }} <a href="#" (click)="openChangePayDay($event)" class="ms-1 small">(edit)</a></div>
+            <div class="col-5 text-muted">First Pay Period</div>
+            <div class="col-7">{{ firstPayPeriodLabel }}</div>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <h6 class="mb-3">Upcoming Payrolls</h6>
+          <ul class="list-unstyled mb-0" *ngIf="upcomingPayrolls?.length; else noUpcoming">
+            <li class="mb-2" *ngFor="let p of upcomingPayrolls">
+              <div class="d-flex align-items-center gap-2">
+                <span class="dot"></span>
+                <div>
+                  <div class="fw-semibold">{{ p.label }}</div>
+                  <div class="text-muted small">Pay Date : {{ p.pay_date }}</div>
+                </div>
+              </div>
+            </li>
+          </ul>
+          <ng-template #noUpcoming>
+            <div class="text-muted small">No upcoming payrolls</div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Change Pay Day Modal -->
+<div class="modal fade show d-block" tabindex="-1" role="dialog" *ngIf="isChangePayDayOpen">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Change Pay Day</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeChangePayDay()"></button>
+      </div>
+      <form [formGroup]="payDayForm" (ngSubmit)="savePayDay()">
+        <div class="modal-body">
+          <label class="form-label fw-semibold">Pay your employees on<span class="text-danger">*</span></label>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="radio" id="modalLastWorking" value="3" (change)="getlist()" formControlName="pay_on">
+            <label class="form-check-label" for="modalLastWorking">the last working day of every month</label>
+          </div>
+          <div class="form-check d-flex align-items-center gap-2 mb-3">
+            <input class="form-check-input" type="radio" id="modalSpecificDay" value="4" (change)="getlist()" formControlName="pay_on">
+            <label class="form-check-label mb-0" for="modalSpecificDay">day</label>
+            <select (change)="getlist()" class="form-select form-select-sm w-auto" formControlName="fixed_day" [disabled]="payDayForm?.get('pay_on')?.value !== '4'">
+              <option *ngFor="let d of daysInMonth" [value]="d">{{ d }}</option>
+            </select>
+            <span class="text-muted">of every month</span>
+          </div>
+
+          <div class="mb-2 fw-semibold small">Salary for the month of {{ salaryMonthLabelModal }} will be paid on<span class="text-danger">*</span></div>
+          <select class="form-select mb-3" formControlName="pay_date">
+            <option *ngFor="let d of month_list" [value]="d.pay_date">{{ d.pay_date_formatted }}</option>
+          </select>
+
+          <div class="alert alert-warning small d-flex align-items-start" role="alert">
+            <span class="me-2">⚠️</span>
+            <div>When payday falls on a non-working day or a holiday, employees will get paid on the previous working day.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary" (click)="closeChangePayDay()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="isChangePayDayOpen"></div>

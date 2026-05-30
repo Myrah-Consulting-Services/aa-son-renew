@@ -1,0 +1,216 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-exclamation-diamond me-2"></i>Payment Register
+      </h3>
+      <div class="d-flex gap-2">
+        <!-- <button class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Export
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-printer me-1"></i>Print
+        </button> -->
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-2">
+        <div class="card border-0 bg-light h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">Total Records</div>
+            <div class="fs-5 fw-bold">{{ totalRecords }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 h-100" style="background:#e8f7ee">
+          <div class="card-body py-3">
+            <div class="text-muted small">Total Payment In</div>
+            <div class="fs-5 fw-bold text-success">{{ totalIn | number:'1.2-2' }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 h-100" style="background:#fdecec">
+          <div class="card-body py-3">
+            <div class="text-muted small">Total Payment Out</div>
+            <div class="fs-5 fw-bold text-danger">{{ totalOut | number:'1.2-2' }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="card border-0 h-100" style="background:#eef2ff">
+          <div class="card-body py-3">
+            <div class="text-muted small">Total Amount</div>
+            <div class="fs-5 fw-bold text-primary">{{ totalAmount | number:'1.2-2' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <div class="row">
+          <div class="col-md-2">
+              <label for="">From:</label>
+              <input type="date" [(ngModel)]="dateFrom" class="form-control">
+          </div>
+
+          <div class="col-md-2">
+              <label for="">To:</label>
+              <input type="date" name="" id="" [(ngModel)]="dateTo" class="form-control">
+          </div>
+
+          <div class="col-md-2" style="align-self: end;">
+              <select name="" id="" [(ngModel)]="payment_in_or_out" (change)="getPaymentRegister()" class="form-select">                    
+                  <option value='' selected>All</option>
+                  <option value="2">Payment IN</option>
+                  <option value="1">Payment Out</option>   
+              </select>
+          </div>
+
+          <div class="col-md-1" style="align-self: end;">
+              <button class="btn btn btn-primary" (click)="getPaymentRegister()">Submit</button>
+          </div>
+          <div class="col-md-4" style="text-align: end;align-self: end;">
+              <button (click)="exportXl()" class="btn btn-primary btn-sm">Export to Excel</button>
+          </div>
+      </div>
+      <div class="row">
+       
+          <div *ngIf="loading">
+            <div class="d-flex justify-content-center align-items-center" style="height: 100px;"> 
+              <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="!loading">
+              <div class="row mt-2" #TABLE>
+                  <!-- <table class="table table-bordered dt-responsive nowrap  no-footer dtr-inline"
+           style="background-color: white;">
+              <thead>
+                  <tr>
+                      <th>{{ 'HEADER.ITEM NAME' | translate}}</th>
+                      <th>{{ 'HEADER.ITEM CODE' | translate}}</th>
+                      <th>{{ 'HEADER.SELLING QUANTITY' | translate}}</th>
+                      <th>{{ 'HEADER.TOTAL SELLING PRICE' | translate}}</th>
+                      <th>{{ 'HEADER.BALANCE STOCK' | translate}}</th>
+                      <th>{{ 'HEADER.STOCK VALUE' | translate}}</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr *ngFor="let itemSales of itemsales">
+                      <td>{{itemSales.item_name}}</td>
+                      <td>{{itemSales.item_code}}</td>
+                      <td *ngIf="itemSales.item_type=='product'">{{itemSales.total_quantity}}</td>
+                      <td *ngIf="itemSales.item_type=='service'">NA</td>
+                      <td>{{itemSales.total_amount | number:'2.1-2'}}</td>
+                      <td *ngIf="itemSales.item_type=='product'">{{itemSales.opening_stock}}</td>
+                      <td *ngIf="itemSales.item_type=='service'">NA</td>
+                      <td>{{itemSales.avg_purchase_report | number:'2.1-2'}}</td>
+                  </tr>
+              </tbody> -->
+
+                  <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                      <thead class="table-primary">
+                        <tr>
+                          <th>#</th>
+                          <th>Date</th>
+                          <th>Reference No</th>
+                          <th class="text-end">Amount</th>
+                          <th>Party Name</th>
+                          <th>Payment Type</th>
+                          <th>Particular</th>
+                          <th>Payment In/Out</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let element of paymentRegister; let i = index">
+                          <td>{{ getStartEntryNumber() + i }}</td>
+                          <td>{{element.receipt_date}}</td>
+                          <td class="fw-semibold">{{element.receipt_no}}</td>
+                          <td class="text-end">{{ element.amount | number:'1.2-2'}}</td>
+                          <td>{{element.party_name}}</td>
+                          <td>{{element.payment_type}}</td>
+                          <td>
+                            <span *ngIf="element.payment_type=='cash'">{{element.handover_to}}</span>
+                            <span *ngIf="element.payment_type=='Bank' || element.payment_type=='cheque'">{{element.bank}}</span>
+                          </td>
+                          <td>{{element.payment_in_or_out}}</td>
+                          <td>
+                            <button class="btn btn-outline-warning btn-sm me-2"  (click)="editPayInModal(element)"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" *ngIf="element.payment_in_or_out=='Payment In'" (click)="deletePayIn(element.id)"><i class="bi bi-trash text-danger"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" *ngIf="element.payment_in_or_out=='Payment Out'" (click)="deletePayIn(element.id)"><i class="bi bi-trash text-danger"></i></button>
+                           
+                          </td>
+                        </tr>
+                        <tr *ngIf="paymentRegister.length === 0">
+                          <td colspan="9" class="text-center text-muted">
+                              <i class="bi bi-search fs-1 d-block mb-2"></i>
+                              No records found.
+                            </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Pagination Controls -->
+                  <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="!loading && pagination && pagination.total_pages > 0">
+                    <div class="d-flex align-items-center gap-2">
+                      <label class="form-label mb-0 me-2">Page Size:</label>
+                      <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize" (change)="onPageSizeChange($event)">
+                        <option [value]="5">5</option>
+                        <option [value]="10">10</option>
+                        <option [value]="25">25</option>
+                        <option [value]="50">50</option>
+                        <option [value]="100">100</option>
+                      </select>
+                      <small class="text-muted ms-2">
+                        Showing {{ getStartEntryNumber() }} to {{ getEndEntryNumber() }} of {{ pagination.total_data }} entries
+                      </small>
+                    </div>
+                    
+                    <nav aria-label="Payment register pagination">
+                      <ul class="pagination pagination-sm mb-0">
+                        <!-- First Page -->
+                        <li class="page-item" [class.disabled]="currentPage === 1">
+                          <button class="page-link" (click)="onPageChange(1)" [disabled]="currentPage === 1">
+                            <i class="bi bi-chevron-double-left"></i>
+                          </button>
+                        </li>
+                        
+                        <!-- Previous Page -->
+                        <li class="page-item" [class.disabled]="currentPage === 1">
+                          <button class="page-link" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
+                            <i class="bi bi-chevron-left"></i>
+                          </button>
+                        </li>
+                        
+                        <!-- Page Numbers -->
+                        <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+                          <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+                        </li>
+                        
+                        <!-- Next Page -->
+                        <li class="page-item" [class.disabled]="currentPage === pagination.total_pages">
+                          <button class="page-link" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === pagination.total_pages">
+                            <i class="bi bi-chevron-right"></i>
+                          </button>
+                        </li>
+                        
+                        <!-- Last Page -->
+                        <li class="page-item" [class.disabled]="currentPage === pagination.total_pages">
+                          <button class="page-link" (click)="onPageChange(pagination.total_pages)" [disabled]="currentPage === pagination.total_pages">
+                            <i class="bi bi-chevron-double-right"></i>
+                          </button>
+                        </li>
+                      </ul>
+                    </nav>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>

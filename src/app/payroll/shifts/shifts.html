@@ -1,0 +1,29 @@
+<div class="shift-scheduler p-4">
+    <h2 class="text-lg font-bold mb-4">Weekly Shift Scheduler</h2>
+    
+    <form [formGroup]="scheduleForm" (ngSubmit)="submit()">
+      <!-- <table mat-table [dataSource]="roster.controls" class="mat-elevation-z2" formArrayName="roster">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th *ngFor="let day of weekDays">{{ day }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of roster.controls; let i = index" [formGroupName]="i">
+            <td>{{ employees[i].name }}</td>
+            <td *ngFor="let day of weekDays; let j = index">
+              <mat-form-field appearance="fill" class="shift-cell">
+                <mat-select [formControlName]="j" [formArrayName]="'shifts'">
+                  <mat-option *ngFor="let shift of shifts" [value]="shift.value">{{ shift.label }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </tr>
+        </tbody>
+      </table> -->
+  
+      <button mat-flat-button color="primary" type="submit" class="mt-4">Save Schedule</button>
+    </form>
+  </div>
+  

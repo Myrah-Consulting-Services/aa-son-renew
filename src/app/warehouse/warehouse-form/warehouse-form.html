@@ -1,0 +1,193 @@
+<!-- Modal Header (only shown in modal mode) -->
+<div class="modal-header" *ngIf="isModalMode">
+  <h4 class="modal-title">{{ isEditMode ? 'Edit Warehouse' : 'New Warehouse' }}</h4>
+  <button type="button" class="btn-close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<!-- Page Header (only shown in route mode) -->
+<div class="container-fluid" *ngIf="!isModalMode">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>{{ isEditMode ? 'Edit Warehouse' : 'New Warehouse' }}</h2>
+      <p class="text-muted">{{ isEditMode ? 'Update warehouse information' : 'Create a new warehouse' }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Form Content -->
+<div [class]="isModalMode ? 'modal-body' : 'container-fluid'">
+  <div class="card" *ngIf="!isModalMode">
+    <div class="card-body">
+      <form [formGroup]="form">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="mb-3">
+              <label for="name" class="form-label">Warehouse Name *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="name" 
+                formControlName="name"
+                [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+              >
+              <div class="invalid-feedback" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+                <div *ngIf="form.get('name')?.errors?.['required']">Warehouse name is required.</div>
+                <div *ngIf="form.get('name')?.errors?.['minlength']">Must be at least 2 characters.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="mb-3">
+              <label for="address" class="form-label">Address *</label>
+              <textarea 
+                class="form-control" 
+                id="address" 
+                rows="3"
+                formControlName="address"
+                [class.is-invalid]="form.get('address')?.invalid && form.get('address')?.touched"
+              ></textarea>
+              <div class="invalid-feedback" *ngIf="form.get('address')?.invalid && form.get('address')?.touched">
+                <div *ngIf="form.get('address')?.errors?.['required']">Address is required.</div>
+                <div *ngIf="form.get('address')?.errors?.['minlength']">Must be at least 5 characters.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="contactPerson" class="form-label">Contact Person</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="contactPerson" 
+                formControlName="contactPerson"
+              >
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone</label>
+              <input 
+                type="tel" 
+                class="form-control" 
+                id="phone" 
+                formControlName="phone"
+              >
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input 
+            type="email" 
+            class="form-control" 
+            id="email" 
+            formControlName="email"
+            [class.is-invalid]="form.get('email')?.invalid && form.get('email')?.touched"
+          >
+          <div class="invalid-feedback" *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
+            <div *ngIf="form.get('email')?.errors?.['email']">Please enter a valid email.</div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Form (only shown in modal mode) -->
+  <form [formGroup]="form" *ngIf="isModalMode">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="mb-3">
+          <label for="name" class="form-label">Warehouse Name *</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="name" 
+            formControlName="name"
+            [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+          >
+          <div class="invalid-feedback" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+            <div *ngIf="form.get('name')?.errors?.['required']">Warehouse name is required.</div>
+            <div *ngIf="form.get('name')?.errors?.['minlength']">Must be at least 2 characters.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="mb-3">
+          <label for="address" class="form-label">Address *</label>
+          <textarea 
+            class="form-control" 
+            id="address" 
+            rows="3"
+            formControlName="address"
+            [class.is-invalid]="form.get('address')?.invalid && form.get('address')?.touched"
+          ></textarea>
+          <div class="invalid-feedback" *ngIf="form.get('address')?.invalid && form.get('address')?.touched">
+            <div *ngIf="form.get('address')?.errors?.['required']">Address is required.</div>
+            <div *ngIf="form.get('address')?.errors?.['minlength']">Must be at least 5 characters.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label for="contactPerson" class="form-label">Contact Person</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="contactPerson" 
+            formControlName="contactPerson"
+          >
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label for="phone" class="form-label">Phone</label>
+          <input 
+            type="tel" 
+            class="form-control" 
+            id="phone" 
+            formControlName="phone"
+          >
+        </div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input 
+        type="email" 
+        class="form-control" 
+        id="email" 
+        formControlName="email"
+        [class.is-invalid]="form.get('email')?.invalid && form.get('email')?.touched"
+      >
+      <div class="invalid-feedback" *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
+        <div *ngIf="form.get('email')?.errors?.['email']">Please enter a valid email.</div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Modal Footer (only shown in modal mode) -->
+<div class="modal-footer" *ngIf="isModalMode">
+  <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+  <button type="button" class="btn btn-primary" (click)="save()" >
+    {{ isEditMode ? 'Update' : 'Save' }}
+  </button>
+</div>
+
+<!-- Page Footer (only shown in route mode) -->
+<div class="container-fluid" *ngIf="!isModalMode">
+  <div class="row">
+    <div class="col">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="save()" [disabled]="form.invalid">
+          {{ isEditMode ? 'Update' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

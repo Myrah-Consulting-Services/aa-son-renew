@@ -1,0 +1,129 @@
+<div class="reports-dashboard-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse/reports">Reports</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="reports-dashboard-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="reports-logo">
+          <i class="bi bi-graph-up"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Reports Dashboard</h1>
+          <p class="header-subtitle">Generate and view various warehouse management reports</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Available Reports</h3>
+          <p class="stat-number">{{ getTotalReports() }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Recently Viewed</h3>
+          <p class="stat-number">{{ getRecentReports() }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-collection"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Report Categories</h3>
+          <p class="stat-number">{{ getCategoriesCount() }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-download"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Exports Today</h3>
+          <p class="stat-number">{{ getExportCount() }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Report Categories Grid -->
+    <div class="categories-grid">
+      <div class="category-card" *ngFor="let category of reportCategories">
+        <div class="category-header">
+          <div class="d-flex align-items-center">
+            <i class="bi {{ category.icon }} me-2"></i>
+            <h6 class="mb-0">{{ category.title }}</h6>
+          </div>
+        </div>
+        <div class="category-body">
+          <p class="category-description">{{ category.description }}</p>
+          <div class="reports-list">
+            <button *ngFor="let report of category.reports" 
+                    (click)="navigateToReport(report)" 
+                    class="report-btn"
+                    [class.active]="isActiveReport(report)">
+              <i class="bi {{ report.icon }} me-2"></i>
+              <span>{{ report.name }}</span>
+              <i *ngIf="isActiveReport(report)" class="bi bi-check-circle-fill ms-auto"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="quick-actions-section">
+      <div class="section-header">
+        <h3 class="section-title-small">
+          <i class="bi bi-lightning-charge me-2"></i>Quick Actions
+        </h3>
+      </div>
+      <div class="actions-grid">
+        <button class="action-btn" (click)="navigateToReport({route: '/reports/inventory'})">
+          <i class="bi bi-download action-icon"></i>
+          <span>Export Inventory</span>
+        </button>
+        <button class="action-btn" (click)="navigateToReport({route: '/reports/movements'})">
+          <i class="bi bi-download action-icon"></i>
+          <span>Export Movements</span>
+        </button>
+        <button class="action-btn" (click)="navigateToReport({route: '/reports/requisitions'})">
+          <i class="bi bi-download action-icon"></i>
+          <span>Export Requisitions</span>
+        </button>
+        <button class="action-btn" (click)="navigateToReport({route: '/reports/warehouse-performance'})">
+          <i class="bi bi-download action-icon"></i>
+          <span>Export Performance</span>
+        </button>
+      </div>
+    </div>
+  </section>
+</div> 

@@ -1,0 +1,68 @@
+// Top Navbar Styles
+.top-navbar {
+  background: #fff;
+  color: #41299b;
+  box-shadow: 0 2px 12px 0 rgba(44, 62, 80, 0.10) !important;
+  border-bottom: none !important;
+  .navbar-brand {
+    color: #41299b !important;
+  }
+}
+.text-primary{
+    color: #41299b !important;
+}
+
+.top-navbar .nav-link-custom {
+  color: #41299b !important;
+  border-radius: 2rem;
+  padding: 0.5rem 1.2rem;
+  transition: background 0.2s;
+  margin-right: 0.5rem;
+  position: relative;
+  &:hover, &.active, &:focus {
+    background: #ee9b20 !important;
+    color: #41299b !important;
+  }
+}
+.top-navbar .notif-btn {
+  color: #41299b !important;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.top-navbar .user-btn {
+  color: #41299b !important;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.top-navbar .dropdown-menu {
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 24px rgba(65,41,155,0.08);
+  min-width: 180px;
+}
+.bg-warning{
+    background-color: #EE9B20 !important;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+::ng-deep .navbar-underline {
+  height: 8px;
+  background: #f6a019;
+  width: 100%;
+  z-index: 1000;
+}
+
+.logout-btn{
+    padding: 0.5rem 1.2rem;
+    transition: background 0.2s;
+    margin-right: 0.5rem;
+}
+.logout-btn:hover{
+    background: #ee9b20 !important;
+}

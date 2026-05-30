@@ -1,0 +1,934 @@
+// ============================================
+// MODERN FORM DESIGN SYSTEM
+// ============================================
+
+// Color Palette
+$primary: #41299b;
+$primary-light: #6d5ba8;
+$primary-lighter: #ede9fe;
+$bg-primary: #ffffff;
+$bg-secondary: #f8f9fa;
+$bg-tertiary: #fafbfc;
+$border-color: #e5e7eb;
+$border-light: #f3f4f6;
+$text-primary: #1f2937;
+$text-secondary: #6b7280;
+$text-tertiary: #9ca3af;
+$success: #10b981;
+$error: #ef4444;
+$warning: #f59e0b;
+
+// Spacing Scale
+$spacing-xs: 0.5rem;   // 8px
+$spacing-sm: 0.75rem;  // 12px
+$spacing-md: 1rem;      // 16px
+$spacing-lg: 1.5rem;    // 24px
+$spacing-xl: 2rem;      // 32px
+$spacing-2xl: 3rem;     // 48px
+
+// Typography
+$font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-size-xs: 0.75rem;   // 12px
+$font-size-sm: 0.875rem;  // 14px
+$font-size-base: 1rem;     // 16px
+$font-size-lg: 1.125rem;   // 18px
+$font-size-xl: 1.25rem;    // 20px
+
+// Border Radius
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-full: 9999px;
+
+// Shadows
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$shadow-focus: 0 0 0 3px rgba(65, 41, 155, 0.1);
+
+// ============================================
+// BASE STYLES
+// ============================================
+
+:host {
+  display: block;
+  background: $bg-secondary;
+  min-height: 100vh;
+  font-family: $font-family;
+}
+
+// ============================================
+// FORM CONTAINER
+// ============================================
+
+.create-item-form {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: $spacing-xl $spacing-lg;
+
+  .row {
+    margin: 0;
+    
+    > [class*="col-"] {
+      padding: 0 $spacing-sm;
+    }
+  }
+}
+
+// ============================================
+// SECTION CARDS
+// ============================================
+
+.card {
+  background: $bg-primary;
+  border: 1px solid $border-light;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  margin-bottom: $spacing-lg;
+  transition: all 0.2s ease;
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: $shadow-md;
+  }
+
+  .card-body {
+    padding: $spacing-lg;
+  }
+
+  .card-title {
+    font-size: $font-size-lg;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0 0 $spacing-md 0;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    padding-bottom: $spacing-sm;
+    border-bottom: 2px solid $border-light;
+
+    i {
+      color: $primary;
+      font-size: $font-size-base;
+    }
+  }
+}
+
+// ============================================
+// FORM CONTROLS
+// ============================================
+
+.form-label {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $text-primary;
+  margin-bottom: $spacing-xs;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  .text-danger {
+    color: $error;
+    font-size: $font-size-xs;
+    margin-left: 2px;
+  }
+
+  i {
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    cursor: help;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $primary;
+    }
+  }
+}
+
+.form-control,
+.form-select {
+  font-size: $font-size-sm;
+  padding: 0.625rem 0.875rem;
+  min-height: 40px;
+  border: 1.5px solid $border-color;
+  border-radius: $radius-md;
+  background: $bg-primary;
+  color: $text-primary;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: $text-tertiary;
+    font-weight: 400;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: $shadow-focus;
+    background: $bg-primary;
+  }
+
+  &:disabled {
+    background: $bg-tertiary;
+    color: $text-tertiary;
+    cursor: not-allowed;
+  }
+
+  &.form-control-sm,
+  &.form-select-sm {
+    font-size: $font-size-xs;
+    padding: 0.5rem 0.75rem;
+    min-height: 36px;
+  }
+}
+
+textarea.form-control {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+// ============================================
+// RADIO BUTTON GROUP
+// ============================================
+
+.radio-group {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: 0;
+}
+
+.radio-option {
+  flex: 1;
+  position: relative;
+
+  input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .radio-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-xs;
+    padding: $spacing-sm $spacing-md;
+    min-height: 48px;
+    background: $bg-tertiary;
+    border: 2px solid $border-color;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    color: $text-secondary;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    i {
+      font-size: $font-size-base;
+      transition: color 0.2s ease;
+    }
+
+    &:hover {
+      background: $bg-secondary;
+      border-color: $primary-light;
+      color: $primary;
+      transform: translateY(-1px);
+      box-shadow: $shadow-sm;
+
+      i {
+        color: $primary;
+      }
+    }
+  }
+
+  &.selected .radio-label,
+  input[type="radio"]:checked + .radio-label {
+    background: $primary-lighter;
+    border-color: $primary;
+    color: $primary;
+    box-shadow: 0 0 0 3px rgba(65, 41, 155, 0.1);
+
+    i {
+      color: $primary;
+    }
+  }
+}
+
+// ============================================
+// BUTTONS
+// ============================================
+
+.btn {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  padding: 0.625rem 1.25rem;
+  min-height: 40px;
+  border-radius: $radius-md;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  border: none;
+  cursor: pointer;
+
+  i {
+    font-size: $font-size-base;
+  }
+
+  &.btn-primary {
+    background: $primary;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: $primary-light;
+      transform: translateY(-1px);
+      box-shadow: $shadow-md;
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      background: lighten($primary, 25%);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+
+  &.btn-secondary {
+    background: $bg-secondary;
+    color: $text-primary;
+    border: 1.5px solid $border-color;
+
+    &:hover {
+      background: $bg-tertiary;
+      border-color: $primary-light;
+      color: $primary;
+    }
+  }
+
+  &.btn-outline-primary {
+    background: transparent;
+    color: $primary;
+    border: 1.5px solid $primary;
+
+    &:hover {
+      background: $primary;
+      color: white;
+    }
+  }
+
+  &.btn-sm {
+    padding: 0.5rem 1rem;
+    min-height: 36px;
+    font-size: $font-size-xs;
+  }
+}
+
+.btn-outline-primary {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0.5rem;
+}
+
+// ============================================
+// CHECKBOXES
+// ============================================
+
+.form-check {
+  margin-bottom: $spacing-sm;
+
+  .form-check-input {
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 2px solid $border-color;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0.125rem;
+
+    &:checked {
+      background-color: $primary;
+      border-color: $primary;
+    }
+
+    &:focus {
+      box-shadow: $shadow-focus;
+    }
+  }
+
+  .form-check-label {
+    font-size: $font-size-sm;
+    color: $text-primary;
+    cursor: pointer;
+    margin-left: $spacing-xs;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+}
+
+// ============================================
+// INPUT GROUPS
+// ============================================
+
+.input-group {
+  display: flex;
+  align-items: stretch;
+
+  .form-control {
+    flex: 1;
+  }
+
+  .form-select {
+    max-width: 140px;
+    border-left: none;
+    border-radius: 0 $radius-md $radius-md 0;
+  }
+
+  .input-group-text {
+    background: $bg-tertiary;
+    border: 1.5px solid $border-color;
+    border-right: none;
+    border-radius: $radius-md 0 0 $radius-md;
+    padding: 0.625rem 0.875rem;
+    color: $text-secondary;
+    font-size: $font-size-sm;
+  }
+}
+
+// ============================================
+// SECTION HEADERS & COLLAPSIBLE
+// ============================================
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm 0;
+  margin-bottom: $spacing-md;
+  border-bottom: 1px solid $border-light;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  h6 {
+    font-size: $font-size-base;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+
+    i {
+      color: $primary;
+      font-size: $font-size-base;
+    }
+
+    .toggle-icon {
+      margin-left: auto;
+      color: $text-secondary;
+      transition: transform 0.3s ease;
+    }
+  }
+
+  &:hover {
+    border-bottom-color: $primary-light;
+
+    h6 .toggle-icon {
+      color: $primary;
+    }
+  }
+}
+
+.section-content {
+  overflow: hidden;
+  transition: all 0.3s ease;
+  max-height: 2000px;
+  opacity: 1;
+
+  &.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.section-card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+// ============================================
+// DIMENSION SECTION
+// ============================================
+
+.dimension-section {
+  background: $bg-tertiary;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-md;
+  border: 1px solid $border-light;
+
+  .dimension-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-sm;
+    margin-bottom: $spacing-sm;
+
+    .dimension-input {
+      .form-label {
+        font-size: $font-size-xs;
+        font-weight: 500;
+        color: $text-secondary;
+        margin-bottom: $spacing-xs;
+      }
+
+      .form-control {
+        font-size: $font-size-xs;
+        padding: 0.5rem 0.75rem;
+        min-height: 36px;
+      }
+    }
+  }
+
+  .unit-selectors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-sm;
+
+    .unit-selector {
+      .form-label {
+        font-size: $font-size-xs;
+        font-weight: 500;
+        color: $text-secondary;
+        margin-bottom: $spacing-xs;
+      }
+
+      .form-select {
+        font-size: $font-size-xs;
+        padding: 0.5rem 0.75rem;
+        min-height: 36px;
+      }
+    }
+  }
+
+  .volume-display {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: $radius-sm;
+    padding: $spacing-sm $spacing-md;
+    margin-top: $spacing-sm;
+
+    small {
+      color: #1976d2;
+      font-weight: 500;
+      font-size: $font-size-xs;
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+
+      i {
+        font-size: $font-size-xs;
+      }
+    }
+  }
+}
+
+// ============================================
+// CHIPS (Batch Categories)
+// ============================================
+
+.chip-style {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  background: #1976d2;
+  color: white;
+  border-radius: $radius-full;
+  padding: 0.25rem 0.75rem;
+  font-size: $font-size-xs;
+  font-weight: 500;
+  margin: 0.125rem;
+
+  i {
+    cursor: pointer;
+    color: #ff661e;
+    font-size: 0.875rem;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: darken(#ff661e, 10%);
+    }
+  }
+}
+
+.chip-container {
+  margin-bottom: $spacing-xs;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-xs;
+}
+
+.chip-input {
+  border: 1.5px solid #b6c6e3;
+  background: #e3edfa;
+  color: #1976d2;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: $radius-sm;
+  width: 100%;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  }
+}
+
+.custom-chip-select {
+  background: #e3edfa;
+  color: #1976d2;
+  font-weight: 500;
+  border: 1.5px solid #b6c6e3;
+  border-radius: $radius-sm;
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  }
+}
+
+// ============================================
+// CUSTOM COLUMNS CARD
+// ============================================
+
+.custom-columns-card {
+  background: #f8f9fc;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  border: 1px solid $border-light;
+  box-shadow: 0 2px 8px rgba(65, 41, 155, 0.04);
+
+  .form-label {
+    font-weight: 600;
+    color: $primary;
+  }
+
+  .form-control {
+    background: $bg-secondary;
+    border: 1.5px solid $border-color;
+    transition: all 0.2s ease;
+
+    &:focus {
+      border-color: $primary;
+      box-shadow: $shadow-focus;
+    }
+  }
+
+  .btn-outline-danger {
+    border: none;
+    background: transparent;
+    color: #ff661e;
+
+    &:hover {
+      background: rgba(#ff661e, 0.1);
+    }
+  }
+}
+
+// ============================================
+// FORM VALIDATION
+// ============================================
+
+.text-danger {
+  font-size: $font-size-xs;
+  color: $error;
+  margin-top: $spacing-xs;
+  display: block;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: $error;
+
+  &:focus {
+    border-color: $error;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+}
+
+// ============================================
+// MODAL STYLING
+// ============================================
+
+:host ::ng-deep .modal {
+  .modal-content {
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    box-shadow: $shadow-lg;
+  }
+
+  .modal-header {
+    padding: $spacing-lg;
+    border-bottom: 1px solid $border-light;
+    background: $bg-tertiary;
+
+    .modal-title {
+      font-size: $font-size-lg;
+      font-weight: 600;
+      color: $text-primary;
+    }
+
+    .btn-close {
+      padding: $spacing-sm;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: $spacing-lg;
+  }
+
+  .modal-footer {
+    padding: $spacing-lg;
+    border-top: 1px solid $border-light;
+    background: $bg-tertiary;
+  }
+}
+
+// ============================================
+// TAB NAVIGATION
+// ============================================
+
+.tab-navigation {
+  margin-bottom: $spacing-xl;
+  border-bottom: 2px solid $border-light;
+
+  .nav-tabs {
+    border: none;
+    display: flex;
+    gap: $spacing-md;
+
+    .nav-link {
+      padding: $spacing-sm $spacing-md;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: $text-secondary;
+      font-size: $font-size-base;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      background: transparent;
+      margin-bottom: -2px;
+
+      i {
+        margin-right: $spacing-xs;
+      }
+
+      &:hover {
+        color: $primary;
+        border-bottom-color: $primary-light;
+      }
+
+      &.active {
+        color: $primary;
+        border-bottom-color: $primary;
+        background: transparent;
+      }
+    }
+  }
+}
+
+// ============================================
+// IMAGE UPLOAD
+// ============================================
+
+.image-upload-box {
+  width: 140px;
+  height: 140px;
+  border: 2px dashed $border-color;
+  border-radius: $radius-md;
+  background: $bg-tertiary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    border-color: $primary;
+    background: $primary-lighter;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: $radius-md;
+  }
+
+  i {
+    font-size: 2.5rem;
+    color: $text-tertiary;
+  }
+}
+
+// ============================================
+// FORM ACTIONS
+// ============================================
+
+.d-flex.justify-content-end {
+  margin-top: $spacing-xl;
+  padding-top: $spacing-lg;
+  border-top: 1px solid $border-light;
+  display: flex;
+  gap: $spacing-sm;
+  justify-content: flex-end;
+}
+
+// ============================================
+// SPACING UTILITIES
+// ============================================
+
+.mb-3 {
+  margin-bottom: $spacing-md !important;
+}
+
+.mb-4 {
+  margin-bottom: $spacing-lg !important;
+}
+
+.gap-2 {
+  gap: $spacing-sm !important;
+}
+
+.g-2 {
+  --bs-gutter-x: #{$spacing-sm};
+  --bs-gutter-y: #{$spacing-sm};
+}
+
+.g-3 {
+  --bs-gutter-x: #{$spacing-md};
+  --bs-gutter-y: #{$spacing-md};
+}
+
+.g-4 {
+  --bs-gutter-x: #{$spacing-lg};
+  --bs-gutter-y: #{$spacing-lg};
+}
+
+// ============================================
+// TOOLTIPS
+// ============================================
+
+:host ::ng-deep .tooltip {
+  .tooltip-inner {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+    background-color: $text-primary;
+    border-radius: $radius-sm;
+  }
+}
+
+// ============================================
+// SCROLLBAR
+// ============================================
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $bg-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border-color;
+  border-radius: $radius-full;
+
+  &:hover {
+    background: $text-tertiary;
+  }
+}
+
+// ============================================
+// NUMBER INPUT
+// ============================================
+
+input[type="number"] {
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+// ============================================
+// RESPONSIVE DESIGN
+// ============================================
+
+@media (max-width: 992px) {
+  .create-item-form {
+    padding: $spacing-lg $spacing-md;
+  }
+
+  .card .card-body {
+    padding: $spacing-md;
+  }
+
+  .dimension-section {
+    .dimension-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .unit-selectors {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .create-item-form {
+    padding: $spacing-md $spacing-sm;
+  }
+
+  .radio-group {
+    flex-direction: column;
+  }
+
+  .form-select {
+    max-width: 100%;
+  }
+
+  .d-flex.justify-content-end {
+    flex-direction: column-reverse;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}

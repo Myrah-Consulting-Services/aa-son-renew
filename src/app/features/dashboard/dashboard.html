@@ -1,0 +1,273 @@
+<div class="dashboard-bg py-4">
+  <div class="container-fluid">
+    <!-- Quick Actions Section -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-2 col-6">
+        <a [routerLink]="['/invoices/create-invoice']" [queryParams]="{type: 'sales'}" class="text-decoration-none" style="color: inherit">
+          <div class="dashboard-card card-action shadow-sm rounded dashboard-card-hover p-3 text-center h-100 cursor-pointer">
+            <div class="action-icon-wrapper bg-sales mb-2">
+              <i class="bi bi-file-earmark-plus-fill text-white"></i>
+            </div>
+            <div class="action-label fw-semibold mb-1">Sales Invoice</div>
+            <span class="badge bg-secondary badge-sm">ALT + S</span>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-2 col-6">
+        <a [routerLink]="['/invoices/create-invoice']" [queryParams]="{type: 'purchase'}" class="text-decoration-none" style="color: inherit">
+          <div class="dashboard-card card-action shadow-sm rounded dashboard-card-hover p-3 text-center h-100 cursor-pointer">
+            <div class="action-icon-wrapper bg-purchase mb-2">
+              <i class="bi bi-file-earmark-text-fill text-white"></i>
+            </div>
+            <div class="action-label fw-semibold mb-1">Purchase Invoice</div>
+            <span class="badge bg-secondary badge-sm">ALT + P</span>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-2 col-6">
+        <a [routerLink]="['/reports/report-list']" class="text-decoration-none" style="color: inherit">
+          <div class="dashboard-card card-action shadow-sm rounded dashboard-card-hover p-3 text-center h-100 cursor-pointer">
+            <div class="action-icon-wrapper bg-reports mb-2">
+              <i class="bi bi-graph-up text-white"></i>
+            </div>
+            <div class="action-label fw-semibold mb-1">Reports</div>
+            <span class="badge bg-secondary badge-sm">ALT + R</span>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-2 col-6">
+        <a [routerLink]="['/manage-money/payment-in']" class="text-decoration-none" style="color: inherit">
+          <div class="dashboard-card card-action shadow-sm rounded dashboard-card-hover p-3 text-center h-100 cursor-pointer">
+            <div class="action-icon-wrapper bg-payment mb-2">
+              <i class="bi bi-arrow-left-right text-white"></i>
+            </div>
+            <div class="action-label fw-semibold mb-1">Payment In/Out</div>
+            <span class="badge bg-secondary badge-sm">ALT + I/O</span>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-2 col-6">
+        <a [routerLink]="['/items/item-list']" class="text-decoration-none" style="color: inherit">
+          <div class="dashboard-card card-action shadow-sm rounded dashboard-card-hover p-3 text-center h-100 cursor-pointer">
+            <div class="action-icon-wrapper bg-items mb-2">
+              <i class="bi bi-box-seam-fill text-white"></i>
+            </div>
+            <div class="action-label fw-semibold mb-1">Items ({{reports?.total_items || 0}})</div>
+            <span class="badge bg-secondary badge-sm">ALT + T</span>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-2 col-6">
+        <a [routerLink]="['/parties']" class="text-decoration-none" style="color: inherit">
+          <div class="dashboard-card card-action shadow-sm rounded dashboard-card-hover p-3 text-center h-100 cursor-pointer">
+            <div class="action-icon-wrapper bg-parties mb-2">
+              <i class="bi bi-people-fill text-white"></i>
+            </div>
+            <div class="action-label fw-semibold mb-1">Parties ({{reports?.total_parties || 0}})</div>
+            <span class="badge bg-secondary badge-sm">ALT + U</span>
+          </div>
+        </a>
+      </div>
+    </div>
+    <!-- Financial Summary Section -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3 col-12">
+        <div class="dashboard-card card-summary shadow rounded p-3 h-100">
+          <div class="d-flex align-items-center mb-2">
+            <div class="summary-icon-wrapper bg-bank me-2">
+              <i class="bi bi-bank text-white"></i>
+            </div>
+            <span class="summary-label">Bank Balance</span>
+          </div>
+          <div class="summary-value text-success fw-bold">{{getcurrency()}} {{formatNumber(reports?.bank_balance)}}</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-12">
+        <div class="dashboard-card card-summary shadow rounded p-3 h-100">
+          <div class="d-flex align-items-center mb-2">
+            <div class="summary-icon-wrapper bg-cash me-2">
+              <i class="bi bi-wallet2 text-white"></i>
+            </div>
+            <span class="summary-label">Cash Balance</span>
+          </div>
+          <div class="summary-value text-danger fw-bold">{{getcurrency()}} {{formatNumber(reports?.cash_balance)}}</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-12">
+        <div class="dashboard-card card-summary shadow rounded p-3 h-100">
+          <div class="d-flex align-items-center mb-2">
+            <div class="summary-icon-wrapper bg-receivables me-2">
+              <i class="bi bi-hand-holding-usd text-white"></i>
+            </div>
+            <span class="summary-label">Receivables</span>
+          </div>
+          <div class="summary-value text-success fw-bold">{{getcurrency()}} {{formatNumber(reports?.receivables)}}</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-12">
+        <div class="dashboard-card card-summary shadow rounded p-3 h-100">
+          <div class="d-flex align-items-center mb-2">
+            <div class="summary-icon-wrapper bg-payables me-2">
+              <i class="bi bi-file-text text-white"></i>
+            </div>
+            <span class="summary-label">Payables</span>
+          </div>
+          <div class="summary-value text-success fw-bold">{{getcurrency()}} {{formatNumber(reports?.payables)}}</div>
+        </div>
+      </div>
+    </div>
+    <!-- Sales Chart & Recent Transactions Section -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-6 col-12">
+        <div class="dashboard-card card-chart shadow rounded p-3 h-100">
+          <div class="chart-title mb-3 fw-semibold">Sales Chart</div>
+          <div class="chart-area bg-light rounded p-3">
+            <svg [attr.width]="chartWidth" [attr.height]="chartHeight">
+              <!-- Y gridlines and labels -->
+              <g *ngFor="let t of yTicks; let i = index">
+                <line [attr.x1]="marginLeft" [attr.x2]="chartWidth - marginRight" [attr.y1]="marginTop + innerHeight - (innerHeight * (t / (maxSales || 1)))" [attr.y2]="marginTop + innerHeight - (innerHeight * (t / (maxSales || 1)))" stroke="#eee" stroke-width="1"/>
+                <text [attr.x]="4" [attr.y]="marginTop + innerHeight - (innerHeight * (t / (maxSales || 1))) + 4" font-size="10" fill="#888">{{ formatChartValue(t) }}</text>
+              </g>
+
+              <!-- X labels -->
+              <g *ngFor="let p of points">
+                <text [attr.x]="p.x" [attr.y]="chartHeight - 6" font-size="10" fill="#888" text-anchor="middle">{{ p.label }}</text>
+              </g>
+
+              <!-- Line path -->
+              <path [attr.d]="salesPathD" stroke="#4caf50" stroke-width="2" fill="none"></path>
+
+              <!-- Data points -->
+              <g *ngFor="let p of points">
+                <circle [attr.cx]="p.x" [attr.cy]="p.y" r="3" fill="#4caf50"></circle>
+              </g>
+            </svg>
+            <div *ngIf="weeklySales.length === 0" class="w-100 text-center text-muted py-4">No data</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-12">
+        <div class="dashboard-card card-table shadow rounded p-3 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="table-title fw-semibold">Recent Transactions</div>
+            <div class="transaction-count text-muted">{{(recent_transactions?.length || 0)}} transactions</div>
+          </div>
+          <div class="table-responsive" *ngIf="recent_transactions && recent_transactions.length > 0">
+            <table class="table table-bordered table-hover table-striped mb-0 dashboard-table rounded">
+              <thead class="table-light">
+                <tr>
+                  <th class="table-header">DATE</th>
+                  <th class="table-header">TYPE</th>
+                  <th class="table-header">PARTY</th>
+                  <th class="table-header">AMOUNT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let report of recent_transactions; let i = index">
+                  <td>{{report.date | date:'dd-MM-yyyy'}}</td>
+                  <td>{{report.type}}</td>
+                  <td>{{report.party_name}}</td>
+                  <td>{{getcurrency()}} {{report.amount}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="!recent_transactions || recent_transactions.length === 0" class="empty-transactions text-center py-5">
+            <div class="empty-icon-wrapper mb-3">
+              <i class="bi bi-file-earmark-text empty-icon"></i>
+              <i class="bi bi-search empty-search-icon"></i>
+            </div>
+            <div class="text-muted">No transactions found</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Income vs Expense Overview Section -->
+    <div class="row g-3">
+      <div class="col-md-12 col-12">
+        <div class="dashboard-card card-chart shadow rounded p-3 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+              <span class="legend-box bg-success me-2"></span>
+              <span class="me-3">Total Income</span>
+              <span class="legend-box bg-danger me-2"></span>
+              <span>Total Expense</span>
+            </div>
+            <div>
+              <select class="form-select form-select-sm chart-dropdown" [(ngModel)]="filterType" (ngModelChange)="getDates()">
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quaterly</option>
+                <option value="half_yearly">Last 6 Months</option>
+                <option value="yearly">Yearly</option>
+                <option value="date">Specific Date</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart-area bg-light rounded p-2">
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <input *ngIf="filterType === 'monthly'" type="month" class="form-control form-control-sm"
+                       [(ngModel)]="selectedMonth" (ngModelChange)="getDates()" style="width: 160px;" />
+                <div *ngIf="filterType === 'quarterly'" class="d-flex gap-2">
+                  <select class="form-select form-select-sm" [(ngModel)]="selectedQuarter" (ngModelChange)="getDates()" style="width: 160px;">
+                    <option value="04-06">Apr-Jun</option>
+                    <option value="07-09">Jul-Sep</option>
+                    <option value="10-12">Oct-Dec</option>
+                    <option value="01-03">Jan-Mar</option>
+                  </select>
+                  <select class="form-select form-select-sm" [(ngModel)]="selectedYear" (ngModelChange)="getDates()" style="width: 160px;">
+                    <option *ngFor="let year of years" [value]="year">{{year}}</option>
+                  </select>
+                </div>
+                <select *ngIf="filterType === 'yearly'" class="form-select form-select-sm" [(ngModel)]="selectedYear" (ngModelChange)="getDates()" style="width: 160px;">
+                  <option *ngFor="let i of years" [value]="i">{{i}}</option>
+                </select>
+                <input *ngIf="filterType === 'date'" type="date" class="form-control form-control-sm"
+                       [(ngModel)]="selectedDate" (ngModelChange)="getDates()" style="width: 160px;" />
+                <div *ngIf="filterType === 'custom'" class="d-flex gap-2">
+                  <input type="date" class="form-control form-control-sm"
+                         [(ngModel)]="customStartDate" (ngModelChange)="getDates()" style="width: 160px;" />
+                  <input type="date" class="form-control form-control-sm"
+                         [(ngModel)]="customEndDate" (ngModelChange)="getDates()" style="width: 160px;" />
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <div echarts [options]="option" class="demo-chart" style="height: 300px !important;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add this style block for hover and polish -->
+<style>
+.dashboard-card-hover:hover {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1.5px 4px rgba(0,0,0,0.04);
+  transform: translateY(-2px) scale(1.02);
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.summary-icon {
+  vertical-align: middle;
+}
+.table-header {
+  font-weight: 600;
+}
+.legend-box {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+.bg-success {
+  background-color: #4caf50 !important;
+}
+.bg-danger {
+  background-color: #f44336 !important;
+}
+</style>

@@ -1,0 +1,43 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Damage Reports</h2>
+  <button class="btn btn-danger" (click)="openForm()">
+    <i class="bi bi-plus-lg me-1"></i> New Damage Report
+  </button>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Location</th>
+            <th>Quantity</th>
+            <th>Reason</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let damage of damages">
+            <td>{{ damage.date | date: 'mediumDate' }}</td>
+            <td>{{ getItemName(damage.itemId) }}</td>
+            <td>
+                <div>{{ getWarehouseName(damage.warehouseId) }}</div>
+                <small class="text-muted">{{ getLocationName(damage.locationId) }}</small>
+            </td>
+            <td>{{ damage.quantity }}</td>
+            <td>{{ damage.reason }}</td>
+            <td><span class="badge bg-warning text-dark">{{ damage.source }}</span></td>
+          </tr>
+          <tr *ngIf="damages.length === 0">
+            <td colspan="6" class="text-center text-muted">
+              No damage reports found.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

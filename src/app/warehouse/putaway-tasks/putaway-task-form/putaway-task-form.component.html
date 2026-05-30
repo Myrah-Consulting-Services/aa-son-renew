@@ -1,0 +1,267 @@
+<div class="putaway-task-form-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse/putaway-tasks">Putaway Tasks</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ isEditMode ? 'Edit' : 'Create' }} Task</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="putaway-form-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="putaway-logo">
+          <i class="bi bi-arrow-up-right-square"></i>
+        </span>
+        <div>
+          <h1 class="header-title">{{ isEditMode ? 'Edit' : 'Create' }} Putaway Task</h1>
+          <p class="header-subtitle">{{ isEditMode ? 'Update existing' : 'Create new' }} putaway task for loading bay to rack movement</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-grid">
+        <!-- Task Information -->
+        <div class="form-card">
+          <div class="card-header-section">
+            <h3 class="card-title">
+              <i class="bi bi-info-circle me-2"></i>
+              Task Information
+            </h3>
+          </div>
+          <div class="card-body-section">
+            <!-- GRN Reference -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-file-text me-1"></i>
+                GRN Reference *
+              </label>
+              <input 
+                type="text" 
+                class="form-control" 
+                formControlName="grnRef"
+                placeholder="e.g., GRN-2024-001">
+            </div>
+
+            <!-- Item Selection -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-box me-1"></i>
+                Item *
+              </label>
+              <input 
+                type="text" 
+                class="form-control" 
+                formControlName="itemName"
+                placeholder="Enter item name">
+            </div>
+
+            <!-- Quantity -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-hash me-1"></i>
+                Quantity *
+              </label>
+              <input 
+                type="number" 
+                class="form-control" 
+                formControlName="quantity"
+                min="1"
+                placeholder="Enter quantity">
+            </div>
+
+            <!-- Priority -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Priority *
+              </label>
+              <select class="form-select" formControlName="priority">
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location Information -->
+        <div class="form-card">
+          <div class="card-header-section">
+            <h3 class="card-title">
+              <i class="bi bi-geo-alt me-2"></i>
+              Location Information
+            </h3>
+          </div>
+          <div class="card-body-section">
+            <!-- From Location -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-truck-flatbed me-1"></i>
+                From Location *
+              </label>
+              <select class="form-select" formControlName="fromLocation">
+                <option value="">Select loading bay</option>
+                <option value="Loading Bay A">Loading Bay A</option>
+                <option value="Loading Bay B">Loading Bay B</option>
+                <option value="Loading Bay C">Loading Bay C</option>
+                <option value="Loading Bay D">Loading Bay D</option>
+              </select>
+            </div>
+
+            <!-- To Location (Rack) -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-grid-3x3 me-1"></i>
+                To Rack *
+              </label>
+              <select class="form-select" formControlName="toLocation">
+                <option value="">Select target rack</option>
+                <option value="Rack R001-A1">Rack R001-A1 (Standard)</option>
+                <option value="Rack FR-001">Rack FR-001 (Fragile Items)</option>
+                <option value="Rack HV-001">Rack HV-001 (Heavy Items)</option>
+                <option value="Rack TC-001">Rack TC-001 (Temperature Controlled)</option>
+              </select>
+            </div>
+
+            <!-- Worker Assignment -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-person me-1"></i>
+                Assigned Worker
+              </label>
+              <select class="form-select" formControlName="assignedWorker">
+                <option value="">Auto-assign based on skills</option>
+                <option value="Akshay Raut">Akshay Raut (Forklift Operator)</option>
+                <option value="Meera Joshi">Meera Joshi (Fragile Handler)</option>
+                <option value="Sanjay Pawar">Sanjay Pawar (Store Keeper)</option>
+                <option value="Vikram Singh">Vikram Singh (General Handler)</option>
+              </select>
+            </div>
+
+            <!-- Estimated Time -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-clock me-1"></i>
+                Estimated Time (minutes)
+              </label>
+              <input 
+                type="number" 
+                class="form-control" 
+                formControlName="estimatedTime"
+                min="5"
+                placeholder="Auto-calculated">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Special Requirements -->
+      <div class="form-card">
+        <div class="card-header-section">
+          <h3 class="card-title">
+            <i class="bi bi-shield-check me-2"></i>
+            Special Requirements & Equipment
+          </h3>
+        </div>
+        <div class="card-body-section">
+          <div class="requirements-grid">
+            <div class="requirements-column">
+              <h6 class="requirements-title">Handling Requirements</h6>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" formControlName="requiresFragileHandling">
+                <label class="form-check-label">
+                  <i class="bi bi-exclamation-diamond me-1"></i>
+                  Fragile Handling Required
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" formControlName="requiresTemperatureControl">
+                <label class="form-check-label">
+                  <i class="bi bi-thermometer-snow me-1"></i>
+                  Temperature Control Required
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" formControlName="requiresForklift">
+                <label class="form-check-label">
+                  <i class="bi bi-truck me-1"></i>
+                  Forklift Required
+                </label>
+              </div>
+            </div>
+            <div class="requirements-column">
+              <h6 class="requirements-title">Equipment Needed</h6>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" formControlName="equipmentPalletJack">
+                <label class="form-check-label">Pallet Jack</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" formControlName="equipmentDolly">
+                <label class="form-check-label">Hand Dolly</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" formControlName="equipmentStraps">
+                <label class="form-check-label">Safety Straps</label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Notes -->
+          <div class="form-group mt-3">
+            <label class="form-label">
+              <i class="bi bi-journal-text me-1"></i>
+              Notes / Instructions
+            </label>
+            <textarea 
+              class="form-control" 
+              formControlName="notes"
+              rows="3"
+              placeholder="Add any special instructions or notes for the worker..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Task will be created and assigned to the selected worker
+            </span>
+          </div>
+          <div class="btn-group">
+            <button 
+              type="button" 
+              class="btn btn-secondary"
+              (click)="cancel()">
+              <i class="bi bi-x-circle me-1"></i>
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              class="btn btn-primary"
+              [disabled]="!form.valid">
+              <i class="bi bi-check-circle me-1"></i>
+              {{ isEditMode ? 'Update' : 'Create' }} Task
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+</div>
+
+
+
+

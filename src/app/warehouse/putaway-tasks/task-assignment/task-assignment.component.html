@@ -1,0 +1,293 @@
+<div class="task-assignment-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse/putaway-tasks">Putaway Tasks</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Task Assignment</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="task-assignment-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="assignment-logo">
+          <i class="bi bi-people"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Task Assignment</h1>
+          <p class="header-subtitle">Assign putaway tasks to warehouse workers</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" (click)="autoAssignAll()">
+          <i class="bi bi-magic me-1"></i>Auto Assign All
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="optimizeAssignments()">
+          <i class="bi bi-graph-up me-1"></i>Optimize
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-list-task"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Unassigned Tasks</h3>
+          <p class="stat-number">{{ unassignedTasks.length }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Available Workers</h3>
+          <p class="stat-number">{{ availableWorkers.length }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-bar-chart"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Workload Balance</h3>
+          <p class="stat-number">{{ getWorkloadBalance() }}%</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-speedometer"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Efficiency Score</h3>
+          <p class="stat-number">{{ getEfficiencyScore() }}%</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <div class="assignment-grid">
+      <!-- Unassigned Tasks -->
+      <div class="assignment-card">
+        <div class="card-header-section">
+          <h3 class="card-title">
+            <i class="bi bi-list-task me-2"></i>
+            Unassigned Tasks ({{ unassignedTasks.length }})
+          </h3>
+        </div>
+        <div class="card-body-section">
+          <div class="tasks-list">
+            <div *ngFor="let task of unassignedTasks" 
+                 class="task-item"
+                 [class.task-priority-high]="task.priority === 'high'"
+                 [class.task-priority-critical]="task.priority === 'critical'"
+                 [class.task-selected]="selectedTask?.id === task.id"
+                 (click)="selectTask(task)">
+              <div class="task-header">
+                <h6 class="task-name">{{ task.itemName }}</h6>
+                <small class="task-time">{{ task.estimatedTime }} min</small>
+              </div>
+              <div class="task-details">
+                <div class="task-info">
+                  <strong>GRN:</strong> {{ task.grnRef }} | 
+                  <strong>Qty:</strong> {{ task.quantity }}
+                </div>
+                <div class="task-badges">
+                  <span class="badge" 
+                        [class.bg-light]="task.priority === 'normal'"
+                        [class.bg-warning]="task.priority === 'high'"
+                        [class.bg-danger]="task.priority === 'critical'">
+                    {{ task.priority | titlecase }}
+                  </span>
+                  <span class="badge bg-info">{{ task.fromLocation }}</span>
+                  <span *ngIf="task.isFragile" class="badge bg-warning text-dark">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Fragile
+                  </span>
+                  <span *ngIf="task.requiresColdStorage" class="badge bg-info">
+                    <i class="bi bi-thermometer-snow me-1"></i>Cold
+                  </span>
+                </div>
+                <small class="task-due">
+                  Due: {{ task.dueTime | date:'shortTime' }}
+                </small>
+              </div>
+            </div>
+            
+            <!-- Empty State -->
+            <div *ngIf="unassignedTasks.length === 0" class="empty-state">
+              <i class="bi bi-check-circle"></i>
+              <h6>All tasks assigned!</h6>
+              <p>Great job managing the workload.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Worker Assignment Panel -->
+      <div class="assignment-card">
+        <div class="card-header-section">
+          <h3 class="card-title">
+            <i class="bi bi-person-gear me-2"></i>
+            Worker Assignment
+          </h3>
+        </div>
+        <div class="card-body-section">
+          <!-- Assignment Form -->
+          <div *ngIf="selectedTask" class="assignment-form-section">
+            <div class="selected-task-info">
+              <h6 class="info-title">
+                <i class="bi bi-info-circle me-2"></i>
+                Selected Task: {{ selectedTask.itemName }}
+              </h6>
+              <div class="info-details">
+                <div class="info-item">
+                  <small class="info-label">Priority:</small> 
+                  <span class="badge" 
+                        [class.bg-light]="selectedTask.priority === 'normal'"
+                        [class.bg-warning]="selectedTask.priority === 'high'"
+                        [class.bg-danger]="selectedTask.priority === 'critical'">
+                    {{ selectedTask.priority | titlecase }}
+                  </span>
+                </div>
+                <div class="info-item">
+                  <small class="info-label">Equipment:</small> {{ selectedTask.equipmentRequired }}
+                </div>
+              </div>
+            </div>
+
+            <form [formGroup]="assignmentForm" (ngSubmit)="assignTask()">
+              <div class="form-group">
+                <label class="form-label">Select Worker *</label>
+                <select class="form-select" formControlName="workerId">
+                  <option value="">Choose worker...</option>
+                  <option *ngFor="let worker of getEligibleWorkers(selectedTask)" 
+                          [value]="worker.id">
+                    {{ worker.name }} - {{ worker.designation }}
+                    ({{ worker.currentLoad }}/{{ worker.maxCapacity }} tasks)
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group" *ngIf="assignmentForm.get('workerId')?.value">
+                <label class="form-label">Estimated Completion</label>
+                <input type="datetime-local" class="form-control" 
+                       formControlName="estimatedCompletion" readonly>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Assignment Notes</label>
+                <textarea class="form-control" formControlName="notes" rows="2"
+                          placeholder="Any special instructions..."></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary flex-fill" 
+                        [disabled]="assignmentForm.invalid">
+                  <i class="bi bi-person-plus me-1"></i>
+                  Assign Task
+                </button>
+                <button type="button" class="btn btn-secondary" 
+                        (click)="clearSelection()">
+                  <i class="bi bi-x me-1"></i>
+                  Clear
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Worker Status -->
+          <div class="worker-status-section">
+            <h6 class="section-subtitle">Worker Status</h6>
+            <div *ngFor="let worker of workers" class="worker-status-item">
+              <div class="worker-header">
+                <div>
+                  <div class="worker-name">{{ worker.name }}</div>
+                  <small class="text-muted">{{ worker.designation }}</small>
+                </div>
+                <div class="text-end">
+                  <span class="badge" 
+                        [class.bg-success]="worker.status === 'available'"
+                        [class.bg-warning]="worker.status === 'busy'"
+                        [class.bg-danger]="worker.status === 'break'">
+                    {{ worker.status | titlecase }}
+                  </span>
+                </div>
+              </div>
+              
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar" 
+                     [class.bg-success]="worker.currentLoad < worker.maxCapacity * 0.7"
+                     [class.bg-warning]="worker.currentLoad >= worker.maxCapacity * 0.7 && worker.currentLoad < worker.maxCapacity * 0.9"
+                     [class.bg-danger]="worker.currentLoad >= worker.maxCapacity * 0.9"
+                     [style.width.%]="(worker.currentLoad / worker.maxCapacity) * 100">
+                </div>
+              </div>
+              
+              <div class="worker-metrics">
+                <small class="text-muted">
+                  {{ worker.currentLoad }}/{{ worker.maxCapacity }} tasks
+                </small>
+                <small class="text-muted">
+                  Efficiency: {{ worker.efficiency }}%
+                </small>
+              </div>
+
+              <!-- Current Tasks -->
+              <div *ngIf="worker.currentTasks.length > 0" class="worker-tasks">
+                <small class="text-muted fw-bold">Current Tasks:</small>
+                <div class="task-list">
+                  <div *ngFor="let task of worker.currentTasks" class="task-item-small">
+                    • {{ task.itemName }} ({{ task.status }})
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assignment Suggestions -->
+          <div *ngIf="selectedTask" class="suggestions-section">
+            <h6 class="section-subtitle">AI Suggestions</h6>
+            <div class="suggestions-list">
+              <div *ngFor="let suggestion of getAssignmentSuggestions(selectedTask)" 
+                   class="suggestion-item">
+                <div class="suggestion-content">
+                  <div>
+                    <strong>{{ suggestion.workerName }}</strong>
+                    <small class="text-muted d-block">{{ suggestion.reason }}</small>
+                  </div>
+                  <div class="suggestion-actions">
+                    <span class="badge bg-success">{{ suggestion.score }}% match</span>
+                    <button class="btn btn-sm btn-secondary" 
+                            (click)="applySuggestion(suggestion)">
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+
+

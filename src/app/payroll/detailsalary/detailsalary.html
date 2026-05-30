@@ -1,0 +1,345 @@
+<div class="detailsalary-container">
+  <form [formGroup]="salaryForm" (ngSubmit)="onSubmit()" class="salary-form">
+    <div class="salary-details-container">
+      <!-- Salary Structure Selector -->
+      <div class="row mb-4 align-items-center">
+        <label class="col-md-2 col-form-label">Salary Structure</label>
+        <div class="col-md-6">
+          <div class="position-relative">
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search and select salary structure..."
+              [value]="salaryStructureSearchTerm"
+              (focus)="onSalaryStructureFocus()"
+              (input)="onSalaryStructureInput($event)"
+              (blur)="onSalaryStructureBlur()"
+            />
+            <!-- Dropdown for salary structure search -->
+            <div class="dropdown-menu show position-absolute w-100" 
+                 *ngIf="showSalaryStructureDropdown && filteredSalaryStructures.length > 0"
+                 style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+              <div class="dropdown-item" 
+                   *ngFor="let structure of filteredSalaryStructures" 
+                   (mousedown)="selectSalaryStructure(structure)"
+                   style="cursor: pointer; padding: 8px 12px;">
+                <div class="fw-bold">{{ structure.name }}</div>
+                <div class="small text-muted">{{ structure.description }}</div>
+                <div class="small text-primary">{{ structure.total_components }} components</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Annual CTC -->
+      <div class="row mb-4 align-items-center">
+        <label class="col-md-2 col-form-label">Annual CTC <span class="text-danger">*</span></label>
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text">AED </span>
+            <input type="number" class="form-control" formControlName="annualCTC" (input)="onCalculationTypeChange()">
+            <span class="input-group-text">per year</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Earnings -->
+      <h4 class="section-title text-success">Earnings</h4>
+      <div class="table-responsive mb-4">
+        <table class="table salary-table">
+          <thead class="table-light">
+            <tr>
+              <th>Salary Components</th>
+              <th style="width: 25%;">Calculation Type</th>
+              <th style="width: 20%;">Monthly Amount</th>
+              <th style="width: 20%;">Annual Amount</th>
+              <th style="width: 10%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody formArrayName="earnings">
+            <tr *ngIf="earnings.length === 0">
+              <td colspan="5" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle me-2"></i>
+                No earnings added yet. Select a salary structure or add earnings manually.
+              </td>
+            </tr>
+            <tr *ngFor="let earning of earnings.controls; let i = index" [formGroupName]="i">
+              <td>
+                <div class="position-relative">
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    formControlName="head_name"
+                    placeholder="Select component..." 
+                    (focus)="onEarningsFocus(i)"
+                    (input)="onEarningsInput(i, $event)"
+                    (blur)="onEarningsBlur(i)"
+                  />
+                  <!-- Dropdown for earnings search -->
+                  <div class="dropdown-menu show position-absolute w-100" 
+                       *ngIf="showEarningsDropdown[i] && filteredEarnings[i] && filteredEarnings[i].length > 0"
+                       style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                    <div class="dropdown-item" 
+                         *ngFor="let item of filteredEarnings[i]" 
+                         (mousedown)="selectEarning(i, item)"
+                         style="cursor: pointer; padding: 8px 12px;">
+                      {{ item.head_name }}
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="earning.get('head_name')?.value === 'Fixed Allowance'" class="form-text small">
+                  (Monthly CTC :- Sum of all other components)
+                </div>
+              </td>
+              <td>
+                <div class="input-group">
+                  <input type="number" class="form-control" formControlName="calculation_value" placeholder="0" (input)="onCalculationTypeChange()">
+                  <select class="form-select" formControlName="calculation_type" (change)="onCalculationTypeChange()">
+                    <option [value]="1">Fixed</option>
+                    <option [value]="2">% of Basic</option>
+                    <option [value]="3">% of Annual CTC</option>
+                  </select>
+                </div>
+              </td>
+              <td><input type="text" class="form-control" formControlName="monthly_value"></td>
+              <td><input type="text" class="form-control" formControlName="annual_value"></td>
+              <td>
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeEarningsRow(i)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="table-light">
+              <td><strong>Total Earnings</strong></td>
+              <td></td>
+              <td class="text-center">
+                <strong>Total Monthly:</strong>
+                <div class="text-success fw-bold">AED {{ grossMonthlyEarnings | number:'1.2-2' }}</div>
+              </td>
+              <td class="text-center">
+                <strong>Total Annual:</strong>
+                <div class="text-success fw-bold">AED {{ grossAnnualEarnings | number:'1.2-2' }}</div>
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="mb-3">
+        <button type="button" class="btn btn-outline-success btn-sm" (click)="addEarningsRow()">
+          <i class="bi bi-plus me-1"></i>Add Earnings Row
+        </button>
+      </div>
+
+      <!-- Deductions -->
+      <h4 class="section-title text-danger">Deductions</h4>
+      <div class="table-responsive mb-4">
+        <table class="table salary-table">
+           <thead class="table-light">
+            <tr>
+              <th>Salary Components</th>
+              <th>Calculation Type</th>
+              <th>Monthly Amount</th>
+              <th>Annual Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody formArrayName="deductions">
+            <tr *ngIf="deductions.length === 0">
+              <td colspan="5" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle me-2"></i>
+                No deductions added yet. Select a salary structure or add deductions manually.
+              </td>
+            </tr>
+            <tr *ngFor="let deduction of deductions.controls; let i = index" [formGroupName]="i">
+              <td>
+                <div class="position-relative">
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Select component..." 
+                    [value]="deduction.get('head_name')?.value"
+                    (focus)="onDeductionsFocus(i)"
+                    (input)="onDeductionsInput(i, $event)"
+                    (blur)="onDeductionsBlur(i)"
+                  />
+                  <!-- Dropdown for deductions search -->
+                  <div class="dropdown-menu show position-absolute w-100" 
+                       *ngIf="showDeductionsDropdown[i] && filteredDeductions[i] && filteredDeductions[i].length > 0"
+                       style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                    <div class="dropdown-item" 
+                         *ngFor="let item of filteredDeductions[i]" 
+                         (mousedown)="selectDeduction(i, item)"
+                         style="cursor: pointer; padding: 8px 12px;">
+                      {{ item.head_name }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-group">
+                  <input type="number" class="form-control" formControlName="calculation_value" placeholder="0" (input)="onCalculationTypeChange()">
+                  <select class="form-select" formControlName="calculation_type" (change)="onCalculationTypeChange()">
+                    <option [value]="1">Fixed</option>
+                    <option [value]="2">% of Basic</option>
+                    <option [value]="3">% of Annual CTC</option>
+                  </select>
+                </div>
+              </td>
+              <td><input type="text" class="form-control" formControlName="monthly_value"></td>
+              <td><input type="text" class="form-control" formControlName="annual_value"></td>
+              <td>
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeDeductionsRow(i)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="table-light">
+              <td><strong>Total Deductions</strong></td>
+              <td></td>
+              <td class="text-center">
+                <strong>Total Monthly:</strong>
+                <div class="text-danger fw-bold">AED {{ totalMonthlyDeductions | number:'1.2-2' }}</div>
+              </td>
+              <td class="text-center">
+                <strong>Total Annual:</strong>
+                <div class="text-danger fw-bold">AED {{ totalAnnualDeductions | number:'1.2-2' }}</div>
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="mb-3">
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="addDeductionsRow()">
+          <i class="bi bi-plus me-1"></i>Add Deductions Row
+        </button>
+      </div>
+
+      <!-- Benefits -->
+      <h4 class="section-title text-warning">Benefits</h4>
+      <div class="table-responsive">
+        <table class="table salary-table">
+           <thead class="table-light">
+            <tr>
+              <th>Salary Components</th>
+              <th>Reimbursement Type</th>
+              <th>Monthly Amount</th>
+              <th>Annual Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody formArrayName="benefits">
+            <tr *ngIf="benefits.length === 0">
+              <td colspan="5" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle me-2"></i>
+                No benefits added yet. Select a salary structure or add benefits manually.
+              </td>
+            </tr>
+            <tr *ngFor="let item of benefits.controls; let i = index" [formGroupName]="i">
+              <td>
+                <div class="position-relative">
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Select component..." 
+                    [value]="item.get('head_name')?.value"
+                    (focus)="onBenefitsFocus(i)"
+                    (input)="onBenefitsInput(i, $event)"
+                    (blur)="onBenefitsBlur(i)"
+                  />
+                  <!-- Dropdown for benefits search -->
+                  <div class="dropdown-menu show position-absolute w-100" 
+                       *ngIf="showBenefitsDropdown[i] && filteredBenefits[i] && filteredBenefits[i].length > 0"
+                       style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                    <div class="dropdown-item" 
+                         *ngFor="let benefit of filteredBenefits[i]" 
+                         (mousedown)="selectBenefit(i, benefit)"
+                         style="cursor: pointer; padding: 8px 12px;">
+                      {{ benefit.head_name }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="input-group">
+                  <input type="number" class="form-control" formControlName="calculation_value" placeholder="0" (input)="onCalculationTypeChange()">
+                  <select class="form-select" formControlName="calculation_type" (change)="onCalculationTypeChange()">
+                    <option [value]="1">Fixed</option>
+                    <option [value]="2">% of Basic</option>
+                    <option [value]="3">% of Annual CTC</option>
+                  </select>
+                </div>
+              </td>
+              <td><input type="number" class="form-control" formControlName="monthly_value"></td>
+              <td><input type="text" class="form-control" formControlName="annual_value"></td>
+              <td>
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeBenefitsRow(i)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="table-light">
+              <td><strong>Total Benefits</strong></td>
+              <td></td>
+              <td class="text-center">
+                <strong>Total Monthly:</strong>
+                <div class="text-warning fw-bold">AED {{ totalMonthlyBenefits | number:'1.2-2' }}</div>
+              </td>
+              <td class="text-center">
+                <strong>Total Annual:</strong>
+                <div class="text-warning fw-bold">AED {{ totalAnnualBenefits | number:'1.2-2' }}</div>
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="mb-3">
+        <button type="button" class="btn btn-outline-warning btn-sm" (click)="addBenefitsRow()">
+          <i class="bi bi-plus me-1"></i>Add Benefits Row
+        </button>
+      </div>
+
+      <!-- Net Salary Calculation -->
+      <div class="mt-4">
+        <h5 class="mb-3">Net Salary Calculation</h5>
+        <div class="table-responsive mb-3">
+          <table class="table salary-table">
+            <tbody>
+              <tr class="table-primary">
+                <td>
+                  <strong>Net Salary</strong>
+                  <div class="small text-muted mt-1">
+                    <strong>Formula:</strong> Net Salary = (Gross Earnings - Deductions) + Benefits
+                  </div>
+                </td>
+                <td></td>
+                <td class="text-center">
+                  <strong>Net Monthly:</strong>
+                  <div class="text-primary fw-bold">AED {{ netMonthlySalary | number:'1.2-2' }}</div>
+                </td>
+                <td class="text-center">
+                  <strong>Net Annual:</strong>
+                  <div class="text-primary fw-bold">AED {{ netAnnualSalary | number:'1.2-2' }}</div>
+                </td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions mt-4">
+      <button type="submit" class="btn btn-primary btn-save">Save Salary Details</button>
+    </div>
+  </form>
+</div>

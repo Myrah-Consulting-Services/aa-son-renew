@@ -1,0 +1,156 @@
+<div class="container-fluid">
+  <h5 class="mb-3">Insights for {{ periodLabel }}</h5>
+
+  <!-- Employee Breakdown -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="mb-3">Employee Breakdown</h6>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="text-center p-3 border rounded">
+            <div class="fw-semibold">Active Employees</div>
+            <div class="display-6">{{ employeeBreakdown?.active || 0 }}</div>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <div class="row row-cols-2 row-cols-md-3 g-3">
+            <div class="col"><div class="p-2 border rounded d-flex justify-content-between"><span>Paid Employees</span><span>{{ employeeBreakdown?.paid || 0 }}</span></div></div>
+            <div class="col"><div class="p-2 border rounded d-flex justify-content-between"><span>Skipped Employees</span><span>{{ employeeBreakdown?.skipped || 0 }}</span></div></div>
+            <div class="col"><div class="p-2 border rounded d-flex justify-content-between"><span>New Joinee's Skipped</span><span>{{ employeeBreakdown?.newJoineeSkipped || 0 }}</span></div></div>
+            <div class="col"><div class="p-2 border rounded d-flex justify-content-between"><span>Salary Withheld Employees</span><span>{{ employeeBreakdown?.withheld || 0 }}</span></div></div>
+            <div class="col"><div class="p-2 border rounded d-flex justify-content-between"><span>New Joinee's Arrear Released</span><span>{{ employeeBreakdown?.arrearReleased || 0 }}</span></div></div>
+            <div class="col"><div class="p-2 border rounded d-flex justify-content-between"><span>Salary Released Employees</span><span>{{ employeeBreakdown?.released || 0 }}</span></div></div>
+            <div class="col"><div class="p-2 border rounded d-flex justify-content-between"><span>Lop Reversed Employees</span><span>{{ employeeBreakdown?.lopReversed || 0 }}</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benefit and Payment Mode Summary -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="mb-3">Benefit Summary</h6>
+          <div class="list-group list-group-flush">
+            <div class="list-group-item d-flex justify-content-between" *ngFor="let b of benefitSummary">
+              <span>{{ b.name }}</span>
+              <span>{{ b.count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="mb-3">Payment Mode Summary</h6>
+          <div class="list-group list-group-flush">
+            <div class="list-group-item d-flex justify-content-between" *ngFor="let p of paymentModeSummary">
+              <span>{{ p.name }}</span>
+              <span>{{ p.count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component Wise Breakdown -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="mb-3">Component Wise Breakdown</h6>
+      <div class="table-responsive">
+        <table class="table">
+          <thead class="table-light">
+            <tr>
+              <th>COMPONENTS</th>
+              <th class="text-center">EMPLOYEES INVOLVED</th>
+              <th class="text-end">TOTAL AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let group of componentBreakdown">
+              <tr class="table-secondary">
+                <td class="fw-semibold">
+                  <button class="btn btn-link p-0 me-2" (click)="toggleGroup(group.group)">
+                    <i class="bi" [ngClass]="isGroupExpanded(group.group) ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+                  </button>
+                  {{ group.group }}
+                </td>
+                <td></td>
+                <td class="text-end fw-semibold">AED{{ groupTotal(group) | number:'1.2-2' }}</td>
+              </tr>
+              <tr *ngFor="let item of group.items" [style.display]="isGroupExpanded(group.group) ? 'table-row' : 'none'">
+                <td class="ps-4"><a href="javascript:void(0)" (click)="openHeadModal(item)">{{ item.name }}</a></td>
+                <td class="text-center">{{ item.employees }}</td>
+                <td class="text-end">AED{{ item.amount | number:'1.2-2' }}</td>
+              </tr>
+              <tr class="table-light" [style.display]="isGroupExpanded(group.group) ? 'table-row' : 'none'">
+                <td class="fw-semibold ps-4">{{ totalLabelForGroup(group.group) }}</td>
+                <td></td>
+                <td class="text-end fw-semibold">AED{{ groupTotal(group) | number:'1.2-2' }}</td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component Details Modal -->
+  <div class="modal fade" tabindex="-1" [ngClass]="{ 'show d-block': isHeadModalOpen }" aria-hidden="true" (click)="closeHeadModal()">
+    <div class="modal-dialog modal-xl modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ selectedHeadLabel }}</h5>
+          <button type="button" class="btn-close" (click)="closeHeadModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead class="table-light" *ngIf="!headIsGcc; else gccHeader">
+                <tr>
+                  <th>ID</th>
+                  <th>NAME</th>
+                  <th class="text-end">TOTAL AMOUNT</th>
+                </tr>
+              </thead>
+              <ng-template #gccHeader>
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>NAME</th>
+                    <th class="text-end">EMPLOYEE'S CONTRIBUTION</th>
+                    <th class="text-end">EMPLOYER'S CONTRIBUTION</th>
+                  </tr>
+                </thead>
+              </ng-template>
+              <tbody *ngIf="!headIsGcc; else gccBody">
+                <tr *ngFor="let row of headDetails">
+                  <td>{{ row.employee_id }}</td>
+                  <td>{{ row.employee_name }}</td>
+                  <td class="text-end">AED{{ row.amount | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+              <ng-template #gccBody>
+                <tbody>
+                  <tr *ngFor="let row of headDetails">
+                    <td>{{ row.employee_id }}</td>
+                    <td>{{ row.employee_name }}</td>
+                    <td class="text-end">AED{{ row.employeeAmount | number:'1.2-2' }}</td>
+                    <td class="text-end">AED{{ row.employerAmount | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </ng-template>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeHeadModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,91 @@
+<!-- Main Content -->
+<div class="container-fluid" [ngClass]="{'modal-mode': isModalMode}">
+  <!-- Modal Header -->
+  <div *ngIf="isModalMode" class="modal-header">
+    <h4 class="modal-title">{{ isEditing ? 'Edit Benefit' : 'New Benefit' }}</h4>
+    <button type="button" class="close-btn" (click)="closeModal()" aria-label="Close">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+     
+
+      <!-- Benefit Form -->
+      <div class="card">
+        <div class="card-body">
+          <form [formGroup]="benefitForm" (ngSubmit)="onSubmit()">
+            <!-- Benefit Plan -->
+            <div class="mb-3">
+              <label for="benefitPlan" class="form-label">Benefit Plan</label>
+              <select 
+                class="form-select" 
+                id="benefitPlan" 
+                formControlName="earning_type"
+                [class.is-invalid]="isFieldInvalid('earning_type')"
+              >
+                <option value="">Select Benefit Plan</option>
+                <option *ngFor="let benefit of benefits" [value]="benefit.id">
+                  {{ benefit.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="getErrorMessage('earning_type')">
+                {{ getErrorMessage('earning_type') }}
+              </div>
+            </div>
+
+            <!-- Name in Payslip -->
+            <div class="mb-3">
+              <label for="payslipName" class="form-label">Name in Payslip <span class="text-danger">*</span></label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="payslipName" 
+                formControlName="payslip_name"
+                [class.is-invalid]="isFieldInvalid('payslip_name')"
+                placeholder="Enter benefit name for payslip"
+              >
+              <div class="invalid-feedback" *ngIf="getErrorMessage('payslip_name')">
+                {{ getErrorMessage('payslip_name') }}
+              </div>
+            </div>
+
+            <!-- Active Checkbox -->
+            <div class="mb-4">
+              <div class="form-check">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  id="active" 
+                  formControlName="active"
+                >
+                <label class="form-check-label" for="active">
+                  Mark this as Active
+                </label>
+              </div>
+            </div>
+
+            <!-- Hidden Head Type (required) -->
+            <input type="hidden" formControlName="head_type" value="3">
+
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-start align-items-center">
+              <button 
+                type="submit" 
+                class="btn btn-primary me-2"
+                [disabled]="isLoading || benefitForm.invalid"
+              >
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                {{ isEditing ? 'Update' : 'Save' }}
+              </button>
+              <button type="button" class="btn btn-outline-secondary" (click)="isModalMode ? closeModal() : resetForm()">
+                {{ isModalMode ? 'Close' : 'Cancel' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,232 @@
+<div class="jv-page-container">
+  <!-- Compact Header -->
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <span class="breadcrumb-link active">
+        <i class="bi bi-journal-text"></i>
+        <span>Journal Voucher</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="jv-content-card">
+    <div class="jv-header">
+      <div class="header-left">
+        <h1 class="page-title">Journal Voucher List</h1>
+        <p class="page-subtitle">Manage and track your journal vouchers</p>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn btn-primary" (click)="createJv()">
+          <i class="bi bi-plus-lg"></i> Create JV
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <form [formGroup]="jvForm" (ngSubmit)="onSubmit()" class="filter-form">
+        <div class="date-fields">
+          <div class="date-field">
+            <label for="start_date" class="date-label">From Date <span class="required">*</span></label>
+            <input 
+              type="date" 
+              id="start_date" 
+              class="form-control" 
+              formControlName="start_date"
+              [class.is-invalid]="jvForm.get('start_date')?.invalid && jvForm.get('start_date')?.touched">
+            <div 
+              *ngIf="jvForm.get('start_date')?.invalid && jvForm.get('start_date')?.touched"
+              class="invalid-feedback"
+            >
+              From date is required
+            </div>
+          </div>
+
+          <div class="date-field">
+            <label for="end_date" class="date-label">To Date <span class="required">*</span></label>
+            <input 
+              type="date" 
+              id="end_date" 
+              class="form-control" 
+              formControlName="end_date"
+              [class.is-invalid]="jvForm.get('end_date')?.invalid && jvForm.get('end_date')?.touched">
+            <div 
+              *ngIf="jvForm.get('end_date')?.invalid && jvForm.get('end_date')?.touched"
+              class="invalid-feedback"
+            >
+              To date is required
+            </div>
+          </div>
+
+          <div class="date-field">
+            <button 
+              type="submit" 
+              class="btn-apply-filter"
+              [disabled]="jvForm.invalid || loading">
+              <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
+              <i class="bi bi-funnel" *ngIf="!loading"></i>
+              <span *ngIf="!loading">Generate Report</span>
+              <span *ngIf="loading">Loading...</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-section" *ngIf="summary && summary.total_bills">
+      <div class="summary-card-item">
+        <div class="summary-icon">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-label">Total Bills</div>
+          <div class="summary-value">{{ summary.total_bills }}</div>
+        </div>
+      </div>
+      <div class="summary-card-item">
+        <div class="summary-icon">
+          <i class=""></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-label">Total Amount</div>
+          <div class="summary-value">{{getcurrency()}} {{summary.total_amounts | number:'1.2-2'}}</div>
+        </div>
+      </div>
+      <div class="summary-card-item">
+        <div class="summary-icon credit-icon">
+          <i class="bi bi-arrow-up-circle"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-label">Total Credit</div>
+          <div class="summary-value credit-value">{{getcurrency()}} {{summary.total_credit_amounts | number:'1.2-2'}}</div>
+        </div>
+      </div>
+      <div class="summary-card-item">
+        <div class="summary-icon debit-icon">
+          <i class="bi bi-arrow-down-circle"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-label">Total Debit</div>
+          <div class="summary-value debit-value">{{getcurrency()}} {{summary.total_debit_amounts | number:'1.2-2'}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>
+                  <i class="bi bi-hash"></i> Voucher No
+                </th>
+                <th>
+                  <i class="bi bi-calendar"></i> Date
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-arrow-down-circle"></i> Debit
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-arrow-up-circle"></i> Credit
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-currency-dollar"></i> Total Amount
+                </th>
+                <th class="text-center">
+                  <i class="bi bi-gear"></i> Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody *ngIf="hasData && !loading">
+              <tr *ngFor="let entry of jvData">
+                <td>
+                  <div class="voucher-name">{{ entry.voucher_no }}</div>
+                </td>
+                <td>{{ entry.voucher_date | date: 'dd/MM/yyyy' }}</td>
+                <td class="text-end">
+                  <span class="debit-amount">{{ entry.debit }}</span>
+                </td>
+                <td class="text-end">
+                  <span class="credit-amount">{{ entry.credit }}</span>
+                </td>
+                <td class="text-end">
+                  <span class="balance-amount">{{getcurrency()}} {{entry.amount | number:'1.2-2'}}</span>
+                </td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="action-btn btn-edit" (click)="editJv(entry)" title="Edit JV">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="action-btn btn-delete" (click)="deleteJv(entry)" title="Delete JV">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tbody *ngIf="!hasData && !loading">
+              <tr>
+                <td colspan="6" class="empty-table">
+                  <div class="empty-content">
+                    <i class="bi bi-inbox"></i>
+                    <p>No Journal Vouchers found</p>
+                    <small *ngIf="jvForm.touched">No data available for the selected date range. Try adjusting your filters.</small>
+                    <small *ngIf="!jvForm.touched">Select date range and click Generate Report to load data</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pagination-section" *ngIf="hasData">
+        <div class="pagination-info">
+          <span class="page-range">
+            Showing {{(currentPage - 1) * pageSize + 1}} to {{Math.min(currentPage * pageSize, totalData)}} of {{totalData}} entries
+          </span>
+          <div class="items-per-page">
+            <label>Items per page:</label>
+            <select 
+              class="limit-select" 
+              [(ngModel)]="pageSize" 
+              (change)="onLimitChange(+$any($event.target).value)">
+              <option *ngFor="let limitOption of getLimitOptions()" [ngValue]="limitOption">
+                {{ limitOption }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <nav class="pagination-nav" *ngIf="totalPages > 1">
+          <button 
+            class="page-btn" 
+            [disabled]="currentPage === 1" 
+            (click)="onPageChange(currentPage - 1)">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="page-numbers">
+            <button 
+              *ngFor="let page of getPageNumbers()" 
+              class="page-number"
+              [class.active]="page === currentPage"
+              (click)="onPageChange(page)">
+              {{ page }}
+            </button>
+          </div>
+          <button 
+            class="page-btn" 
+            [disabled]="currentPage === totalPages" 
+            (click)="onPageChange(currentPage + 1)">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,256 @@
+<div class="warehouse-dashboard-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="warehouse-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="warehouse-logo">
+          <i class="bi bi-box-seam"></i>
+        </span>
+        <div>
+          <h1 class="header-title">Warehouse Dashboard</h1>
+          <p class="header-subtitle">Monitor your warehouse operations and inventory</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Range">
+          <button type="button" class="btn btn-secondary" [class.active]="selectedRange==='7d'" (click)="setRange('7d')">7D</button>
+          <button type="button" class="btn btn-secondary" [class.active]="selectedRange==='30d'" (click)="setRange('30d')">30D</button>
+          <button type="button" class="btn btn-secondary" [class.active]="selectedRange==='90d'" (click)="setRange('90d')">90D</button>
+        </div>
+        <div class="input-group input-group-sm" style="width: 260px;">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" placeholder="Search items, customers..." (input)="onSearch($event.target.value)">
+        </div>
+        <button class="btn btn-secondary btn-sm" (click)="refreshNow()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="autoRefresh" [checked]="autoRefreshEnabled" (change)="toggleAutoRefresh()">
+          <label class="form-check-label small" for="autoRefresh">Auto-refresh</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-building"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Warehouses</h3>
+          <p class="stat-number">{{ warehouses.length }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-grid-3x3"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Rack Locations</h3>
+          <p class="stat-number">{{ locations.length }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Total Stock Items</h3>
+          <p class="stat-number">{{ stock.length }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-truck"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Outward Transactions</h3>
+          <p class="stat-number">{{ outwardTransactions.length }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <!-- Workflow Process Flow -->
+    <div class="process-flow-section">
+      <h2 class="section-title"><i class="bi bi-diagram-2 me-2"></i>Warehouse Process Flow</h2>
+      <div class="process-flow-grid">
+        <div class="process-card" *ngFor="let step of processFlow; let i = index"
+             [class.border-primary]="step.status === 'active'"
+             (click)="navigateToProcessStep(step)"
+             style="cursor: pointer;">
+          <div class="process-card-body">
+            <div class="process-icon">
+              <i class="bi bi-{{ step.icon }}"></i>
+            </div>
+            <h6 class="process-title">{{ step.name }}</h6>
+            <div class="badge bg-primary">{{ step.count }} {{ step.count === 1 ? 'item' : 'items' }}</div>
+          </div>
+          <div *ngIf="i < processFlow.length - 1" class="process-arrow">
+            <i class="bi bi-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Workflow Statistics -->
+      <div class="workflow-stats">
+        <div class="workflow-stat-item">
+          <div class="stat-value">{{ workflowStats.putawayTasks.pending }}</div>
+          <small class="stat-label">Putaway Tasks Pending</small>
+        </div>
+        <div class="workflow-stat-item">
+          <div class="stat-value">{{ workflowStats.rackMovements.pending }}</div>
+          <small class="stat-label">Rack Movements Pending</small>
+        </div>
+        <div class="workflow-stat-item">
+          <div class="stat-value">{{ workflowStats.pickingTasks.pending }}</div>
+          <small class="stat-label">Picking Tasks Pending</small>
+        </div>
+        <div class="workflow-stat-item">
+          <div class="stat-value">{{ workflowStats.loadingBay.utilization }}%</div>
+          <small class="stat-label">Loading Bay Utilization</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-section">
+      <h2 class="section-title"><i class="bi bi-lightning me-2"></i>Quick Actions</h2>
+      <div class="actions-grid">
+        <button class="action-btn" (click)="navigateTo('inward/new')">
+          <span class="action-icon"><i class="bi bi-truck-flatbed"></i></span>
+          <span>Material Receipt</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('putaway-tasks/create')">
+          <span class="action-icon"><i class="bi bi-arrow-up-right-square"></i></span>
+          <span>Create Putaway</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('rack-movements/form')">
+          <span class="action-icon"><i class="bi bi-arrow-left-right"></i></span>
+          <span>Rack Movement</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('pickup-task/new')">
+          <span class="action-icon"><i class="bi bi-box-arrow-down"></i></span>
+          <span>Pickup Tasks</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('stock')">
+          <span class="action-icon"><i class="bi bi-grid-3x3"></i></span>
+          <span>Stock Overview</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('reports')">
+          <span class="action-icon"><i class="bi bi-graph-up"></i></span>
+          <span>Reports</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Alerts and Recent Activity -->
+    <div class="alerts-activity-section">
+      <div class="alerts-activity-grid">
+        <!-- Low Stock Alerts -->
+        <div class="alert-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Low Stock Alerts</h3>
+          </div>
+          <div class="card-body">
+            <div *ngIf="getLowStockItems().length === 0" class="empty-state">
+              <i class="bi bi-check-circle text-success"></i>
+              <p>No low stock items</p>
+            </div>
+            <div *ngFor="let item of getLowStockItems()" class="alert-item">
+              <div class="alert-content">
+                <div class="alert-title">Item ID: {{ item.itemId }}</div>
+                <small class="alert-subtitle">Quantity: {{ item.quantity }} units</small>
+              </div>
+              <button class="btn btn-primary btn-sm" (click)="navigateTo('inward/new')">
+                <i class="bi bi-plus me-1"></i>Restock
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="activity-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="bi bi-clock-history text-info me-2"></i>Recent Activity</h3>
+          </div>
+          <div class="card-body">
+            <div *ngIf="getRecentTransactions().length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No recent transactions</p>
+            </div>
+            <div *ngFor="let transaction of getRecentTransactions()" class="activity-item">
+              <div class="activity-content">
+                <div class="activity-title">Transaction #{{ transaction.id }}</div>
+                <small class="activity-subtitle">{{ transaction.date | date:'shortDate' }}</small>
+              </div>
+              <div class="activity-meta">
+                <span class="badge bg-info">{{ transaction.items?.length || 0 }} items</span>
+                <div class="small text-muted">{{ transaction.status || 'Completed' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Section -->
+    <div class="performance-section">
+      <div class="performance-grid">
+        <!-- Fast Moving Items -->
+        <div class="performance-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="bi bi-graph-up-arrow me-2"></i>Fast Moving Items</h3>
+          </div>
+          <div class="card-body">
+            <div *ngIf="getTopFastMovingItems().length === 0" class="empty-state">
+              <p>No data</p>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li *ngFor="let it of getTopFastMovingItems()" class="list-group-item">
+                <span>{{ it.name }}</span>
+                <span class="badge bg-success">{{ it.qty }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Slow Moving / Low Stock -->
+        <div class="performance-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="bi bi-activity me-2"></i>Slow Moving / Low Stock</h3>
+          </div>
+          <div class="card-body">
+            <div *ngIf="getSlowMovingItems().length === 0" class="empty-state">
+              <p>No data</p>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li *ngFor="let s of getSlowMovingItems()" class="list-group-item">
+                <span>{{ s.name || s.itemName }}</span>
+                <span class="badge bg-warning text-dark">{{ s.quantity }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,86 @@
+.detailsalary-container {
+  padding: 20px;
+  
+  .salary-form {
+    .salary-details-container {
+      .section-title {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid currentColor;
+      }
+      
+      .salary-table {
+        th {
+          background-color: #f8f9fa;
+          border-color: #dee2e6;
+          font-weight: 600;
+        }
+        
+        td {
+          vertical-align: middle;
+        }
+        
+        .table-light {
+          background-color: #f8f9fa;
+        }
+        
+        .table-primary {
+          background-color: #e3f2fd;
+        }
+      }
+      
+      .dropdown-menu {
+        border: 1px solid #dee2e6;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        
+        .dropdown-item {
+          &:hover {
+            background-color: #f8f9fa;
+          }
+        }
+      }
+      
+      .btn-outline-success {
+        border-color: #28a745;
+        color: #28a745;
+        
+        &:hover {
+          background-color: #28a745;
+          border-color: #28a745;
+          color: white;
+        }
+      }
+      
+      .btn-outline-danger {
+        border-color: #dc3545;
+        color: #dc3545;
+        
+        &:hover {
+          background-color: #dc3545;
+          border-color: #dc3545;
+          color: white;
+        }
+      }
+      
+      .btn-outline-warning {
+        border-color: #ffc107;
+        color: #ffc107;
+        
+        &:hover {
+          background-color: #ffc107;
+          border-color: #ffc107;
+          color: #212529;
+        }
+      }
+    }
+    
+    .form-actions {
+      border-top: 1px solid #dee2e6;
+      padding-top: 20px;
+      
+      .btn-save {
+        min-width: 150px;
+      }
+    }
+  }
+}

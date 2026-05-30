@@ -1,0 +1,125 @@
+<div class="profit-loss-page-container">
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <a routerLink="/reports/report-list" class="breadcrumb-link">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Reports</span>
+      </a>
+      <span class="separator">/</span>
+      <span class="breadcrumb-link active">
+        <i class="bi bi-graph-up"></i>
+        <span>Profit and Loss</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="profit-loss-content-card">
+    <div class="profit-loss-header">
+      <div class="header-left">
+        <h1 class="page-title">Profit & Loss Statement</h1>
+        <p class="page-subtitle">For period {{ dateFrom | date:'mediumDate' }} to {{ dateTo | date:'mediumDate' }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn btn-secondary" (click)="exportReport()">
+          <i class="bi bi-download"></i>
+          Export
+        </button>
+      </div>
+    </div>
+    
+    <div class="filter-card">
+      <div class="row g-3 align-items-end mb-0">
+        <div class="col-md-3">
+          <label for="dateFrom" class="form-label fw-semibold small">From</label>
+          <input type="date" class="form-control" id="dateFrom" [(ngModel)]="dateFrom" (change)="onDateChange()">
+        </div>
+        <div class="col-md-3">
+          <label for="dateTo" class="form-label fw-semibold small">To</label>
+          <input type="date" class="form-control" id="dateTo" [(ngModel)]="dateTo" (change)="onDateChange()">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" (click)="generateReport()" [disabled]="isLoading">
+            <i class="bi bi-arrow-repeat me-1" [class.spinner-border]="isLoading" [class.spinner-border-sm]="isLoading"></i>
+            {{isLoading ? 'Loading...' : 'Generate'}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Generating Profit & Loss Statement...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="reportData && !isLoading">
+      <table class="table table-striped">
+        <!-- Revenue Section -->
+        <thead class="table-light">
+          <tr>
+            <th class="fw-bold fs-5">Revenue</th>
+            <th class="text-end fw-bold fs-5">{{reportData.total_revenue | currency:currencyCode:'symbol':'1.2-2'}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of reportData.revenue">
+            <td class="ps-4">{{item.account}}</td>
+            <td class="text-end">{{item.amount | currency:currencyCode:'symbol':'1.2-2'}}</td>
+          </tr>
+        </tbody>
+
+        <!-- Cost of Sales Section -->
+        <thead class="table-light">
+          <tr>
+            <th class="fw-bold fs-5">Cost of Sales</th>
+            <th class="text-end fw-bold fs-5">{{reportData.total_cost_of_sales | currency:currencyCode:'symbol':'1.2-2'}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of reportData.cost_of_sales">
+            <td class="ps-4">{{item.account}}</td>
+            <td class="text-end">{{item.amount | currency:currencyCode:'symbol':'1.2-2'}}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="table-group-divider">
+            <td class="fw-bold fs-5 text-end">Gross Profit</td>
+            <td class="text-end fw-bold fs-5 text-success">{{reportData.gross_profit | currency:currencyCode:'symbol':'1.2-2'}}</td>
+          </tr>
+        </tfoot>
+
+        <!-- Operating Expenses Section -->
+        <thead class="table-light mt-4">
+          <tr>
+            <th class="fw-bold fs-5">Operating Expenses</th>
+            <th class="text-end fw-bold fs-5">{{reportData.total_operating_expenses | currency:currencyCode:'symbol':'1.2-2'}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of reportData.operating_expenses">
+            <td class="ps-4">{{item.account}}</td>
+            <td class="text-end">{{item.amount | currency:currencyCode:'symbol':'1.2-2'}}</td>
+          </tr>
+        </tbody>
+
+        <!-- Net Income -->
+        <tfoot class="bg-primary-subtle">
+            <tr class="table-group-divider">
+                <td class="fw-bold fs-4 text-end text-primary">Net Income</td>
+                <td class="text-end fw-bold fs-4 text-primary">{{reportData.net_income | currency:currencyCode:'symbol':'1.2-2'}}</td>
+            </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div *ngIf="!reportData && !isLoading" class="text-center py-4">
+      <p class="text-muted">No profit & loss data available for the selected date range.</p>
+    </div>
+  </div>
+</div>

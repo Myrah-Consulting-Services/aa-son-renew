@@ -1,0 +1,248 @@
+<div class="container-fluid p-4">
+  <h4 class="mb-4">Social Security Benefits
+  </h4>
+  <div class="row">
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item" *ngFor="let tab of statutoryTabs">
+        <a class="nav-link" [class.active]="activeTab === tab.key" (click)="setActiveTab(tab.key)">{{ tab.label }}</a>
+      </li>
+    </ul>
+    <!-- Pension (GPSSA) -->
+    <div *ngIf="activeTab === 'pension'">
+      <div class="alert alert-warning small d-flex align-items-start">
+        <i class="bi bi-info-circle me-2 fs-5"></i>
+        <div>
+          The GPSSA is a federal authority that provides pension and social security benefits to employees and is funded
+          by contributions from employers and employees.
+        </div>
+      </div>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div class="schedule-header d-flex align-items-center">
+            <i class="bi bi-cash-coin me-2"></i>
+            <span>GPSSA</span>
+          </div>
+          <i class="bi bi-pencil cursor-pointer"></i>
+        </div>
+        
+
+        <div class="card-body">
+          <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Pension Details</th>
+                <th>Employees' Contribution</th>
+                <th>Employer's Contribution</th>
+                <th>Applicability</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="align-middle">
+                  <div class="fw-semibold">OLD GPSSA</div>
+                  <div class="small text-muted">Wage Range: AED1,000.00 - AED50,000.00</div>
+                </td>
+                <td class="align-middle">5.00%</td>
+                <td class="align-middle">12.50%</td>
+                <td class="align-middle">For U.A.E citizens</td>
+              </tr>
+              <tr>
+                <td class="align-middle">
+                  <div class="fw-semibold">NEW GPSSA</div>
+                  <div class="small text-muted">Wage Range: AED3,000.00 - AED70,000.00</div>
+                </td>
+                <td class="align-middle">11.00%</td>
+                <td class="align-middle">
+                  15.00%<br />
+                  <small class="text-muted">12.5%, if salary less than AED 20,000</small>
+                </td>
+                <td class="align-middle">For U.A.E citizens</td>
+              </tr>
+            </tbody>
+          </table>
+
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Plan</label>
+          <select class="form-select form-select-sm" [(ngModel)]="gpPlan" (change)="computeGp()">
+            <option value="old">Old GPSSA</option>
+            <option value="new">New GPSSA</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Max. Contributory Wage</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">AED</span>
+            <input type="number" class="form-control" [(ngModel)]="gpMaxWage" (input)="computeGp()">
+            <span class="input-group-text">per month</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3 small">
+        <a href="javascript:void(0)"><i class="bi bi-link-45deg"></i> View Salary Components applicable for GPSSA
+          Contributions</a>
+      </div>
+
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="proRataCheck" [(ngModel)]="gpProRata">
+        <label class="form-check-label" for="proRataCheck">Calculate on pro-rata basis</label>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="postponeCheck" [(ngModel)]="gpPostpone">
+        <label class="form-check-label" for="postponeCheck">Postpone the updated GPSSA contributions due to Salary
+          revisions to the next calendar year</label>
+        <div class="form-text">Select this option if you want GPSSA deductions due to salary revisions to be postponed
+          and applied from the first pay run of the next calendar year.</div>
+      </div>
+
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary btn-sm" (click)="saveGp()">Save</button>
+        <button class="btn btn-outline-secondary btn-sm">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <div *ngIf="activeTab === 'gosi'">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div class="schedule-header d-flex align-items-center">
+          <i class="bi bi-shield-check me-2"></i>GOSI (General Organization
+          for Social Insurance)</div>
+          <i class="bi bi-pencil"></i>
+          </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="mb-2"><b>Applicable To:</b> UAE Nationals</div>
+              <div class="mb-2"><b>Employee Contribution:</b> 5% of Gross Salary</div>
+              <div class="mb-2"><b>Employer Contribution:</b> 12.5% of Gross Salary</div>
+              <div class="mb-2"><b>Deduction Cycle:</b> Monthly</div>
+              <div class="mb-2"><b>GOSI Number:</b> 1234567890</div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light p-3">
+                <div class="fw-bold mb-2">Sample Calculation</div>
+                <div>Gross Salary: <b>AED 20,000</b></div>
+                <div>Employee GOSI (5%): <b>AED 1,000</b></div>
+                <div>Employer GOSI (12.5%): <b>AED 2,500</b></div>
+                <div class="border-top mt-2 pt-2">Total GOSI: <b>AED 3,500</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="activeTab === 'wps'">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+          <i class="bi bi-bank me-2"></i>WPS (Wage Protection System)</div>
+        <div class="card-body">
+          <div class="mb-2"><b>Status:</b> Compliant</div>
+          <div class="mb-2"><b>Last WPS File Uploaded:</b> 31-Jan-2025</div>
+          <div class="mb-2"><b>Bank Used:</b> Emirates NBD</div>
+          <div class="mb-2"><b>Remarks:</b> All salaries processed via WPS as per UAE law.</div>
+          <div class="alert alert-info mt-3"><i class="bi bi-info-circle"></i> WPS ensures timely and full payment of
+            wages to employees through banks, as mandated by the UAE Ministry of Labour.</div>
+        </div>
+      </div>
+    </div>
+    <!-- SIO -->
+    <div *ngIf="activeTab === 'sio'">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div class="schedule-header d-flex align-items-center">
+          <i class="bi bi-cash-coin me-2"></i>SIO</div>
+          <i class="bi bi-pencil"></i>
+          </div>
+
+        <div class="card-body">
+          <app-statutory-form [title]="'Social Insurance Organization (SIO)'" [benefit]="sio" (saved)="onSave($event)">
+          </app-statutory-form>
+        </div>
+      <!-- Saved Benefits as Summary Cards -->
+      <div class="row">
+        <div class="col-md-4" *ngFor="let benefit of benefits">
+          <div class="card p-3">
+            <h6>{{ benefit.name }}</h6>
+            <p><b>Employer's Contribution:</b> {{ benefit.employerContribution }}%</p>
+            <p><b>Employees' Contribution:</b> {{ benefit.employeeContribution }}%</p>
+            <p><b>Contributory Wage Max Limit:</b> AED {{ benefit.contributoryWageMax }}</p>
+            <p><b>On Pro Rata Basis:</b> {{ benefit.proRata ? 'Yes' : 'No' }}</p>
+            <p><b>Renewal at the start of the year:</b> {{ benefit.renewal ? 'Yes' : 'No' }}</p>
+            <p><b>{{ benefit.employees }} Employees</b></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- PIFSS -->
+<div *ngIf="activeTab === 'pifss'">
+  <div class="card shadow-sm mb-4">
+
+  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <div class="schedule-header d-flex align-items-center">
+      <i class="bi bi-cash-coin me-2"></i>PIFSS</div>
+      <i class="bi bi-pencil"></i>
+</div>
+    <div class="card-body">
+      <app-statutory-form [title]="'Public Institution for Social Security (PIFSS)'" [benefit]="pifss"
+        (saved)="onSave($event)">
+      </app-statutory-form>
+    </div>
+    <!-- Saved Benefits as Summary Cards -->
+    <div class="row">
+      <div class="col-md-4" *ngFor="let benefit of benefits">
+        <div class="card p-3">
+          <h6>{{ benefit.name }}</h6>
+          <p><b>Employer's Contribution:</b> {{ benefit.employerContribution }}%</p>
+          <p><b>Employees' Contribution:</b> {{ benefit.employeeContribution }}%</p>
+          <p><b>Contributory Wage Max Limit:</b> AED {{ benefit.contributoryWageMax }}</p>
+          <p><b>On Pro Rata Basis:</b> {{ benefit.proRata ? 'Yes' : 'No' }}</p>
+          <p><b>Renewal at the start of the year:</b> {{ benefit.renewal ? 'Yes' : 'No' }}</p>
+          <p><b>{{ benefit.employees }} Employees</b></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div *ngIf="activeTab === 'gratuity'">
+  <!-- <div class="card shadow-sm mb-4">
+      <div class="card-header bg-success text-white"><i class="bi bi-cash-coin me-2"></i>Gratuity</div>
+      <div class="card-body">
+        <div class="mb-2"><b>Eligibility:</b> Employees with 1+ year of continuous service</div>
+        <div class="mb-2"><b>Calculation:</b> 21 days basic salary per year for first 5 years, 30 days per year thereafter</div>
+        <div class="mb-2"><b>Sample Calculation:</b></div>
+        <div class="card bg-light p-3">
+          <div>Basic Salary: <b>AED 10,000</b></div>
+          <div>Years of Service: <b>3</b></div>
+          <div>Gratuity: <b>3 x 21 x 10,000 / 30 = AED 21,000</b></div>
+        </div>
+      </div>
+    </div> -->
+  <app-gratuity></app-gratuity>
+</div>
+<div *ngIf="activeTab === 'eosb'">
+  <!-- <div class="card shadow-sm mb-4">
+      <div class="card-header bg-warning text-dark"><i class="bi bi-award me-2"></i>End of Service Benefits</div>
+      <div class="card-body">
+        <div class="mb-2"><b>Eligibility:</b> Employees completing contract period</div>
+        <div class="mb-2"><b>Calculation:</b> Based on last drawn basic salary and years of service</div>
+        <div class="mb-2"><b>Sample Calculation:</b></div>
+        <div class="card bg-light p-3">
+          <div>Basic Salary: <b>AED 12,000</b></div>
+          <div>Years of Service: <b>7</b></div>
+          <div>EOSB: <b>5 x 21 x 12,000 / 30 + 2 x 30 x 12,000 / 30 = AED 102,000</b></div>
+        </div>
+      </div>
+    </div> -->
+  <app-eosb-accrual-dashboard></app-eosb-accrual-dashboard>
+</div>
+<div *ngIf="activeTab === 'final-settlement'">
+  <app-final-settlement></app-final-settlement>
+</div>

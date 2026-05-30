@@ -1,0 +1,347 @@
+<div class="ledger-page-container">
+  <!-- Compact Header -->
+  <div class="page-header-card">
+    <div class="breadcrumb">
+      <a routerLink="/dashboard" class="breadcrumb-link">
+        <i class="bi bi-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <span class="separator">/</span>
+      <span class="breadcrumb-link active">
+        <i class="bi bi-journal-bookmark"></i>
+        <span>Ledgers</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="ledger-content-card">
+    <div class="ledger-header">
+      <div class="header-left">
+        <h1 class="page-title">Ledger Reports</h1>
+        <p class="page-subtitle">All your ledgers at a glance</p>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn btn-secondary" (click)="openCreateGroupModal(createGroupModal)">
+          <i class="bi bi-diagram-3"></i> Create Group
+        </button>
+        <button class="action-btn btn-primary" (click)="openCreateLedgerModal(createLedgerModal)">
+          <i class="bi bi-plus-lg"></i> Create Ledger
+        </button>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoadingMainList">
+        <div class="spinner"></div>
+        <p>Loading ledger list...</p>
+      </div>
+
+      <!-- Table Card -->
+      <div class="table-card" *ngIf="!isLoadingMainList">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>
+                  <i class="bi bi-hash"></i> Sr.No
+                </th>
+                <th>
+                  <i class="bi bi-calendar"></i> Date
+                </th>
+                <th>
+                  <i class="bi bi-journal-bookmark"></i> Name
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-currency-dollar"></i> Balance
+                </th>
+                <th class="text-center">
+                  <i class="bi bi-gear"></i> Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody *ngIf="ledgers.length > 0">
+              <tr *ngFor="let ledger of ledgers;let i=index">
+                <td>{{(mainCurrentPage - 1) * mainPageSize + i + 1}}</td>
+                <td>{{ledger.as_on_date | date:'dd/MM/yyyy'}}</td>
+                <td>
+                  <div class="ledger-name">
+                    <span class="ledger-icon">
+                      <i class="bi bi-journal-bookmark"></i>
+                    </span>
+                    {{ledger.ledger_name}}
+                  </div>
+                </td>
+                <td class="text-end">
+                  <span class="balance-amount">{{getcurrency()}} {{ledger.current_balance | number:'1.2-2'}}</span>
+                </td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="action-btn btn-view" (click)="openLedgerlistModal(ledgerlistModal,ledger.id)" title="View Ledger">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="action-btn btn-edit" (click)="openCreateLedgerModal(createLedgerModal,ledger.id)" title="Edit Ledger">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tbody *ngIf="ledgers.length === 0">
+              <tr>
+                <td colspan="5" class="empty-table">
+                  <div class="empty-content">
+                    <i class="bi bi-inbox"></i>
+                    <p>No ledgers found.</p>
+                    <small>Create a new ledger to get started</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination Section -->
+      <div class="pagination-section" *ngIf="ledgers.length > 0">
+        <div class="pagination-info">
+          <span class="page-range">
+            Showing {{(mainCurrentPage - 1) * mainPageSize + 1}} to {{Math.min(mainCurrentPage * mainPageSize, mainTotalData)}} of {{mainTotalData}} entries
+          </span>
+          <div class="items-per-page">
+            <label>Items per page:</label>
+            <select 
+              class="limit-select" 
+              [value]="mainPageSize" 
+              (change)="onPageSizeChange($event)">
+              <option [value]="10">10</option>
+              <option [value]="20">20</option>
+              <option [value]="50">50</option>
+            </select>
+          </div>
+        </div>
+        <nav class="pagination-nav" *ngIf="mainTotalPages > 1">
+          <button 
+            class="page-btn" 
+            [disabled]="!mainHasPreviousPage" 
+            (click)="onMainPreviousPage()">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="page-numbers">
+            <button 
+              *ngFor="let page of getMainPageNumbers()" 
+              class="page-number"
+              [class.active]="page === mainCurrentPage"
+              (click)="onMainPageChange(page)">
+              {{ page }}
+            </button>
+          </div>
+          <button 
+            class="page-btn" 
+            [disabled]="!mainHasNextPage" 
+            (click)="onMainNextPage()">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Ledger Modal -->
+<ng-template #createLedgerModal>  
+  <div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">
+      <i class="bi bi-journal-bookmark me-2"></i>
+      {{emitid ? 'Edit Ledger' : 'Create Ledger'}}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <app-cerate-ledger [modalRef]="modalRef" [emitid]="emitid" (addledger)="addledger($event)"></app-cerate-ledger>
+  </div>
+</ng-template>
+
+<!-- Create Group Modal -->
+<ng-template #createGroupModal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">
+      <i class="bi bi-diagram-3 me-2"></i>
+      Create Group
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <app-create-group [modalRef]="modalRef" (addgroup)="addgroup($event)"></app-create-group>
+  </div>
+</ng-template>
+
+<!-- Ledger Details Modal -->
+<ng-template #ledgerlistModal>  
+  <div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">
+      <i class="bi bi-journal-text me-2"></i>
+      Ledger Details
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="ledgerlistForm" (ngSubmit)="onSubmit()" class="filter-form">
+      <div class="date-fields">
+        <div class="date-field">
+          <label for="start_date" class="date-label">Start Date <span class="required">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            id="start_date"
+            formControlName="start_date"
+            [class.is-invalid]="ledgerlistForm.get('start_date')?.invalid && ledgerlistForm.get('start_date')?.touched">
+          <div class="invalid-feedback" *ngIf="ledgerlistForm.get('start_date')?.invalid && ledgerlistForm.get('start_date')?.touched">
+            Start date is required
+          </div>
+        </div>
+        <div class="date-field">
+          <label for="end_date" class="date-label">End Date <span class="required">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            id="end_date"
+            formControlName="end_date"
+            [class.is-invalid]="ledgerlistForm.get('end_date')?.invalid && ledgerlistForm.get('end_date')?.touched">
+          <div class="invalid-feedback" *ngIf="ledgerlistForm.get('end_date')?.invalid && ledgerlistForm.get('end_date')?.touched">
+            End date is required
+          </div>
+        </div>
+        <div class="date-field">
+          <button type="submit" class="btn-apply-filter" [disabled]="ledgerlistForm.invalid">
+            <i class="bi bi-funnel"></i>
+            Apply Filter
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Ledger List Data Section -->
+    <div class="ledger-details-section" *ngIf="ledgerslistdata.length > 0 || openingBalance || isLoadingLedger">
+      <!-- Loading Indicator -->
+      <div class="loading-state" *ngIf="isLoadingLedger">
+        <div class="spinner"></div>
+        <p>Loading ledger data...</p>
+      </div>
+
+      <!-- Opening Balance -->
+      <div class="opening-balance-card" *ngIf="openingBalance && !isLoadingLedger">
+        <div class="balance-icon">
+          <i class="bi bi-wallet2"></i>
+        </div>
+        <div class="balance-content">
+          <div class="balance-label">Opening Balance</div>
+          <div class="balance-value">{{getOpeningBalanceDisplay()}}</div>
+        </div>
+      </div>
+
+      <!-- Ledger Table -->
+      <div class="table-card" *ngIf="!isLoadingLedger">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>
+                  <i class="bi bi-calendar"></i> Date
+                </th>
+                <th>
+                  <i class="bi bi-file-text"></i> Particular
+                </th>
+                <th>
+                  <i class="bi bi-hash"></i> Ref No
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-arrow-down-circle"></i> Debit
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-arrow-up-circle"></i> Credit
+                </th>
+                <th class="text-end">
+                  <i class="bi bi-wallet2"></i> Balance
+                </th>
+                <th class="text-center">
+                  <i class="bi bi-gear"></i> Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ledger of ledgerslistdata;let i=index">
+                <td>{{ledger.invoice_date}}</td>
+                <td>
+                  <div class="particular-name">{{ledger.particular}}</div>
+                </td>
+                <td>{{ledger.invoice_no}}</td>
+                <td class="text-end">
+                  <span class="debit-amount">{{formatAmount(ledger.debit)}}</span>
+                </td>
+                <td class="text-end">
+                  <span class="credit-amount">{{formatAmount(ledger.credit)}}</span>
+                </td>
+                <td class="text-end" [ngClass]="getBalanceClass(ledger.balance_final)">
+                  {{ledger.balance_final}}
+                </td>
+                <td class="text-center">
+                  <div class="action-buttons">
+                    <button class="action-btn btn-edit" (click)="editEntry(ledger)" title="Edit Entry">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="action-btn btn-delete" (click)="deleteEntry(ledger)" title="Delete Entry">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-section" *ngIf="!isLoadingLedger && totalPages > 1">
+          <div class="pagination-info">
+            <span class="page-range">
+              Showing {{(currentPage - 1) * limit + 1}} to {{Math.min(currentPage * limit, totalData)}} of {{totalData}} entries
+            </span>
+          </div>
+          <nav class="pagination-nav">
+            <button 
+              class="page-btn" 
+              [disabled]="!hasPreviousPage" 
+              (click)="onPreviousPage()">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="page-numbers">
+              <button 
+                *ngFor="let page of getPageNumbers()" 
+                class="page-number"
+                [class.active]="page === currentPage"
+                (click)="onPageChange(page)">
+                {{ page }}
+              </button>
+            </div>
+            <button 
+              class="page-btn" 
+              [disabled]="!hasNextPage" 
+              (click)="onNextPage()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- No Data Message -->
+      <div class="empty-state" *ngIf="!isLoadingLedger && ledgerslistdata.length === 0">
+        <i class="bi bi-inbox"></i>
+        <p>No ledger entries found for the selected date range.</p>
+        <small>Try adjusting your date filters</small>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+  </div>
+</ng-template>

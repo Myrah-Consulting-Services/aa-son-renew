@@ -1,0 +1,53 @@
+<div class="container-fluid py-4">
+  <div class="card shadow-sm border-0 p-4">
+    <!-- Header and Date Filter -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+      <div class="text-primary">
+        <h3 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Accounts Payable Aging</h3>
+        <p class="mb-0 text-muted">Aging Summary as of {{reportDate | date:'longDate'}}</p>
+      </div>
+      <button class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-download me-1"></i>Export
+      </button>
+    </div>
+
+    <!-- Report Body -->
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead class="table-light text-center">
+          <tr>
+            <th scope="col" class="text-start">Party Name</th>
+            <th scope="col">Current</th>
+            <th scope="col">1-30 Days</th>
+            <th scope="col">31-60 Days</th>
+            <th scope="col">61-90 Days</th>
+            <th scope="col">> 90 Days</th>
+            <th scope="col">Total Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of reportData">
+            <td class="fw-semibold">{{item.party_name}}</td>
+            <td class="text-end">{{item.current | number:'1.2-2'}}</td>
+            <td class="text-end">{{item.days_1_30 | number:'1.2-2'}}</td>
+            <td class="text-end">{{item.days_31_60 | number:'1.2-2'}}</td>
+            <td class="text-end">{{item.days_61_90 | number:'1.2-2'}}</td>
+            <td class="text-end">{{item.above_90 | number:'1.2-2'}}</td>
+            <td class="text-end fw-bold">{{item.total_due | number:'1.2-2'}}</td>
+          </tr>
+        </tbody>
+        <tfoot class="table-group-divider fw-bold bg-primary-subtle fs-5">
+            <tr>
+              <td class="text-end">Total</td>
+              <td class="text-end">{{totals.current | number:'1.2-2'}}</td>
+              <td class="text-end">{{totals.days_1_30 | number:'1.2-2'}}</td>
+              <td class="text-end">{{totals.days_31_60 | number:'1.2-2'}}</td>
+              <td class="text-end">{{totals.days_61_90 | number:'1.2-2'}}</td>
+              <td class="text-end">{{totals.above_90 | number:'1.2-2'}}</td>
+              <td class="text-end">{{totals.total_due | number:'1.2-2'}}</td>
+            </tr>
+          </tfoot>
+      </table>
+    </div>
+  </div>
+</div> 

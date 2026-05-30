@@ -1,0 +1,1523 @@
+<!-- Toast Component -->
+<div class="modal-header bg-primary text-white">
+  <h4 class="modal-title">
+    <i class="bi bi-box-seam me-2"></i>
+    {{ editInwardId ? 'Edit Inward Receipt' : 'New Inward Receipt' }}
+  </h4>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-light btn-sm" *ngIf="invoice_pdf_id" (click)="previewPDF()">
+      <i class="bi bi-eye me-1"></i>
+      Preview
+    </button>
+    <button type="button" class="btn btn-outline-light btn-sm" *ngIf="invoice_pdf_id" (click)="downloadPDF()">
+      <i class="bi bi-download me-1"></i>
+      Download PDF
+    </button>
+    <button type="button" class="btn-close btn-close-white" (click)="activeModal.dismiss()"></button>
+  </div>
+</div>
+
+<div class="modal-body p-0">
+  <form [formGroup]="form" class="p-3">
+    
+    <!-- Receipt Type & Placement Strategy (Compact Row) -->
+    <div class="card mb-3">
+      <div class="card-header bg-light py-2">
+        <h6 class="mb-0 small">
+          <i class="bi bi-gear me-2"></i>
+          Receipt Configuration
+        </h6>
+      </div>
+      <div class="card-body py-2">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Inward Type *</label>
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" formControlName="inwardType" value="1" id="grn-type" autocomplete="off">
+              <label class="btn btn-outline-primary btn-sm" for="grn-type">
+                <i class="bi bi-box-seam me-1"></i> GRN
+              </label>
+              
+              <input type="radio" class="btn-check" formControlName="inwardType" value="2" id="iwt-type" autocomplete="off">
+              <label class="btn btn-outline-primary btn-sm" for="iwt-type">
+                <i class="bi bi-arrow-left-circle me-1"></i> IWT
+              </label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Placement Option *</label>
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" formControlName="placementOption" value="1" id="loading-bay-option" autocomplete="off">
+              <label class="btn btn-outline-success btn-sm" for="loading-bay-option">
+                <i class="bi bi-truck-flatbed me-1"></i> Loading Bay
+              </label>
+              
+              <input type="radio" class="btn-check" formControlName="placementOption" value="2" id="direct-location-option" autocomplete="off">
+              <label class="btn btn-outline-info btn-sm" for="direct-location-option">
+                <i class="bi bi-building me-1"></i> Direct Location
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conditional Fields in Same Row -->
+        <div class="row g-2 mt-2" *ngIf="placementOption === '1'">
+          <div class="col-md-12">
+            <label class="form-label small fw-bold">Loading Bay Area *</label>
+            <select class="form-select form-select-sm" formControlName="loadingBayArea">
+              <option value="">Select Loading Bay Area</option>
+              <option [value]="s.id" *ngFor="let s of loadingbayAreas">{{s.name}}</option>
+              <!-- <option value="1">Loading Bay A - General Purpose</option>
+              <option value="2">Loading Bay B - Heavy Materials</option>
+              <option value="3">Loading Bay C - Fragile Items</option>
+              <option value="4">Loading Bay D - Cold Storage Items</option> -->
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-2 mt-2" *ngIf="placementOption === '2'">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Warehouse *</label>
+            <select class="form-select form-select-sm" formControlName="warehouseId" (change)="onWarehouseChange($event)">
+              <option value="">Select Warehouse</option>
+              <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+                {{ warehouse.name }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Location *</label>
+            <select class="form-select form-select-sm" formControlName="locationId">
+              <option value="">Select Location</option>
+              <option *ngFor="let location of filteredLocations" [value]="location.id">
+                {{ location.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basic Information (Compact) -->
+    <div class="card mb-3">
+      <div class="card-header bg-light py-2">
+        <div class="d-flex align-items-center">
+          <h6 class="mb-0 small me-3">
+            <i class="bi bi-info-circle me-2"></i>
+            Basic Information
+          </h6>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="supplierSwitch" formControlName="supplierSwitch">
+            <label class="form-check-label small fw-bold mb-0" for="supplierSwitch">Production</label>
+          </div>
+        </div>
+      </div>
+      <div class="card-body py-2">
+        <div class="row g-2">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Date *</label>
+            <input type="date" class="form-control form-control-sm" formControlName="date" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold" *ngIf="!form.get('supplierSwitch')?.value">Supplier *</label>
+            <label class="form-label small fw-bold" *ngIf="form.get('supplierSwitch')?.value">Production *</label>
+            <!-- add select input for production -->
+            <div class="position-relative" *ngIf="form.get('supplierSwitch')?.value">
+              <select class="form-select form-select-sm" formControlName="production">
+                <option value="">Select Production</option>
+                <option [value]="1">Factory Lagos</option>
+                <option [value]="2">Factory Benin</option>
+              </select>
+            </div>
+            <div class="position-relative" *ngIf="!form.get('supplierSwitch')?.value">
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                formControlName="supplier" 
+                placeholder="Search supplier..."
+                (focus)="onSupplierFocus()"
+                (input)="onSupplierInput($event)"
+                (blur)="onSupplierBlur()"
+                autocomplete="off"
+              />
+              <!-- Dropdown -->
+              <div class="dropdown-menu show position-absolute w-100" 
+                   *ngIf="showSupplierDropdown && filteredParties.length > 0"
+                   style="top: 100%; z-index: 1050; max-height: 150px; overflow-y: auto;">
+                <div class="dropdown-item py-1" 
+                     *ngFor="let party of filteredParties" 
+                     (mousedown)="selectParty(party)"
+                     style="cursor: pointer;">
+                  <div class="small fw-bold">{{ party.partyName }}</div>
+                  <small class="text-muted">{{ party.contact }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Received By *</label>
+            <div class="position-relative">
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                formControlName="receivedBy" 
+                placeholder="Receiver..."
+                (focus)="onReceivedByFocus()"
+                (input)="onReceivedByInput($event)"
+                (blur)="onReceivedByBlur()"
+                autocomplete="off"
+              />
+              <!-- Employee Dropdown -->
+              <div class="dropdown-menu show position-absolute w-100" 
+                   *ngIf="showEmployeeDropdown && filteredEmployees.length > 0"
+                   style="top: 100%; z-index: 1050; max-height: 150px; overflow-y: auto;">
+                <div class="dropdown-item py-1" 
+                     *ngFor="let employee of filteredEmployees" 
+                     (mousedown)="selectEmployee(employee)"
+                     style="cursor: pointer;">
+                  <div class="small fw-bold">{{ employee.name }}</div>
+                  <small class="text-muted">{{ employee.designation }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-bold">GRN Number</label>
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control" formControlName="grnNo" />
+              <button class="btn btn-outline-secondary btn-sm" type="button" (click)="generateGrnNumber()">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PO Selection & Warehouse (Compact Row) -->
+        <div class="row g-2 mt-2" *ngIf="inwardType === '1'">
+          <div class="col-md-6" *ngIf="!form.get('supplierSwitch')?.value">
+            <label class="form-label small fw-bold">Purchase Invoice Numbers</label>
+            <div class="position-relative">
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                formControlName="poNo" 
+                placeholder="Select Invoice Numbers..."
+                (focus)="onPoDropdownFocus()"
+                (blur)="onPoDropdownBlur()"
+                readonly
+              />
+              
+              <!-- Selected PO Numbers as Chips -->
+              <div class="mt-1" *ngIf="selectedPoNumbers.length > 0">
+                <span class="badge bg-primary me-1" 
+                      *ngFor="let po of selectedPoNumbers"
+                      style="cursor: pointer; font-size: 0.7em;"
+                      (mousedown)="removePoNumber(po.id)">
+                  {{ po.invoice_no }}
+                  <i class="bi bi-x ms-1"></i>
+                </span>
+              </div>
+              
+              <!-- Dropdown -->
+              <div class="dropdown-menu show position-absolute w-100" 
+                   *ngIf="showPoDropdown && partyInvoices.length > 0"
+                   style="top: 100%; z-index: 1050; max-height: 150px; overflow-y: auto;">
+                <div class="dropdown-item py-1" 
+                     *ngFor="let invoice of partyInvoices" 
+                     (mousedown)="togglePoSelection(invoice.id)"
+                     style="cursor: pointer;">
+                  <div class="form-check">
+                    <input class="form-check-input form-check-input-sm" 
+                           type="checkbox" 
+                           [checked]="isPoSelected(invoice.id)"
+                           (mousedown)="$event.stopPropagation()">
+                    <label class="form-check-label small">
+                      {{ invoice.invoice_no }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Warehouse & Location for Loading Bay -->
+          <!-- <div class="col-md-3" *ngIf="placementOption === '1'">
+            <label class="form-label small fw-bold">Warehouse *</label>
+            <select class="form-select form-select-sm" formControlName="warehouseId" (change)="onWarehouseChange($event)">
+              <option value="">Select Warehouse</option>
+              <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }}</option>
+            </select>
+          </div>
+          <div class="col-md-3" *ngIf="placementOption === '1'">
+            <label class="form-label small fw-bold">Location *</label>
+            <select class="form-select form-select-sm" formControlName="locationId">
+              <option value="">Select Location</option>
+              <option *ngFor="let l of filteredLocations" [value]="l.id">{{ l.name }}</option>
+            </select>
+          </div> -->
+        </div>
+
+        <!-- Remarks (Single Row) -->
+        <div class="row g-2 mt-2" *ngIf="!form.get('supplierSwitch')?.value">
+          <div class="col-md-12">
+            <label class="form-label small fw-bold">Remarks</label>
+            <input type="text" class="form-control form-control-sm" formControlName="remarks" placeholder="Enter remarks...">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items Section (Compact) -->
+    <div class="card mb-3">
+      <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 small">
+          <i class="bi bi-boxes me-2"></i>
+          Items
+          <span *ngIf="getTotalBarcodeTasksCount() > 0" class="badge bg-info ms-2">
+            Barcodes: {{ getCompletedBarcodeTasksCount() }}/{{ getTotalBarcodeTasksCount() }}
+          </span>
+        </h6>
+        <div class="d-flex gap-1">
+          <button class="btn btn-outline-success btn-sm" 
+                  type="button" 
+                  (click)="generateAllBarcodes()"
+                  [disabled]="items.length === 0"
+                  title="Generate barcodes for all items">
+            <i class="bi bi-upc-scan me-1"></i> Generate All Barcodes
+          </button>
+          <button class="btn btn-outline-primary btn-sm" type="button" (click)="addItem()">
+            <i class="bi bi-plus me-1"></i> Add
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="small">Item</th>
+                <th class="small" style="width: 80px;">Qty</th>
+                <th class="small" style="width: 80px;">Unit</th>
+                <th class="small" style="width: 100px;">Rate</th>
+                <th class="small" style="width: 70px;">Disc%</th>
+                <th class="small" style="width: 70px;">VAT%</th>
+                <th class="small" style="width: 100px;">Amount</th>
+                <th class="small" style="width: 60px;" *ngIf="placementOption === '2'">W/L</th>
+                <th class="small" style="width: 40px;">Action</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="items">
+              <tr *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <div class="position-relative">
+                    <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      [value]="itemSearchTerms[i] || ''"
+                      (focus)="onItemFocus(i)"
+                      (input)="onItemInput(i, $event)"
+                      (blur)="onItemBlur(i)"
+                      placeholder="Search item..."
+                      autocomplete="off"
+                      style="min-width: 200px;"
+                    />
+                    <!-- Item Dropdown -->
+                    <div class="dropdown-menu show position-absolute w-100"
+                         *ngIf="showItemDropdown[i] && (filteredItems[i]?.length || 0) > 0"
+                         style="top: 100%; z-index: 1050; max-height: 150px; overflow-y: auto;">
+                      <div class="dropdown-item py-1"
+                           *ngFor="let itm of (filteredItems[i] || [])"
+                           (mousedown)="selectItem(i, itm)"
+                           style="cursor: pointer;">
+                        <div class="small fw-bold">{{ itm.name }}</div>
+                        <small class="text-muted">{{ itm.item_code }}</small>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="quantity" min="1" (input)="onQuantityChange(i)" />
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" formControlName="unit" (change)="onUnitChange($event)">
+                    <option value="">Unit</option>
+                    <option *ngFor="let unit of item.get('units')?.value" [value]="unit.id">
+                      {{ unit.unit || unit.name | slice:0:3 }}
+                    </option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="rate" min="0" step="0.01" />
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="discount" min="0" step="0.01" />
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="vat" min="0" step="0.01" />
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="amount" min="0" step="0.01" readonly/>
+                </td>
+                <td *ngIf="placementOption === '2'">
+                  <div class="d-flex flex-column gap-1">
+                    <!-- <select class="form-select form-select-sm" formControlName="warehouseId" (change)="onWarehouseChange($event)">
+                      <option value="">W/H</option>
+                      <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name | slice:0:6 }}</option>
+                    </select> -->
+                    <select class="form-select form-select-sm" formControlName="locationId">
+                      <option value="">Loc</option>
+                      <option *ngFor="let l of filteredLocations" [value]="l.id">{{ l.name | slice:0:6 }}</option>
+                    </select>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <!-- Barcode Print Button -->
+                    <button class="btn btn-outline-primary btn-sm" 
+                            (click)="generateBarcodesForItem(i)" 
+                            [disabled]="!item.get('itemId')?.value || !item.get('barcode')?.value"
+                            type="button"
+                            [title]="!item.get('barcode')?.value ? 'No barcode found in item data' : (hasGeneratedBarcodes(i) ? 'View/Print Existing Barcodes (' + getBarcodeCount(i) + ')' : 'Generate New Barcodes')">
+                      <i class="bi bi-upc-scan" 
+                         [class.text-muted]="!item.get('barcode')?.value"
+                         [class.text-success]="item.get('barcode')?.value && hasGeneratedBarcodes(i)"
+                         [class.text-primary]="item.get('barcode')?.value && !hasGeneratedBarcodes(i)"></i>
+                      <span *ngIf="hasGeneratedBarcodes(i)" class="badge badge-sm bg-success ms-1" title="Existing barcodes">{{ getBarcodeCount(i) }}</span>
+                      <span *ngIf="!item.get('barcode')?.value && item.get('itemId')?.value" class="badge badge-sm bg-warning ms-1" title="No barcode in master data">!</span>
+                    </button>
+                    
+                    <!-- Remove Item Button -->
+                    <button class="btn btn-outline-danger btn-sm" 
+                            (click)="removeItem(i)" 
+                            [disabled]="items.length === 1" 
+                            type="button"
+                            title="Remove Item">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Compact Amount Summary -->
+        <div class="border-top p-2 amount-summary-compact" *ngIf="items.length > 0">
+          <div class="row row-cols-3 row-cols-md-6 g-1 text-center align-items-center">
+            <div class="col">
+              <small class="text-muted d-block lh-1">Base</small>
+              <strong class="value text-primary">{{ calculateTotalBaseAmount() + calculateTotalDiscountAmount() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="col">
+              <small class="text-muted d-block lh-1">Discount</small>
+              <strong class="value text-danger">{{ calculateTotalDiscountAmount() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="col">
+              <small class="text-muted d-block lh-1">After Disc.</small>
+              <strong class="value text-info">{{ calculateTotalBaseAmount() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="col">
+              <small class="text-muted d-block lh-1">VAT</small>
+              <strong class="value text-warning">{{ calculateTotalVatAmount() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="col">
+              <small class="text-muted d-block lh-1 text-nowrap">Total ({{getcurrency()}})</small>
+              <strong class="value text-success">{{ calculateTotalAmount() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="col">
+              <small class="text-muted d-block lh-1">Items</small>
+              <strong class="value text-secondary">{{ items.length }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Additional Charges -->
+    <div class="card mb-3">
+      <div class="card-header bg-light py-2">
+        <h6 class="mb-0 small">
+          <i class="bi bi-plus-circle me-2"></i>
+          Additional Charges
+        </h6>
+      </div>
+      <div class="card-body p-2">
+    <div class="row g-2 mb-3">
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Customs Payable</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="customs_Payable" placeholder="Enter customs payable">
+          <select class="form-select form-select-sm" formControlName="customs_Payable_currency" style="max-width: 80px;">
+            <option [value]="1">{{getcurrency()}}</option>
+            <option value="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Insurance Payable</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="insurance_Payable" placeholder="Enter insurance payable">
+          <select class="form-select form-select-sm" formControlName="insurance_Payable_currency" style="max-width: 80px;">
+            <option [value]="1">{{getcurrency()}}</option>
+            <option value="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Demurrage</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="demurage" placeholder="Enter demurrage">
+          <select class="form-select form-select-sm" formControlName="demurage_currency" style="max-width: 80px;">
+            <option [value]="1">{{getcurrency()}}</option>
+            <option value="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Freight Payable</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="freight_Payable" placeholder="Enter freight payable">
+          <select class="form-select form-select-sm" formControlName="freight_Payable_currency" style="max-width: 80px;">
+            <option [value]="1">{{getcurrency()}}</option>
+            <option value="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Port Charge Payable</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="port_Charge_Payable" placeholder="Enter port charge payable">
+          <select class="form-select form-select-sm" formControlName="port_Charge_Payable_currency" style="max-width: 80px;">
+            <option [value]="1">{{getcurrency()}}</option>
+            <option value="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Carriage Inwards</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="carriage_Inwards" placeholder="Enter carriage inwards">
+          <select class="form-select form-select-sm" formControlName="carriage_Inwards_currency" style="max-width: 80px;">
+            <option value="1">{{getcurrency()}}</option>
+            <option value="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">THC Charges</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="thc_Charges" placeholder="Enter THC charges">
+          <select class="form-select form-select-sm" formControlName="thc_Charges_currency" style="max-width: 80px;">
+            <option [value]="1">{{getcurrency()}}</option>
+            <option [value]="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Bank Charge Payable</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="bank_Charge_Payable" placeholder="Enter bank charge payable">
+          <select class="form-select form-select-sm" formControlName="bank_Charge_Payable_currency" style="max-width: 80px;">
+            <option [value]="1">{{getcurrency()}}</option>
+            <option [value]="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold">Misc Others</label>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" formControlName="misc_Others" placeholder="Enter misc others">
+          <select class="form-select form-select-sm" formControlName="misc_Others_currency" style="max-width: 80px;">
+            <option [value]="1">{{getcurrency()}}</option>
+            <option [value]="2">{{getcurrencysecond()}}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    </div>
+    </div>
+    
+    <!-- Barcode Generation Tasks (Compact) -->
+    <div class="card mb-3" *ngIf="barcodeGenerationTasks.length > 0">
+      <div class="card-header bg-light py-2">
+        <h6 class="mb-0 small">
+          <i class="bi bi-upc-scan me-2"></i>
+          Barcode Generation Tasks
+          <span class="badge bg-info ms-2">{{ getCompletedBarcodeTasksCount() }}/{{ getTotalBarcodeTasksCount() }} Completed</span>
+          <span *ngIf="hasPendingBarcodeTasks()" class="badge bg-warning ms-1">Pending</span>
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="small">Item</th>
+                <th class="small">Qty</th>
+                <th class="small">Barcodes</th>
+                <!-- <th class="small">Assigned To</th> -->
+                <th class="small">Status</th>
+                <th class="small">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let task of barcodeGenerationTasks; let i = index" 
+                  [class.table-warning]="task.status === 'pending'"
+                  [class.table-info]="task.status === 'assigned'"
+                  [class.table-success]="task.status === 'completed'">
+                <td class="small">{{ task.itemName }}</td>
+                <td class="small">{{ task.quantity }}</td>
+                <td class="small">{{ task.barcodes.length }} codes</td>
+                <!-- <td class="small">{{ task.assignedWorkerName || 'Unassigned' }}</td> -->
+                <td>
+                  <span class="badge small" 
+                        [class.bg-warning]="task.status === 'pending'"
+                        [class.bg-info]="task.status === 'assigned'"
+                        [class.bg-success]="task.status === 'completed'">
+                    {{ task.status | titlecase }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-outline-primary btn-sm" 
+                          (click)="previewBarcodes(task.itemIndex)"
+                          type="button"
+                          title="View/Print Barcodes">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Putaway Tasks (Compact) -->
+    <div class="card mb-3" *ngIf="placementOption === '1' && hasPutawayTasks()">
+      <div class="card-header bg-light py-2">
+        <h6 class="mb-0 small">
+          <i class="bi bi-arrow-up-right-square me-2"></i>
+          Putaway Tasks
+          <span class="badge bg-success ms-2">Auto-Generated</span>
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="small">Item</th>
+                <th class="small">Qty</th>
+                <th class="small">From</th>
+                <th class="small">To</th>
+                <th class="small">Priority</th>
+                <th class="small">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let step of workflowSteps; let i = index" 
+                  [class.table-warning]="step.taskType === 'putaway' && step.status === 'pending'"
+                  [class.table-success]="step.taskType === 'putaway' && step.status === 'completed'">
+                <td *ngIf="step.taskType === 'putaway'" class="small">{{ step.taskData?.itemName || 'Item ' + (i + 1) }}</td>
+                <td *ngIf="step.taskType === 'putaway'" class="small">{{ step.taskData?.quantity || 0 }}</td>
+                <td *ngIf="step.taskType === 'putaway'">
+                  <span class="badge bg-warning text-dark small">{{ step.taskData?.fromLocation || 'Loading Bay' }}</span>
+                </td>
+                <td *ngIf="step.taskType === 'putaway'">
+                  <span class="badge bg-info small">{{ step.taskData?.toLocation || 'Rack' }}</span>
+                </td>
+                <td *ngIf="step.taskType === 'putaway'">
+                  <span class="badge small" 
+                        [class.bg-danger]="step.taskData?.priority === '3'"
+                        [class.bg-secondary]="step.taskData?.priority === '1' || step.taskData?.priority === '2'"
+                        [class.bg-info]="step.taskData?.priority === '2'">
+                    {{ step.taskData?.priorityName || 'normal' | titlecase }}
+                  </span>
+                </td>
+                <td *ngIf="step.taskType === 'putaway'">
+                  <span class="badge small" 
+                        [class.bg-warning]="step.status === 'pending'"
+                        [class.bg-success]="step.status === 'completed'">
+                    {{ step.status }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal-footer bg-light py-2">
+  <div class="d-flex justify-content-between w-100">
+    <!-- <div>
+      <button type="button" class="btn btn-outline-info btn-sm" (click)="openPreviewModal()">
+        <i class="bi bi-eye me-1"></i> Preview Receipt
+      </button>
+    </div> -->
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-secondary btn-sm" (click)="cancel()">
+        <i class="bi bi-x-circle me-1"></i> Cancel
+      </button>
+      <button type="button" class="btn btn-primary btn-sm" (click)="save()" [disabled]="form?.invalid">
+        <i class="bi bi-check-circle me-1"></i> 
+        {{ editInwardId ? 'Update Receipt' : 'Save Receipt' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Print Template (Hidden) -->
+<div id="printTemplate" style="display: none;">
+  <div class="print-receipt">
+    <div class="text-center mb-3">
+      <!-- Company Logo -->
+      <div *ngIf="companyData?.business_logo" class="mb-2">
+        <img [src]="companyData.business_logo" alt="Company Logo" style="max-width: 80px; max-height: 80px;">
+      </div>
+      <h3>{{ getCompanyName() }}</h3>
+      <p class="mb-1">{{ getCompanyAddress() }}</p>
+      <p class="mb-1 small text-muted">{{ companyData?.address1 }}</p>
+      <p class="mb-1 small text-muted">TEL: {{ companyData?.phone_no }} | Email: {{ companyData?.email }}</p>
+      <p class="mb-1 small text-muted" *ngIf="companyData?.tax_registration_number">TRN: {{ companyData?.tax_registration_number }}</p>
+      <h4 class="text-primary">{{ getInwardTypeName(form?.get('inwardType')?.value) }}</h4>
+    </div>
+    
+    <div class="row mb-3">
+      <div class="col-6">
+        <div class="info-table">
+          <div class="info-row">
+            <span class="label">{{ inwardType === '1' ? 'GRN No:' : 'IWT No:' }}</span>
+            <span class="value">{{ form?.get('grnNo')?.value || 'N/A' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Date:</span>
+            <span class="value">{{ form?.get('date')?.value | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="info-row" *ngIf="inwardType === '1'">
+            <span class="label">Supplier:</span>
+            <span class="value">{{ form?.get('supplier')?.value }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="info-table">
+          <div class="info-row">
+            <span class="label">Received By:</span>
+            <span class="value">{{ form?.get('receivedBy')?.value }}</span>
+          </div>
+          <div class="info-row" *ngIf="getSelectedPoDisplayString()">
+            <span class="label">PO Reference:</span>
+            <span class="value">{{ getSelectedPoDisplayString() }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Warehouse:</span>
+            <span class="value">{{ getWarehouseName() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table class="table table-bordered table-sm">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 5%;">#</th>
+          <th style="width: 45%;">Item Description</th>
+          <th style="width: 10%;">Qty</th>
+          <th style="width: 10%;">Unit</th>
+          <th style="width: 15%;">Rate</th>
+          <th style="width: 15%;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of items.controls; let i = index">
+          <td class="text-center">{{ i + 1 }}</td>
+          <td>{{ itemSearchTerms[i] || 'Item ' + (i + 1) }}</td>
+          <td class="text-center">{{ item.get('quantity')?.value }}</td>
+          <td class="text-center">{{ getUnitName(item.get('units')?.value, item.get('unit')?.value) }}</td>
+          <td class="text-end">{{ item.get('rate')?.value | number:'1.2-2' }}</td>
+          <td class="text-end">{{ item.get('amount')?.value | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="table-info">
+          <td colspan="5" class="text-end fw-bold">Total Amount:</td>
+          <td class="text-end fw-bold">{{getcurrency()}} {{ calculateTotalAmount() | number:'1.2-2' }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="row mt-3" *ngIf="form?.get('remarks')?.value">
+      <div class="col-12">
+        <strong>Remarks:</strong> {{ form?.get('remarks')?.value }}
+      </div>
+    </div>
+
+    <div class="row mt-4 signature-section">
+      <div class="col-4 text-center">
+        <div class="signature-line">
+          <div class="fw-bold">Prepared By</div>
+          <small>{{ form?.get('receivedBy')?.value }}</small>
+        </div>
+      </div>
+      <div class="col-4 text-center">
+        <div class="signature-line">
+          <div class="fw-bold">Verified By</div>
+          <small>Quality Control</small>
+        </div>
+      </div>
+      <div class="col-4 text-center">
+        <div class="signature-line">
+          <div class="fw-bold">Authorized By</div>
+          <small>Warehouse Manager</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-3">
+      <small class="text-muted">
+        Printed on: {{ getCurrentDate() | date:'dd/MM/yyyy HH:mm' }}
+      </small>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal-overlay" *ngIf="showPreviewModal" (click)="closePreviewModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          Receipt Preview - {{ form?.get('grnNo')?.value }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePreviewModal()"></button>
+      </div>
+      
+      <div class="modal-body p-0">
+        <!-- Preview Content -->
+        <div class="preview-container p-4 bg-white">
+          <div class="receipt-preview">
+            <!-- Company Header (AA Sons Format) -->
+            <div class="text-center mb-3">
+              <div class="company-header">
+                <div class="company-logo">
+                  <span class="logo-text">{{ companyData?.name }}</span>
+                </div>
+                <h3 class="company-full-name">AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)</h3>
+                <div class="company-contact-info">
+                  <div>POST BOX NO. 4713,DUBAI, U.A.E.</div>
+                  <div>TEL :04-3536699 FAX :04-3536611 Email : raisem&#64;eim.ae</div>
+                  <div class="trn-info">TRN : 100033732700003</div>
+                </div>
+              </div>
+              <div class="document-title">MATERIAL RECEIPT NOTE {{ inwardType === '1' ? 'IMPORT' : 'TRANSFER' }}</div>
+            </div>
+            
+            <!-- Document Details (Two Column Layout) -->
+            <div class="document-details mb-4">
+              <table class="details-table">
+                <tr>
+                  <td class="left-section">
+                    <div class="detail-row">
+                      <span class="detail-label">Vendor</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ form?.get('supplier')?.value || 'N/A' }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Address</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ getSupplierAddress() }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Tel No</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ getSupplierPhone() }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Fax No</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ getSupplierFax() }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">TRN</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ getSupplierTRN() }}</span>
+                    </div>
+                  </td>
+                  <td class="right-section">
+                    <div class="detail-row">
+                      <span class="detail-label">Doc No</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ form?.get('grnNo')?.value || 'N/A' }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Doc Date</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ form?.get('date')?.value | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Currency</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{getcurrency()}}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Expt Dly Date</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ form?.get('date')?.value | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Payment Terms</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">Cash</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Outlet</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">{{ getWarehouseName() }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Branch</span>
+                      <span class="detail-separator">:</span>
+                      <span class="detail-value">Head Office</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Items Table (AA Sons Format) -->
+            <div class="items-table-container mb-4">
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th class="sno-col">S.No</th>
+                    <th class="code-col">Item Code</th>
+                    <th class="desc-col">Description</th>
+                    <th class="unit-col">Unit</th>
+                    <th class="qty-col">Qty</th>
+                    <th class="rate-col">Rate</th>
+                    <th class="gross-col">Gross</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of items.controls; let i = index" class="item-row">
+                    <td class="sno-cell">{{ i + 1 }}</td>
+                    <td class="code-cell">{{ getItemCode(item.get('itemId')?.value) }}</td>
+                    <td class="desc-cell">{{ getItemDescription(item.get('itemId')?.value) }}</td>
+                    <td class="unit-cell">{{ getUnitName(item.get('units')?.value, item.get('unit')?.value) }}</td>
+                    <td class="qty-cell">{{ item.get('quantity')?.value | number:'1.2-2' }}</td>
+                    <td class="rate-cell">{{ item.get('rate')?.value | number:'1.2-2' }}</td>
+                    <td class="gross-cell">{{ item.get('amount')?.value | number:'1.2-2' }}</td>
+                  </tr>
+                  <!-- Empty rows to match format -->
+                  <tr *ngFor="let empty of getEmptyRows()" class="empty-row">
+                    <td class="sno-cell"></td>
+                    <td class="code-cell"></td>
+                    <td class="desc-cell"></td>
+                    <td class="unit-cell"></td>
+                    <td class="qty-cell"></td>
+                    <td class="rate-cell"></td>
+                    <td class="gross-cell"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Charges Summary Table -->
+            <table class="table table-bordered mt-4 mb-2" style="font-size: 0.95em;">
+              <tr>
+                <td>Customs Payable<br><span>{{ form?.get('customs_Payable')?.value | number:'1.2-2' }}</span></td>
+                <td>Insurance Payable<br><span>{{ form?.get('insurance_Payable')?.value | number:'1.2-2' }}</span></td>
+                <td>Demurage <br><span>{{ form?.get('demurage')?.value | number:'1.2-2' }}</span></td>
+              </tr>
+              <tr>
+                <td>Freight Payable<br><span>{{ form?.get('freight_Payable')?.value | number:'1.2-2' }}</span></td>
+                <td>Port Charge Payable<br><span>{{ form?.get('port_Charge_Payable')?.value | number:'1.2-2' }}</span></td>
+                <td>Carriage Inwards<br><span>{{ form?.get('carriage_Inwards')?.value | number:'1.2-2' }}</span></td>
+                <td class="fw-bold text-end align-middle" rowspan="2" colspan="1" style="vertical-align: middle;">
+                  Total Net : <span>{{ calculateTotalNet() | number:'1.2-2' }}</span>
+                </td>
+              </tr>
+              <tr>
+                <td>THC & DO Charges<br><span>{{ form?.get('thc_Charges')?.value | number:'1.2-2' }}</span></td>
+                <td>Bank Charge Payable<br><span>{{ form?.get('bank_Charge_Payable')?.value | number:'1.2-2' }}</span></td>
+                <td><span class="fw-bold text-primary">Misc. & Others</span><br><span>{{ form?.get('misc_Others')?.value | number:'1.2-2' }}</span></td>
+              </tr>
+            </table>
+
+            <!-- Amount in Words -->
+            <div class="mb-2">
+              <strong>Amount in words :</strong>
+              <span>{{ amountInWords }}</span>
+            </div>
+
+            <!-- Remarks -->
+            <div class="mb-2">
+              <strong>Remarks :</strong>
+              <span>{{ form?.get('remarks')?.value }}</span>
+            </div>
+
+            <!-- Company Name -->
+            <div class="mb-2">
+              For <strong>AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)</strong>
+            </div>
+
+            <!-- Signature Lines -->
+            <div class="row mb-2">
+              <div class="col text-center">
+                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto 4px auto;"></div>
+                <small>Prepared By</small>
+              </div>
+              <div class="col text-center">
+                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto 4px auto;"></div>
+                <small>Checked By</small>
+              </div>
+              <div class="col text-center">
+                <div style="border-top: 1px dashed #000; width: 80%; margin: 0 auto 4px auto;"></div>
+                <small>Approved By</small>
+              </div>
+            </div>
+
+            <!-- Print Info -->
+            <div class="d-flex justify-content-between small">
+              <div>
+                Print Date & Time : {{ getCurrentDate() | date:'M/d/yyyy h:mm a' }}
+              </div>
+              <div>
+                User : {{ currentUserName }} &nbsp; Page No : 1
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer bg-light">
+        <div class="d-flex justify-content-between w-100">
+          <div>
+            <small class="text-muted">
+              Document: {{ form?.get('grnNo')?.value }} | Items: {{ items.length }} | 
+              Total: {{getcurrency()}} {{ calculateTotalAmount() | number:'1.2-2' }}
+            </small>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-success btn-sm" (click)="downloadPDF()">
+              <i class="bi bi-download me-1"></i> Download PDF
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" (click)="printFromPreview()">
+              <i class="bi bi-printer me-1"></i> Print
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="closePreviewModal()">
+              <i class="bi bi-x-circle me-1"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Barcode Modal -->
+<div class="modal-overlay" *ngIf="showBarcodeModal" (click)="closeBarcodeModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-upc-scan me-2"></i>
+          Barcode Labels - {{ currentItemForBarcode?.itemName }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeBarcodeModal()"></button>
+      </div>
+      
+      <div class="modal-body p-3">
+        <div *ngIf="currentItemForBarcode" class="barcode-preview">
+          <!-- Item Summary -->
+                     <!-- <div class="alert alert-info mb-3">
+             <div class="row">
+               <div class="col-md-6">
+                 <strong>Item:</strong> {{ currentItemForBarcode.itemName }}<br>
+                 <strong>Quantity:</strong> {{ currentItemForBarcode.quantity }} units<br>
+                 <strong>Base Barcode:</strong> {{ currentItemForBarcode.baseBarcode }}
+               </div>
+               <div class="col-md-6">
+                 <strong>Barcodes Generated:</strong> {{ currentItemForBarcode.barcodes.length }}<br>
+                 <strong>GRN Reference:</strong> {{ form?.get('grnNo')?.value }}<br>
+                 <small class="text-muted">Using existing item barcode code</small>
+               </div>
+             </div>
+           </div> -->
+
+          <!-- Barcode Preview Grid -->
+          <div class="barcode-preview-grid">
+            <h6 class="mb-3">
+              <i class="bi bi-eye me-1"></i>
+              Scannable Barcode Preview ({{ currentItemForBarcode.barcodes.length }} labels)
+            </h6>
+            
+            <div class="row g-2">
+              <div class="col-md-4" *ngFor="let barcode of currentItemForBarcode.barcodes.slice(0, 6); let idx = index">
+                <div class="barcode-preview-card">
+                  <div class="barcode-header-mini">{{ companyData?.name }}</div>
+                  <div class="barcode-container-mini">
+                    <svg class="barcode-svg-mini" [id]="'preview-barcode-' + idx"></svg>
+                    <div class="barcode-number-mini">{{ barcode }}</div>
+                  </div>
+                  <div class="barcode-item-mini">{{ currentItemForBarcode.itemName | slice:0:20 }}</div>
+                  <div class="barcode-serial-mini">{{ idx + 1 }}/{{ currentItemForBarcode.quantity }}</div>
+                </div>
+              </div>
+              
+              <!-- Show count if more than 6 barcodes -->
+              <div class="col-12" *ngIf="currentItemForBarcode.barcodes.length > 6">
+                <div class="text-center text-muted">
+                  <i class="bi bi-three-dots"></i>
+                  and {{ currentItemForBarcode.barcodes.length - 6 }} more labels
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Barcode List -->
+          <!-- <div class="mt-4">
+            <h6 class="mb-3">
+              <i class="bi bi-list-ul me-1"></i>
+              Generated Barcode Numbers
+            </h6>
+            <div class="barcode-list">
+              <div class="row g-1">
+                <div class="col-md-6" *ngFor="let barcode of currentItemForBarcode.barcodes; let idx = index">
+                  <div class="barcode-list-item">
+                    <span class="barcode-index">{{ idx + 1 }}.</span>
+                    <span class="barcode-code">{{ barcode }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div> -->
+        </div>
+      </div>
+      
+      <div class="modal-footer bg-light">
+        <div class="d-flex justify-content-between w-100">
+          <div>
+            <small class="text-muted">
+              {{ currentItemForBarcode?.barcodes.length }} barcode labels ready for printing
+            </small>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-warning btn-sm" (click)="regenerateBarcodes(currentItemIndex)">
+              <i class="bi bi-arrow-clockwise me-1"></i> Regenerate
+            </button>
+            <button type="button" class="btn btn-success btn-sm" (click)="printBarcodes()">
+              <i class="bi bi-printer me-1"></i> Print Labels
+            </button>
+            <button type="button" class="btn btn-outline-info btn-sm" (click)="downloadBarcodes()">
+              <i class="bi bi-download me-1"></i> Download
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="closeBarcodeModal()">
+              <i class="bi bi-x-circle me-1"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Additional Preview Modal Styles -->
+<style>
+/* Preview Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-container {
+  max-width: 95vw;
+  max-height: 95vh;
+  overflow: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 95vh;
+}
+
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(95vh - 130px);
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #dee2e6;
+  flex-shrink: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-50px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Preview Modal Styles */
+.preview-container {
+  background-color: #f8f9fa;
+  min-height: 70vh;
+}
+
+.receipt-preview {
+  background: white;
+  padding: 20px;
+  border: 2px solid #000;
+  margin: 0 auto;
+  max-width: 900px;
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+}
+
+/* AA Sons Header Styles */
+.company-header {
+  border-bottom: 2px solid #000;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.logo-text {
+  font-size: 32px;
+  font-weight: bold;
+  color: #d32f2f;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.company-full-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin: 5px 0;
+  letter-spacing: 1px;
+}
+
+.company-contact-info {
+  font-size: 11px;
+  color: #333;
+  line-height: 1.3;
+}
+
+.trn-info {
+  font-weight: bold;
+  margin-top: 3px;
+}
+
+.document-title {
+  background: #000;
+  color: white;
+  padding: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 10px;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+/* Document Details Table */
+.document-details {
+  margin: 15px 0;
+}
+
+.details-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.details-table td {
+  vertical-align: top;
+  padding: 5px;
+  border: 1px solid #000;
+}
+
+.left-section, .right-section {
+  width: 50%;
+  padding: 10px;
+}
+
+.detail-row {
+  display: flex;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.detail-label {
+  font-weight: bold;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.detail-separator {
+  margin: 0 5px;
+}
+
+.detail-value {
+  flex: 1;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.items-table th {
+  background-color: #f0f0f0;
+  border: 1px solid #000;
+  padding: 8px 4px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.items-table td {
+  border: 1px solid #000;
+  padding: 6px 4px;
+  text-align: left;
+  font-size: 10px;
+}
+
+.sno-col { width: 8%; }
+.code-col { width: 15%; }
+.desc-col { width: 40%; }
+.unit-col { width: 8%; }
+.qty-col { width: 10%; }
+.rate-col { width: 10%; }
+.gross-col { width: 12%; }
+
+.sno-cell, .qty-cell, .rate-cell, .gross-cell {
+  text-align: center;
+}
+
+.code-cell {
+  font-weight: bold;
+}
+
+.desc-cell {
+  padding-left: 8px;
+}
+
+
+.empty-row {
+  height: 25px;
+}
+
+.footer-info {
+  margin-top: 20px;
+  font-size: 10px;
+  border-top: 1px solid #ccc;
+  padding-top: 10px;
+}
+
+#previewModal .modal-dialog {
+  max-width: 95%;
+}
+
+@media (max-width: 768px) {
+  #previewModal .modal-dialog {
+    max-width: 98%;
+    margin: 5px;
+  }
+  
+  .receipt-preview {
+    padding: 10px;
+    font-size: 10px;
+  }
+  
+  .logo-text {
+    font-size: 24px;
+  }
+  
+  .company-full-name {
+    font-size: 14px;
+  }
+  
+  .document-title {
+    font-size: 12px;
+    padding: 6px;
+  }
+}
+
+/* Barcode Modal Styles */
+.barcode-preview-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+  background: white;
+  text-align: center;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 9px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.barcode-header-mini {
+  font-weight: bold;
+  color: #d32f2f;
+  font-size: 8px;
+  margin-bottom: 2px;
+}
+
+.barcode-container-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.barcode-svg-mini {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 2px;
+}
+
+.barcode-number-mini {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  background: #f8f9fa;
+  padding: 2px;
+  border: 1px solid #ccc;
+  margin-top: 2px;
+}
+
+.barcode-item-mini {
+  font-size: 8px;
+  font-weight: bold;
+  color: #333;
+  margin: 2px 0;
+}
+
+.barcode-serial-mini {
+  font-size: 7px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.barcode-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 10px;
+  background: #f8f9fa;
+}
+
+.barcode-list-item {
+  font-family: 'Courier New', monospace;
+  padding: 4px 8px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.barcode-index {
+  color: #6c757d;
+  margin-right: 8px;
+  font-weight: bold;
+  width: 25px;
+}
+
+.barcode-code {
+  color: #212529;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.barcode-preview-grid {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fafafa;
+}
+
+.badge-sm {
+  font-size: 0.7em;
+  padding: 0.2em 0.4em;
+}
+
+/* Action column spacing for buttons */
+.action-buttons {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+  min-width: 32px;
+  padding: 4px 6px;
+}
+
+/* Responsive barcode grid */
+@media (max-width: 768px) {
+  .barcode-preview-card {
+    height: 100px;
+    font-size: 8px;
+  }
+  
+  .barcode-number-mini {
+    font-size: 9px;
+  }
+  
+  .barcode-visual-mini {
+    height: 12px;
+  }
+}
+</style>
+  

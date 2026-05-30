@@ -1,0 +1,893 @@
+<form [formGroup]="itemForm" (ngSubmit)="onSubmit()" class="create-item-form p-3">
+  
+
+
+  <!-- Company 1 Layout (Original Form) -->
+  <div>
+    <!-- Tab Navigation -->
+    <div class="tab-navigation mb-4">
+      <div class="nav nav-tabs" role="tablist">
+        <button class="nav-link active" 
+                type="button" 
+                (click)="activeTab = 'item'"
+                [class.active]="activeTab === 'item'">
+          <i class="bi bi-box-seam me-2"></i>Item Detail
+        </button>
+      </div>
+    </div>
+
+  <!-- Item Detail Tab Content -->
+  <div *ngIf="activeTab === 'item'">
+    <div class="row g-4">
+      <!-- Left Column -->
+      <div class="col-md-6" style="margin-top: 0px;">
+        <div class="card " style="height: 98%;">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <h6 class="card-title mb-0">Basic Information</h6>
+              <div class="ms-2" placement="right" ngbTooltip="Enter the basic details">
+                <i class="bi bi-info-circle text-muted"></i>
+              </div>
+            </div>
+
+            <!-- Item Type Selection -->
+            <div class="mb-3">
+              <label class="form-label d-flex align-items-center gap-2">
+                Item Type <span class="text-danger">*</span>
+                <i class="bi bi-info-circle text-muted" placement="right" 
+                   ngbTooltip="Select whether this is a physical product or a service"></i>
+              </label>
+              <div class="radio-group">
+                <div class="radio-option" [class.selected]="itemForm.get('item_type')?.value === 1">
+                  <input type="radio" id="typeProduct" name="item_type" [value]="1" formControlName="item_type" style="display: none;">
+                  <label for="typeProduct" class="radio-label">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Product</span>
+                  </label>
+                </div>
+                <div class="radio-option" [class.selected]="itemForm.get('item_type')?.value === 2">
+                  <input type="radio" id="typeService" name="item_type" [value]="2" formControlName="item_type" style="display: none;">
+                  <label for="typeService" class="radio-label">
+                    <i class="bi bi-gear"></i>
+                    <span>Service</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Name and Code -->
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label d-flex align-items-center gap-2">
+                  {{itemForm.get('item_type')?.value === 2 ? 'Service Name' : 'Item Name'}} <span class="text-danger">*</span>
+                  <i class="bi bi-info-circle text-muted" placement="right" 
+                     [ngbTooltip]="itemForm.get('item_type')?.value === 2 ? 'Enter the name of your service' : 'Enter a unique and descriptive name for your item'"></i>
+                </label>
+                <input type="text" class="form-control" formControlName="name"
+                       [placeholder]="itemForm.get('item_type')?.value === 2 ? 'Enter service name' : 'Enter item name'">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label d-flex align-items-center gap-2">
+                  {{itemForm.get('item_type')?.value === 2 ? 'Service Code' : 'Item Code'}} <span class="text-danger">*</span>
+                  <i class="bi bi-info-circle text-muted" placement="right" 
+                     [ngbTooltip]="itemForm.get('item_type')?.value === 2 ? 'Enter a unique identifier for your service' : 'Enter a unique identifier for your item'"></i>
+                </label>
+                <input type="text" class="form-control" formControlName="item_code"
+                       [placeholder]="itemForm.get('item_type')?.value === 2 ? 'Enter service code' : 'Enter item code'">
+              </div>
+            </div>
+
+            <!-- Categories and Brand - Only for products -->
+            <div *ngIf="itemForm.get('item_type')?.value === 1">
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label d-flex align-items-center gap-2">
+                    Category <span class="text-danger">*</span>
+                    <i class="bi bi-info-circle text-muted" placement="right" 
+                       ngbTooltip="Select or create a product category"></i>
+                  </label>
+                  <div class="d-flex gap-2">
+                    <select class="form-select" formControlName="item_category">
+                      <option [value]="null">Select Category</option>
+                      <option *ngFor="let category of itemCategories" [value]="category.id">{{category.name}}</option>
+                    </select>
+                    <button type="button" class="btn btn-outline-primary" (click)="createCategory(largeDataModal)">
+                      <i class="bi bi-plus"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label d-flex align-items-center gap-2">
+                    Brand
+                    <i class="bi bi-info-circle text-muted" placement="right" 
+                       ngbTooltip="Select or create a brand for your item"></i>
+                  </label>
+                  <div class="d-flex gap-2">
+                    <select class="form-select" formControlName="item_brand">
+                      <option [value]="null">Select Brand</option>
+                      <option *ngFor="let brand of itemBrands" [value]="brand.id">{{brand.name}}</option>
+                    </select>
+                    <button type="button" class="btn btn-outline-primary" (click)="createBrand(brandModal)">
+                      <i class="bi bi-plus"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-2">
+              <label class="form-label d-flex align-items-center gap-2">
+                Description
+                <i class="bi bi-info-circle text-muted" placement="right" 
+                   [ngbTooltip]="itemForm.get('item_type')?.value === 2 ? 'Add a brief description of your service' : 'Add a brief description of your item'"></i>
+              </label>
+              <textarea class="form-control" formControlName="item_description" rows="3"
+                       [placeholder]="itemForm.get('item_type')?.value === 2 ? 'Enter service description' : 'Enter item description'"></textarea>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="mb-3">
+              <label class="form-label d-flex align-items-center gap-2">
+                Upload Image
+                <i class="bi bi-info-circle text-muted" placement="right" ngbTooltip="Upload an image for this item or service."></i>
+              </label>
+              <div class="image-upload-box mb-2 d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; border: 1.5px dashed #ccc; border-radius: 8px; background: #fafbfc; position: relative;">
+                <ng-container *ngIf="imagePreview; else placeholder">
+                  <img [src]="imagePreview" alt="Item Image Preview" style="max-width: 100%; max-height: 100%; border-radius: 8px; object-fit: cover;" />
+                </ng-container>
+                <ng-template #placeholder>
+                  <span class="text-muted" style="font-size: 2rem;"> <i class="bi bi-image"></i> </span>
+                </ng-template>
+              </div>
+              <input type="file" accept="image/*" class="d-none" #fileInput (change)="onImageSelected($event)">
+              <button type="button" class="btn btn-outline-primary btn-sm mt-1" (click)="fileInput.click()">Upload Image</button>
+            </div>
+
+            <!-- Opening Stock and Imported -->
+            <div class="row g-2 align-items-end mb-3" *ngIf="itemForm.get('item_type')?.value === 1">
+              <div class="col-md-6">
+                <label class="form-label">Opening Stock</label>
+                <input type="number" class="form-control" formControlName="opening_stock" min="0" placeholder="Enter opening stock">
+              </div>
+              <div class="col-md-6">
+                <div class="form-check mb-1">
+                  <input class="form-check-input" type="checkbox" formControlName="imported" id="imported">
+                  <label class="form-check-label" for="imported">Imported</label>
+                </div>
+                <div *ngIf="itemForm.get('imported')?.value">
+                  <label class="form-label d-flex align-items-center gap-2 mb-1">
+                    Import Duty (%)
+                    <i class="bi bi-info-circle text-muted ms-1" placement="right" ngbTooltip="Enter the import duty percentage"></i>
+                  </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="imported_value" placeholder="Import Duty (%)" min="0" step="0.01">
+                    <span class="input-group-text">%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-md-6 d-flex flex-column" style="margin-top: 0px;">
+        <!-- Units Card - Only for products -->
+        <div class="card mb-4" *ngIf="itemForm.get('item_type')?.value === 1">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <h6 class="card-title mb-0">Unit Information</h6>
+              <div class="ms-2" placement="right" ngbTooltip="Specify the units of measurement and dimensions for warehouse management and space planning">
+                <i class="bi bi-info-circle text-muted"></i>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label d-flex align-items-center gap-2">
+                  Unit <span class="text-danger">*</span>
+                  <i class="bi bi-info-circle text-muted" placement="right" 
+                     ngbTooltip="Select the main unit of measurement"></i>
+                </label>
+                <select class="form-select" formControlName="unit" (change)="onUnitChange($event)">
+                  <option [value]="null">Select Unit</option>
+                  <option *ngFor="let unit of units" [value]="unit.id">{{unit.name}}</option>
+                </select>
+              </div>
+
+              <div class="col-md-6" *ngIf="showOtherUnit">
+                <label class="form-label d-flex align-items-center gap-2">
+                  Other Unit
+                  <i class="bi bi-info-circle text-muted" placement="right" 
+                     ngbTooltip="Specify any additional unit if needed"></i>
+                </label>
+                <input type="text" class="form-control" formControlName="other_unit"
+                       placeholder="Enter other unit">
+              </div>
+            </div>
+
+            <!-- Main Unit Dimensions -->
+            <div class="mt-3 dimension-section" *ngIf="itemForm.get('item_type')?.value === 1">
+              <div class="section-header" (click)="toggleSection('unitDimensions')">
+                <h6 class="mb-2 text-muted" style="font-size: 0.9rem; margin: 0; cursor: pointer;">
+                  <i class="bi bi-rulers me-1"></i>Unit Dimensions
+                  <i class="bi ms-2 toggle-icon" [class.bi-chevron-down]="!sections.unitDimensions" [class.bi-chevron-up]="sections.unitDimensions"></i>
+                </h6>
+              </div>
+              <div class="section-content" [class.collapsed]="!sections.unitDimensions">
+                <div class="dimension-grid">
+                  <div class="dimension-input">
+                    <label class="form-label form-label-sm mb-1">Length</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="unit_length"
+                           placeholder="0.00" min="0" step="0.01" (input)="onMainUnitDimensionChange()">
+                  </div>
+                  <div class="dimension-input">
+                    <label class="form-label form-label-sm mb-1">Width</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="unit_width"
+                           placeholder="0.00" min="0" step="0.01" (input)="onMainUnitDimensionChange()">
+                  </div>
+                  <div class="dimension-input">
+                    <label class="form-label form-label-sm mb-1">Height</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="unit_height"
+                           placeholder="0.00" min="0" step="0.01" (input)="onMainUnitDimensionChange()">
+                  </div>
+                  <div class="dimension-input">
+                    <label class="form-label form-label-sm mb-1">Weight</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="unit_weight"
+                           placeholder="0.00" min="0" step="0.01">
+                  </div>
+                </div>
+                <div class="unit-selectors">
+                  <div class="unit-selector">
+                    <label class="form-label form-label-sm mb-1">Dimension Unit</label>
+                    <select class="form-select form-select-sm" formControlName="unit_dimension_unit" (change)="onMainUnitDimensionUnitChange()">
+                      <option *ngFor="let unit of dimensionUnits" [value]="unit.id">{{unit.label}}</option>
+                    </select>
+                  </div>
+                  <div class="unit-selector">
+                    <label class="form-label form-label-sm mb-1">Weight Unit</label>
+                    <select class="form-select form-select-sm" formControlName="unit_weight_unit" (change)="onMainUnitWeightUnitChange()">
+                      <option *ngFor="let unit of weightUnits" [value]="unit.id">{{unit.label}}</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <!-- Volume Display -->
+                <div class="volume-display" *ngIf="isMainUnitDimensionsComplete()">
+                  <small class="text-muted">
+                    <i class="bi bi-calculator me-1"></i>
+                    Calculated Volume: {{getMainUnitVolumeWithUnit()}}
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" formControlName="has_alter_unit" 
+                       id="hasAlterUnit" [disabled]="itemForm.get('unit')?.value === 30">
+                <label class="form-check-label d-flex align-items-center gap-2" for="hasAlterUnit">
+                  Has Alternative Unit
+                  <i class="bi bi-info-circle text-muted" placement="right" 
+                     [ngbTooltip]="itemForm.get('unit')?.value === 30 ? 'Alternative unit is not available when OTH - OTHERS is selected' : 'Enable if you need to specify an alternative unit with conversion'"></i>
+                </label>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-2" *ngIf="itemForm.get('has_alter_unit')?.value">
+              <div class="col-md-6">
+                <label class="form-label">Alternative Unit</label>
+                <select class="form-select" formControlName="alternate_unit">
+                  <option [value]="null">Select Unit</option>
+                  <option *ngFor="let unit of units" [value]="unit.id">{{unit.name}}</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Conversion Value</label>
+                <input type="number" class="form-control" formControlName="conversion_value"
+                       placeholder="Enter conversion value">
+              </div>
+            </div>
+
+            <!-- Alternate Unit Dimensions -->
+            <div class="mt-3 dimension-section" *ngIf="itemForm.get('has_alter_unit')?.value && itemForm.get('item_type')?.value === 1">
+              <div class="section-header" (click)="toggleSection('alternateUnitDimensions')">
+                <h6 class="mb-2 text-muted" style="font-size: 0.9rem; margin: 0; cursor: pointer;">
+                  <i class="bi bi-rulers me-1"></i>Alternate Unit Dimensions
+                  <i class="bi ms-2 toggle-icon" [class.bi-chevron-down]="!sections.alternateUnitDimensions" [class.bi-chevron-up]="sections.alternateUnitDimensions"></i>
+                </h6>
+              </div>
+              <div class="section-content" [class.collapsed]="!sections.alternateUnitDimensions">
+                <div class="dimension-grid">
+                  <div class="dimension-input">
+                    <label class="form-label form-label-sm mb-1">Length</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="alt_unit_length"
+                           placeholder="0.00" min="0" step="0.01">
+                  </div>
+                  <div class="dimension-input">
+                    <label class="form-label form-label-sm mb-1">Width</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="alt_unit_width"
+                           placeholder="0.00" min="0" step="0.01">
+                  </div>
+                  <div class="dimension-input">
+                    <label class="form-label form-label-sm mb-1">Height</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="alt_unit_height"
+                           placeholder="0.00" min="0" step="0.01">
+                  </div>
+                  <div class="dimension-input">
+                    <label class="form-label form-label-sm mb-1">Weight</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="alt_unit_weight"
+                           placeholder="0.00" min="0" step="0.01">
+                  </div>
+                </div>
+                <div class="unit-selectors">
+                  <div class="unit-selector">
+                    <label class="form-label form-label-sm mb-1">Dimension Unit</label>
+                    <select class="form-select form-select-sm" formControlName="alt_unit_dimension_unit">
+                      <option *ngFor="let unit of dimensionUnits" [value]="unit.id">{{unit.label}}</option>
+                    </select>
+                  </div>
+                  <div class="unit-selector">
+                    <label class="form-label form-label-sm mb-1">Weight Unit</label>
+                    <select class="form-select form-select-sm" formControlName="alt_unit_weight_unit">
+                      <option *ngFor="let unit of weightUnits" [value]="unit.id">{{unit.label}}</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <!-- Volume Display for Alternate Unit -->
+                <div class="volume-display" *ngIf="isAltUnitDimensionsComplete()">
+                  <small class="text-muted">
+                    <i class="bi bi-calculator me-1"></i>
+                    Calculated Volume: {{getAltUnitVolumeWithUnit()}}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pricing Information Card -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <h6 class="card-title mb-0">Pricing Information</h6>
+              <div class="ms-2" placement="right" ngbTooltip="Set your pricing details">
+                <i class="bi bi-info-circle text-muted"></i>
+              </div>
+            </div>
+
+            <!-- Sales Price -->
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label d-flex align-items-center gap-2">
+                  Sales Price <span class="text-danger">*</span>
+                  <i class="bi bi-info-circle text-muted" placement="right" 
+                     ngbTooltip="Enter the selling price and select tax inclusion"></i>
+                </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" formControlName="sales_price" 
+                         min="0" step="0.01" placeholder="0">
+                  <select class="form-select" formControlName="sale_type" style="max-width: 130px;">
+                    <option *ngFor="let type of saleTypes" [value]="type.id">{{type.name}}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Purchase Price - Only for products -->
+              <div class="col-md-6" *ngIf="itemForm.get('item_type')?.value === 1">
+                <label class="form-label d-flex align-items-center gap-2">
+                  Purchase Price <span class="text-danger">*</span>
+                  <i class="bi bi-info-circle text-muted" placement="right" 
+                     ngbTooltip="Enter the purchase price and select tax inclusion"></i>
+                </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" formControlName="purchase_price" 
+                         min="0" step="0.01" placeholder="0">
+                  <select class="form-select" formControlName="purchase_type" style="max-width: 130px;">
+                    <option *ngFor="let type of purchaseTypes" [value]="type.id">{{type.name}}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tax Information Card -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="mt-4">
+              <div class="row g-3">
+                <div class="col-md-6" style="margin-top: 0px;">
+                  <label class="form-label d-flex align-items-center gap-2">
+                    {{itemForm.get('item_type')?.value === 2 ? 'SAC Code' : 'HSN Code'}}
+                    <i class="bi bi-info-circle text-muted" placement="right" 
+                       [ngbTooltip]="itemForm.get('item_type')?.value === 2 ? 'Enter the Service Accounting Code' : 'Enter the Harmonized System Nomenclature code'"></i>
+                  </label>
+                  <input type="text" class="form-control" formControlName="hsn_code"
+                         [placeholder]="itemForm.get('item_type')?.value === 2 ? 'Enter SAC code' : 'Enter HSN code'">
+                </div>
+                <div class="col-md-6" style="margin-top: 0px;">
+                  <label class="form-label d-flex align-items-center gap-2">
+                    VAT Percentage <span class="text-danger">*</span>
+                    <i class="bi bi-info-circle text-muted" placement="right" 
+                       ngbTooltip="Enter the VAT percentage applicable"></i>
+                  </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" formControlName="vat_per"
+                           placeholder="Enter VAT percentage">
+                    <select class="form-select" formControlName="vat_category" style="max-width: 130px;">
+                      <option *ngFor="let category of vatCategories" [value]="category.id">{{category.name}}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inventory & Valuation Section -->
+        <div class="card mb-4" *ngIf="itemForm.get('item_type')?.value === 1">
+          <div class="card-body py-2 section-card-body">
+            <div class="section-header" (click)="toggleSection('inventoryValuation')">
+              <h6 class="mb-0" style="font-size: 1rem; margin: 0; cursor: pointer;">
+                <i class="bi bi-box-seam me-2"></i>Inventory & Valuation
+                <i class="bi ms-2 toggle-icon" [class.bi-chevron-down]="!sections.inventoryValuation" [class.bi-chevron-up]="sections.inventoryValuation"></i>
+              </h6>
+            </div>
+            <div class="section-content" [class.collapsed]="!sections.inventoryValuation">
+              <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                  <label class="form-label form-label-sm mb-1">Reorder Level</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="reorder_level" placeholder="Min stock">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label form-label-sm mb-1">Valuation</label>
+                  <select class="form-select form-select-sm" formControlName="valuation_method">
+                    <option value="">Method</option>
+                    <option value="FIFO">FIFO</option>
+                    <option value="LIFO">LIFO</option>
+                    <option value="Weighted Average">Weighted Avg</option>
+                    <option value="Specific Identification">Specific</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label form-label-sm mb-1">Parent Code</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="parent_code" placeholder="Parent code">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label form-label-sm mb-1">Alt. Category</label>
+                  <select class="form-select form-select-sm" formControlName="alternate_category">
+                    <option value="">Alternate</option>
+                    <!-- Populate dynamically -->
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label form-label-sm mb-1">Alt. Code</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="alternate_code" placeholder="Alt. code">
+                </div>
+                <div class="col-md-3 d-flex align-items-center mt-3">
+                  <input class="form-check-input me-2" type="checkbox" formControlName="group" id="group">
+                  <label class="form-check-label form-label-sm mb-0" for="group">Group Item</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Identification & Barcode Section -->
+        <div class="card mb-4" *ngIf="itemForm.get('item_type')?.value === 1">
+          <div class="card-body py-2 section-card-body">
+            <div class="section-header" (click)="toggleSection('identificationBarcode')">
+              <h6 class="mb-0" style="font-size: 1rem; margin: 0; cursor: pointer;">
+                <i class="bi bi-upc-scan me-2"></i>Identification & Barcode
+                <i class="bi ms-2 toggle-icon" [class.bi-chevron-down]="!sections.identificationBarcode" [class.bi-chevron-up]="sections.identificationBarcode"></i>
+              </h6>
+            </div>
+            <div class="section-content" [class.collapsed]="!sections.identificationBarcode">
+              <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                  <label class="form-label form-label-sm mb-1">Barcode</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="barcode1" placeholder="Barcode">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label form-label-sm mb-1">Make</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="item_make" placeholder="Brand">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label form-label-sm mb-1">Printer</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="printer" placeholder="Printer">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Perishable & Volume Section -->
+        <div class="card mb-4" *ngIf="itemForm.get('item_type')?.value === 1">
+          <div class="card-body py-2 section-card-body">
+            <div class="section-header" (click)="toggleSection('perishableVolume')">
+              <h6 class="mb-0" style="font-size: 1rem; margin: 0; cursor: pointer;">
+                <i class="bi bi-thermometer-half me-2"></i>Perishable & Volume
+                <i class="bi ms-2 toggle-icon" [class.bi-chevron-down]="!sections.perishableVolume" [class.bi-chevron-up]="sections.perishableVolume"></i>
+              </h6>
+            </div>
+            <div class="section-content" [class.collapsed]="!sections.perishableVolume">
+              <div class="row g-2 align-items-end">
+                <div class="col-md-3 d-flex align-items-center">
+                  <input class="form-check-input me-2" type="checkbox" formControlName="is_perishable" id="is_perishable">
+                  <label class="form-check-label form-label-sm mb-0" for="is_perishable">Perishable</label>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label form-label-sm mb-1">Volume</label>
+                  <input type="number" class="form-control form-control-sm" formControlName="volume" placeholder="Volume">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Detail Tab Content -->
+  <div *ngIf="activeTab === 'batch'">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <h6 class="card-title mb-0">Batch Information</h6>
+          <div class="ms-2" placement="right" ngbTooltip="Configure batch tracking details">
+            <i class="bi bi-info-circle text-muted"></i>
+          </div>
+        </div>
+        
+        <!-- Batch Category Section -->
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" formControlName="has_batch_category" 
+                     id="hasBatchCategory">
+              <label class="form-check-label" for="hasBatchCategory">
+                Add Batch Category
+              </label>
+            </div>
+          </div>
+          <div class="col-md-6 text-end">
+            <button class="btn btn-primary btn-sm" (click)="createBatch(batchModal)">
+              <i class="bi bi-plus"></i> Create New Batch
+            </button>
+          </div>
+        </div>
+
+        <!-- Batch Category Selection -->
+        <div class="row mb-3" *ngIf="itemForm.get('has_batch_category')?.value">
+          <div class="col-md-6">
+            <label class="form-label">Select Category <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="batch_category">
+              <option [value]="null">Select Category</option>
+              <option *ngFor="let category of batchCategories" [value]="category.id">
+                {{category.name}}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-6 d-flex align-items-end">
+            <button class="btn btn-outline-primary" (click)="openBatchCategoryModal(batchCategoryModal)">
+              <i class="bi bi-plus"></i> Create Batch Category
+            </button>
+          </div>
+        </div>
+
+        <!-- Batch Table Custom Column Headers and Values as Chips -->
+        <div class="table-responsive" *ngIf="batchArray.length > 0">
+          <table class="table table-bordered table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Batch No.</th>
+                <th>Batch Code</th>
+                <th>Mfg Date</th>
+                <th>Expiry Date</th>
+                <th>MRP</th>
+                <th>Purchase Price</th>
+                <th>Discount</th>
+                <th>Quantity</th>
+                <!-- Custom columns as headers -->
+                <ng-container *ngIf="itemForm.get('has_custom_column')?.value && customColumns.length > 0">
+                  <th *ngFor="let col of customColumns">{{ col.title }}</th>
+                </ng-container>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let batch of batchArray.controls; let i = index">
+                <td>{{ batch.get('batch_no')?.value }}</td>
+                <td>{{ batch.get('batch_code')?.value }}</td>
+                <td>{{ batch.get('manufacturing_date')?.value | date:'dd/MM/yyyy' }}</td>
+                <td>{{ batch.get('expiry_date')?.value | date:'dd/MM/yyyy' }}</td>
+                <td>{{ batch.get('sales_price')?.value | currency }}</td>
+                <td>{{ batch.get('purchase_price')?.value | currency }}</td>
+                <td>{{ batch.get('discount')?.value }}%</td>
+                <td>{{ batch.get('quantity')?.value }}</td>
+                <!-- Custom column values as chips -->
+                <ng-container *ngIf="itemForm.get('has_custom_column')?.value && customColumns.length > 0">
+                  <td *ngFor="let col of customColumns; let colIndex = index">
+                    <span *ngIf="batch.get('selectedValues')?.value?.[colIndex]" class="chip-style">
+                      {{ batch.get('selectedValues')?.value?.[colIndex] }}
+                    </span>
+                  </td>
+                </ng-container>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" (click)="editBatch(batchModal, batch.value, i)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" (click)="deleteBatch(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="text-center py-5" *ngIf="batchArray.length === 0">
+          <i class="bi bi-collection text-muted" style="font-size: 3rem;"></i>
+          <h5 class="mt-3 text-muted">No Batches Created</h5>
+          <p class="text-muted">Click "Create New Batch" to add your first batch.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- Form Actions -->
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <button type="button" class="btn btn-secondary">
+      <i class="bi bi-x-lg me-1"></i>Cancel
+    </button>
+    <button type="submit" class="btn btn-primary" [disabled]="itemForm.invalid">
+      <i class="bi bi-check-lg me-1"></i>Save
+    </button>
+  </div>
+</form>
+
+<!-- Category Creation Modal -->
+<ng-template #largeDataModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Create Category</h5>
+    <button type="button" class="btn-close" (click)="closeModal('category')" aria-hidden="true"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="categoryForm">
+      <div class="mb-3">
+        <label class="form-label">Category name</label>
+        <input type="text" 
+               class="form-control" 
+               formControlName="CategoryName"
+               placeholder="Enter category name">
+        <div *ngIf="categoryForm.get('CategoryName')?.touched && categoryForm.get('CategoryName')?.invalid" 
+             class="text-danger small mt-1">
+          Category name is required
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal('category')">
+      <i class="bi bi-x-lg me-1"></i>Cancel
+    </button>
+    <button type="button" 
+            class="btn btn-primary" 
+            [disabled]="categoryForm.invalid"
+            (click)="createCat()">
+      <i class="bi bi-check-lg me-1"></i>Create
+    </button>
+  </div>
+</ng-template>
+
+<!-- Brand Creation Modal -->
+<ng-template #brandModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Create Brand</h5>
+    <button type="button" class="btn-close" (click)="closeModal('brand')" aria-hidden="true"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="brandForm">
+      <div class="mb-3">
+        <label class="form-label">Brand name</label>
+        <input type="text" 
+               class="form-control" 
+               formControlName="BrandName"
+               placeholder="Enter brand name">
+        <div *ngIf="brandForm.get('BrandName')?.touched && brandForm.get('BrandName')?.invalid" 
+             class="text-danger small mt-1">
+          Brand name is required
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal('brand')">
+      <i class="bi bi-x-lg me-1"></i>Cancel
+    </button>
+    <button type="button" 
+            class="btn btn-primary" 
+            [disabled]="brandForm.invalid"
+            (click)="createBrandSubmit()">
+      <i class="bi bi-check-lg me-1"></i>Create
+    </button>
+  </div>
+</ng-template>
+
+<!-- Batch Creation Modal -->
+<ng-template #batchModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">{{ isEditBatch ? 'Edit Batch' : 'Create Batch' }}</h5>
+    <button type="button" class="btn-close" (click)="closeBatchModal()" aria-hidden="true"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="batchForm">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Batch No. <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" formControlName="batch_no" placeholder="Enter batch number">
+          <div *ngIf="batchForm.get('batch_no')?.touched && batchForm.get('batch_no')?.invalid" 
+               class="text-danger small mt-1">
+            Batch number is required
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Batch Code</label>
+          <input type="text" class="form-control" formControlName="batch_code" placeholder="Enter batch code">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Manufacturing Date</label>
+          <input type="date" class="form-control" formControlName="manufacturing_date">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Expiry Date</label>
+          <input type="date" class="form-control" formControlName="expiry_date">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">MRP <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" formControlName="sales_price" 
+                 min="0" step="0.01" placeholder="0">
+          <div *ngIf="batchForm.get('sales_price')?.touched && batchForm.get('sales_price')?.invalid" 
+               class="text-danger small mt-1">
+            MRP is required and must be positive
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Purchase Price <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" formControlName="purchase_price" 
+                 min="0" step="0.01" placeholder="0">
+          <div *ngIf="batchForm.get('purchase_price')?.touched && batchForm.get('purchase_price')?.invalid" 
+               class="text-danger small mt-1">
+            Purchase price is required and must be positive
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Discount <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" formControlName="discount" 
+                 min="0" step="0.01" placeholder="0">
+          <div *ngIf="batchForm.get('discount')?.touched && batchForm.get('discount')?.invalid" 
+               class="text-danger small mt-1">
+            Discount is required and must be positive
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Quantity <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" formControlName="quantity" 
+                 min="0" step="1" placeholder="0">
+          <div *ngIf="batchForm.get('quantity')?.touched && batchForm.get('quantity')?.invalid" 
+               class="text-danger small mt-1">
+            Quantity is required and must be positive
+          </div>
+        </div>
+        
+        <!-- Custom Column Fields -->
+        <ng-container *ngIf="itemForm.get('has_custom_column')?.value && customColumns.length > 0">
+          <div class="col-12">
+            <h6 class="mt-3 mb-2">Custom Fields</h6>
+          </div>
+          <div class="col-md-6" *ngFor="let col of customColumns; let i = index">
+            <label class="form-label">{{col.title}} <span class="text-danger">*</span></label>
+            <select class="form-select custom-chip-select"
+                    [ngModel]="(batchForm.get('selectedValues')?.value || [])[i]"
+                    (ngModelChange)="onCustomColumnChange($event, i)">
+              <option [value]="null">Select {{col.title}}</option>
+              <option *ngFor="let option of col.inputs.split(',')" [value]="option.trim()">
+                {{ option.trim() }}
+              </option>
+            </select>
+            <span *ngIf="(batchForm.get('selectedValues')?.value || [])[i]" class="chip-style mt-1">
+              {{ (batchForm.get('selectedValues')?.value || [])[i] }}
+            </span>
+          </div>
+        </ng-container>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeBatchModal()">
+      <i class="bi bi-x-lg me-1"></i>Cancel
+    </button>
+    <button type="button" 
+            class="btn btn-primary" 
+            [disabled]="batchForm.invalid"
+            (click)="submitBatch()">
+      <i class="bi bi-check-lg me-1"></i>{{ isEditBatch ? 'Update' : 'Create' }}
+    </button>
+  </div>
+</ng-template>
+
+<!-- Batch Category Creation Modal -->
+<ng-template #batchCategoryModal let-modal>
+  <div class="modal-header" style="padding-left: 28px;padding-bottom: 0px;">
+    <h5 class="modal-title mt-0" style="font-size: large; font-weight: 500;">Create Batch Category</h5>
+    <button type="button" class="btn-close" (click)="closeBatchCategoryModal()" aria-hidden="true"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="batchCategoryForm">
+      <div class="row mb-2">
+        <div class="col-md-6">
+          <label for="">Batch category name<i style="color: red;">*</i></label>
+          <input type="text" class="form-control" formControlName="category_name"
+                 [class.is-invalid]="batchCategoryForm.get('category_name')?.invalid && batchCategoryForm.get('category_name')?.touched" required>
+          <div *ngIf="batchCategoryForm.get('category_name')?.hasError('required') && (batchCategoryForm.get('category_name')?.touched || batchCategoryForm.get('category_name')?.dirty)">
+            <span class="text-danger">Category name required</span>
+          </div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="">do you want to add custom column for batches</label>
+        <input type="checkbox" formControlName="has_custom_column" (change)="addBatchCol()">
+      </div>
+      <div class="custom-columns-card" *ngIf="batchCategoryForm.get('has_custom_column')?.value">
+        <div class="row align-items-center mb-2">
+          <div class="col-1"></div>
+          <div class="col-4"><label class="form-label">Column Name:</label></div>
+          <div class="col-6"><label class="form-label">Column Inputs:</label></div>
+          <div class="col-1"></div>
+        </div>
+        <div formArrayName="custom_column">
+          <div *ngFor="let item of customColumnArray.controls; let i=index" [formGroupName]="i" class="row align-items-center mb-2">
+            <div class="col-1 text-center">{{i + 1}}</div>
+            <div class="col-4">
+              <input type="text" class="form-control" formControlName="title" placeholder="Enter column title">
+            </div>
+            <div class="col-6">
+              <div class="chip-container">
+                <div class="chip-list">
+                  <span *ngFor="let chip of getChipsForColumn(i); let j = index" class="chip-style">
+                    {{ chip }}
+                    <i class="bi bi-x-circle ms-1" style="cursor: pointer; color: #ff661e;" (click)="removeChip(i, j)"></i>
+                  </span>
+                </div>
+                <input type="text" class="form-control chip-input" placeholder="Type and press Enter to add..." (keyup.enter)="addChip($event, i)">
+              </div>
+            </div>
+            <div class="col-1 text-center">
+              <button *ngIf="i > 0" class="btn btn-sm btn-outline-danger" (click)="removeCustomColumn(i)" type="button">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-2">
+          <button class="btn btn-primary btn-sm" (click)="addCustomColumn()">
+            <i class="bi bi-plus"></i> Add Field
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-primary btn-sm" [disabled]="batchCategoryForm.invalid" (click)="submitBatchCategory()">
+      Create batch category
+    </button>
+  </div>
+</ng-template>
