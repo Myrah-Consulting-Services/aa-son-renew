@@ -1175,7 +1175,7 @@ getcurrencysecond(){
             }
             
             if (this.activeModal) {
-              // this.activeModal.close(data);
+              this.activeModal.close(data);
             } else {
               this.router.navigate(['/warehouse/inward-list']);
             }
