@@ -358,12 +358,9 @@
                 <td>
                   <input type="number" class="form-control form-control-sm" formControlName="amount" min="0" step="0.01" readonly/>
                 </td>
+                <!-- ── W/L column for Direct Location ── -->
                 <td *ngIf="placementOption === '2'">
                   <div class="d-flex flex-column gap-1">
-                    <!-- <select class="form-select form-select-sm" formControlName="warehouseId" (change)="onWarehouseChange($event)">
-                      <option value="">W/H</option>
-                      <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name | slice:0:6 }}</option>
-                    </select> -->
                     <select class="form-select form-select-sm" formControlName="locationId">
                       <option value="">Loc</option>
                       <option *ngFor="let l of filteredLocations" [value]="l.id">{{ l.name | slice:0:6 }}</option>
@@ -432,8 +429,68 @@
         </div>
       </div>
     </div>
+    <!-- ── Putaway Card — shown whenever items exist ─────────────────────── -->
+    <div class="card mb-3" *ngIf="items.length > 0">
+      <div class="card-header py-2 d-flex align-items-center gap-2"
+           style="background: linear-gradient(90deg, #e8f4fd 0%, #dbeafe 100%); border-bottom: 2px solid #93c5fd;">
+        <i class="bi bi-arrow-up-right-square" style="color:#2563eb;"></i>
+        <h6 class="mb-0 small fw-bold" style="color:#1e40af;">Putaway Tasks</h6>
+        <span class="badge ms-1" style="background:#2563eb;">{{ items.length }}</span>
+        <span class="ms-auto small text-muted" *ngIf="placementOption === '1'">
+          <i class="bi bi-truck-flatbed me-1"></i>Loading Bay mode
+        </span>
+        <span class="ms-auto small text-muted" *ngIf="placementOption === '2'">
+          <i class="bi bi-building me-1"></i>Direct Location mode
+        </span>
+      </div>
+      <div class="card-body p-0" style="background:#f0f7ff;">
+        <table class="table table-sm mb-0" style="background:transparent;">
+          <thead style="background:#dbeafe;">
+            <tr>
+              <th class="small ps-3" style="color:#1e40af;">#</th>
+              <th class="small" style="color:#1e40af;">Item</th>
+              <th class="small" style="width:60px;color:#1e40af;">Qty</th>
+              <!-- <th class="small" style="width:120px;color:#1e40af;">Status</th> -->
+              <th class="small" style="width:120px;color:#1e40af;">Priority</th>
+              <th class="small" style="width:100px;color:#1e40af;">Est. Time (min)</th>
+            </tr>
+          </thead>
+          <tbody formArrayName="items">
+            <tr *ngFor="let item of items.controls; let i = index" [formGroupName]="i"
+                style="border-bottom:1px solid #bfdbfe;">
+              <td class="ps-3 text-muted small">{{ i + 1 }}</td>
+              <td>
+                <div class="small fw-semibold text-dark">{{ itemSearchTerms[i] || '—' }}</div>
+                <small class="text-muted">From: {{ getLoadingBayName() }}</small>
+              </td>
+              <td class="small">{{ item.get('quantity')?.value }}</td>
+              <!-- <td>
+                <select class="form-select form-select-sm" formControlName="putawayStatus">
+                  <option *ngFor="let s of putawayStatuses" [value]="s.id">{{ s.name }}</option>
+                </select>
+              </td> -->
+              <td>
+                <select class="form-select form-select-sm" formControlName="putawayPriority">
+                  <option *ngFor="let p of putawayPriorities" [value]="p.id">{{ p.name }}</option>
+                </select>
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  formControlName="estimatedTime"
+                  min="1"
+                  placeholder="30"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Additional Charges -->
-    <div class="card mb-3">
+    <!-- <div class="card mb-3">
       <div class="card-header bg-light py-2">
         <h6 class="mb-0 small">
           <i class="bi bi-plus-circle me-2"></i>
@@ -534,7 +591,7 @@
       </div>
     </div>
     </div>
-    </div>
+    </div> -->
     
     <!-- Barcode Generation Tasks (Compact) -->
     <div class="card mb-3" *ngIf="barcodeGenerationTasks.length > 0">

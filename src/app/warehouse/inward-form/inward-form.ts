@@ -85,6 +85,10 @@ export class InwardForm implements OnInit {
   data: any;
   invoice_pdf_id: any;
   companyData: any; // Store company information
+
+  // ── Putaway status & priority from API ────────────────────────────────────
+  putawayStatuses:   any[] = [];
+  putawayPriorities: any[] = [];
   constructor(
     private fb: FormBuilder,
     @Optional() public activeModal: NgbActiveModal,
@@ -151,6 +155,8 @@ export class InwardForm implements OnInit {
     this.loadWarehouseWorkers();
     this.initializeWorkflow();
     this.loadbay()
+    this.loadPutawayStatuses();
+    this.loadPutawayPriorities();
     // Load existing data if in edit mode, otherwise set up new record behavior
     if (this.editInwardId) {
       this.isEditMode = true;
@@ -170,6 +176,25 @@ loadbay(){
       this.loadingbayAreas=[]
     }
   })
+}
+
+loadPutawayStatuses(): void {
+  this.api.get('/invoice/list-putway-status/').subscribe((res: any) => {
+    if (res.status === 200) this.putawayStatuses = res.data || [];
+  });
+}
+
+loadPutawayPriorities(): void {
+  this.api.get('/invoice/list-putway-priority/').subscribe((res: any) => {
+    if (res.status === 200) this.putawayPriorities = res.data || [];
+  });
+}
+
+getLoadingBayName(): string {
+  const id = this.form?.get('loadingBayArea')?.value;
+  if (!id) return 'Loading Bay';
+  const bay = this.loadingbayAreas.find((b: any) => b.id == id);
+  return bay?.name || 'Loading Bay';
 }
 
 // Fetch company data
@@ -286,7 +311,11 @@ getcurrencysecond(){
       locationId: [null],
       barcode: [''],
       barcodeGenerated: [false],
-      barcodeCount: [0]
+      barcodeCount: [0],
+      // ── Putaway task fields ──────────────────────────────────────
+      putawayStatus:   [1],   // default: Pending
+      putawayPriority: [1],   // default: Normal
+      estimatedTime:   [30],  // default: 30 minutes
     });
   }
 
@@ -1546,38 +1575,28 @@ getcurrencysecond(){
       this.items.controls.forEach((control: AbstractControl, index: number) => {
         const item = control as FormGroup;
         const putawayTask = {
-          id: Date.now() + index,
-          date: this.form.get('date')?.value,
-          grnRef: this.form.get('grnNo')?.value,
-          itemId: item.get('itemId')?.value,
-          itemName: this.itemSearchTerms[index],
-          quantity: item.get('quantity')?.value,
-          fromLocation: 'Loading Bay',
-          fromLocationId: this.form.get('loadingBayArea')?.value, 
-          toLocation: '',
-          toLocationId: null, // To be assigned by warehouse manager
-          status: '1',
-          priority: this.form.get('itemProperties.isFragile')?.value ? '1' : '3',
-          priorityName: this.form.get('itemProperties.isFragile')?.value ? 'Normal' : 'High',
-          createdAt: new Date().toISOString(),
-          assignedWorker: null,
-          estimatedTime: 30, // minutes
+          itemId:          item.get('itemId')?.value,
+          itemName:        this.itemSearchTerms[index],
+          quantity:        item.get('quantity')?.value,
+          fromLocation:    'Loading Bay',
+          fromLocationId:  this.form.get('loadingBayArea')?.value,
+          status:          item.get('putawayStatus')?.value   ?? 1,
+          priority:        item.get('putawayPriority')?.value ?? 1,
+          estimatedTime:   item.get('estimatedTime')?.value   ?? 30,
+          barcode:         item.get('barcode')?.value         || '',
           barcodeGenerated: item.get('barcodeGenerated')?.value || false,
-          barcodeCount: item.get('barcodeCount')?.value || 0,
-          barcode: item.get('barcode')?.value || ''
-          };
-        
-        // Add to putaway tasks array
+          barcodeCount:    item.get('barcodeCount')?.value    || 0,
+        };
         putawayTasks.push(putawayTask);
-        
-        // Add to workflow steps
+
+        // Update workflow steps
         this.workflowSteps.push({
           id: Date.now() + index + 1000,
           name: `Putaway Task - ${this.itemSearchTerms[index]}`,
           status: 'pending',
           assignee: null,
-          estimatedTime: 30,
-          description: `Move ${item.get('quantity')?.value} units from ${this.form.get('loadingBayArea')?.value} to designated rack`,
+          estimatedTime: putawayTask.estimatedTime,
+          description: `Move ${item.get('quantity')?.value} units from Loading Bay to designated rack`,
           taskType: 'putaway',
           taskData: putawayTask
         });
