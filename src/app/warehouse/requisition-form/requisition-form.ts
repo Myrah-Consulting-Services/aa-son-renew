@@ -6,7 +6,7 @@ import { Api } from '../../core/services/api';
 import { Router, RouterModule } from '@angular/router';
 import { ToastService } from '../../core/services/toast.service';
 import * as pdfMake from 'pdfmake/build/pdfmake';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil, of } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs';
 
 
 export interface RequisitionItem {
@@ -290,14 +290,10 @@ export class RequisitionForm implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap((searchTerm: string) => {
         const term = (searchTerm || '').trim();
-        if (!term) {
-          this.searchResults = [];
-          this.showSearchResults = false;
-          return of(null);
-        }
         this.searchingItems = true;
-        return this.api.post('/items/list-item/s=' + encodeURIComponent(term) + '/', {
-          company: 1,
+        // Empty term → fetch all items (show on focus after clearing)
+        return this.api.post('/items/list-item/s=' + (term ? encodeURIComponent(term) : '') + '/', {
+          company: this.api.getCompanyId() ?? 1,
           warehouse: 1
         });
       }),
@@ -306,13 +302,13 @@ export class RequisitionForm implements OnInit, OnDestroy {
       next: (res: any) => {
         this.searchingItems = false;
         if (res?.status === 200) {
-          this.searchResults = res.data || [];
+          this.searchResults    = res.data || [];
           this.showSearchResults = this.searchResults.length > 0;
         }
       },
       error: () => {
-        this.searchingItems = false;
-        this.searchResults = [];
+        this.searchingItems    = false;
+        this.searchResults     = [];
         this.showSearchResults = false;
       }
     });
@@ -329,7 +325,26 @@ export class RequisitionForm implements OnInit, OnDestroy {
 
   onSearchFocus(itemIndex: number): void {
     this.activeSearchIndex = itemIndex;
-    this.showSearchResults = this.searchResults.length > 0;
+    // If we already have results, show them immediately
+    if (this.searchResults.length > 0) {
+      this.showSearchResults = true;
+      return;
+    }
+    // No results yet — load all items so dropdown is populated on first focus
+    this.searchingItems = true;
+    this.api.post('/items/list-item/s=/', {
+      company: this.api.getCompanyId() ?? 1,
+      warehouse: 1
+    }).subscribe({
+      next: (res: any) => {
+        this.searchingItems = false;
+        if (res?.status === 200) {
+          this.searchResults  = res.data || [];
+          this.showSearchResults = this.searchResults.length > 0;
+        }
+      },
+      error: () => { this.searchingItems = false; }
+    });
   }
 
   onSearchBlur(): void {
