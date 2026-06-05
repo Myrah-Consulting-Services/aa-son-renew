@@ -1,5 +1,5 @@
-import { Component, OnInit, Optional, Input, Output, EventEmitter, input, output } from '@angular/core';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
+import { Component, OnInit, Optional, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Api } from '../../core/services/api';
@@ -83,7 +83,7 @@ export interface Warehouse {
   templateUrl: './requisition-form.html',
   styleUrl: './requisition-form.scss'
 })
-export class RequisitionForm implements OnInit {
+export class RequisitionForm implements OnInit, OnDestroy {
   @Output() closeModal = new EventEmitter<void>();
   @Output() requisitionCreated = new EventEmitter<RequisitionResponse>();
   @Input() emitdata:any
@@ -103,10 +103,7 @@ export class RequisitionForm implements OnInit {
   itemUnits: { [index: number]: any[] } = {};
   itemSearchTerms: string[] = [];
 
-  warehouses: Warehouse[] = [
-    { id: 1, name: 'Main Warehouse' },
-    { id: 2, name: 'Showroom' }
-  ];
+  warehouses: Warehouse[] = [];
 
   // Search properties
   private searchSubject = new Subject<string>();
@@ -146,6 +143,7 @@ export class RequisitionForm implements OnInit {
     this.setCurrentDateTime();
     this.setCurrentUser();
     this.addItem();
+    this.loadWarehouses();
 
     if (this.emitdata) {
       this.getinward(this.emitdata);
@@ -270,6 +268,14 @@ export class RequisitionForm implements OnInit {
     this.api.post('/employee/list_employees/',{company:1}).subscribe((res: any) => {
       if (res.status === 200) {
         this.workers = res.data;
+      }
+    });
+  }
+
+  loadWarehouses(): void {
+    this.api.get('/warehouses/list-warehouse/').subscribe((res: any) => {
+      if (res.status === 200) {
+        this.warehouses = (res.data || []).map((w: any) => ({ id: w.id, name: w.name }));
       }
     });
   }

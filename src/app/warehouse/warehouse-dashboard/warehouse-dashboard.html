@@ -23,19 +23,33 @@
         </div>
       </div>
       <div class="header-actions">
-        <div class="btn-group btn-group-sm" role="group" aria-label="Range">
-          <button type="button" class="btn btn-secondary" [class.active]="selectedRange==='7d'" (click)="setRange('7d')">7D</button>
-          <button type="button" class="btn btn-secondary" [class.active]="selectedRange==='30d'" (click)="setRange('30d')">30D</button>
-          <button type="button" class="btn btn-secondary" [class.active]="selectedRange==='90d'" (click)="setRange('90d')">90D</button>
-        </div>
-        <div class="input-group input-group-sm" style="width: 260px;">
-          <span class="input-group-text"><i class="bi bi-search"></i></span>
-          <input type="text" class="form-control" placeholder="Search items, customers..." (input)="onSearch($event.target.value)">
-        </div>
-        <button class="btn btn-secondary btn-sm" (click)="refreshNow()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
-        <div class="form-check form-switch m-0">
-          <input class="form-check-input" type="checkbox" id="autoRefresh" [checked]="autoRefreshEnabled" (change)="toggleAutoRefresh()">
-          <label class="form-check-label small" for="autoRefresh">Auto-refresh</label>
+        <!-- Custom Date Filter only -->
+        <div class="date-filter-group">
+          <div class="date-filter-inputs">
+            <div class="date-input-wrap">
+              <label class="date-label">From</label>
+              <input
+                type="date"
+                class="form-control form-control-sm"
+                [(ngModel)]="filterStartDate"
+                [max]="filterEndDate"
+              >
+            </div>
+            <span class="date-sep">—</span>
+            <div class="date-input-wrap">
+              <label class="date-label">To</label>
+              <input
+                type="date"
+                class="form-control form-control-sm"
+                [(ngModel)]="filterEndDate"
+                [min]="filterStartDate"
+              >
+            </div>
+            <button class="btn btn-primary btn-sm" (click)="applyDateFilter()" [disabled]="dashboardLoading">
+              <span *ngIf="dashboardLoading" class="spinner-border spinner-border-sm me-1" role="status"></span>
+              <i *ngIf="!dashboardLoading" class="bi bi-search me-1"></i>Apply
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -51,7 +65,7 @@
         </div>
         <div class="stat-content">
           <h3>Warehouses</h3>
-          <p class="stat-number">{{ warehouses.length }}</p>
+          <p class="stat-number">{{ dashboardKpis.warehouses ?? warehouses.length }}</p>
         </div>
       </div>
 
@@ -61,7 +75,7 @@
         </div>
         <div class="stat-content">
           <h3>Rack Locations</h3>
-          <p class="stat-number">{{ locations.length }}</p>
+          <p class="stat-number">{{ dashboardKpis.rack_locations ?? locations.length }}</p>
         </div>
       </div>
 
@@ -71,7 +85,7 @@
         </div>
         <div class="stat-content">
           <h3>Total Stock Items</h3>
-          <p class="stat-number">{{ stock.length }}</p>
+          <p class="stat-number">{{ dashboardKpis.total_stock_items ?? stock.length }}</p>
         </div>
       </div>
 
@@ -81,7 +95,7 @@
         </div>
         <div class="stat-content">
           <h3>Outward Transactions</h3>
-          <p class="stat-number">{{ outwardTransactions.length }}</p>
+          <p class="stat-number">{{ dashboardKpis.outward_transactions ?? outwardTransactions.length }}</p>
         </div>
       </div>
     </div>
@@ -93,21 +107,72 @@
     <div class="process-flow-section">
       <h2 class="section-title"><i class="bi bi-diagram-2 me-2"></i>Warehouse Process Flow</h2>
       <div class="process-flow-grid">
-        <div class="process-card" *ngFor="let step of processFlow; let i = index"
-             [class.border-primary]="step.status === 'active'"
-             (click)="navigateToProcessStep(step)"
-             style="cursor: pointer;">
+
+        <!-- Loading Bay -->
+        <div class="process-card border-primary" (click)="navigateTo('inward')" style="cursor:pointer;">
           <div class="process-card-body">
-            <div class="process-icon">
-              <i class="bi bi-{{ step.icon }}"></i>
-            </div>
-            <h6 class="process-title">{{ step.name }}</h6>
-            <div class="badge bg-primary">{{ step.count }} {{ step.count === 1 ? 'item' : 'items' }}</div>
+            <div class="process-icon"><i class="bi bi-truck-flatbed"></i></div>
+            <h6 class="process-title">Loading Bay</h6>
+            <div class="badge bg-primary">{{ processFlowCounts.loading_bay }} </div>
+            <!-- <div class="badge bg-primary">{{ processFlowCounts.loading_bay }} {{ processFlowCounts.loading_bay === 1 ? 'item' : 'items' }}</div> -->
           </div>
-          <div *ngIf="i < processFlow.length - 1" class="process-arrow">
-            <i class="bi bi-arrow-right"></i>
+          <div class="process-arrow"><i class="bi bi-arrow-right"></i></div>
+        </div>
+
+        <!-- Putaway Tasks -->
+        <div class="process-card border-primary" (click)="navigateTo('putaway-tasks')" style="cursor:pointer;">
+          <div class="process-card-body">
+            <div class="process-icon"><i class="bi bi-arrow-up-right-square"></i></div>
+            <h6 class="process-title">Putaway Tasks</h6>
+            <div class="badge bg-primary">{{ processFlowCounts.putaway_tasks }} </div>
+            <!-- <div class="badge bg-primary">{{ processFlowCounts.putaway_tasks }} {{ processFlowCounts.putaway_tasks === 1 ? 'item' : 'items' }}</div> -->
+          </div>
+          <div class="process-arrow"><i class="bi bi-arrow-right"></i></div>
+        </div>
+
+        <!-- Rack Storage -->
+        <div class="process-card border-primary" (click)="navigateTo('stock')" style="cursor:pointer;">
+          <div class="process-card-body">
+            <div class="process-icon"><i class="bi bi-grid-3x3"></i></div>
+            <h6 class="process-title">Rack Storage</h6>
+            <div class="badge bg-primary">{{ processFlowCounts.rack_storage }} </div>
+            <!-- <div class="badge bg-primary">{{ processFlowCounts.rack_storage }} {{ processFlowCounts.rack_storage === 1 ? 'item' : 'items' }}</div> -->
+          </div>
+          <div class="process-arrow"><i class="bi bi-arrow-right"></i></div>
+        </div>
+
+        <!-- Rack Movement -->
+        <div class="process-card border-primary" (click)="navigateTo('rack-movements')" style="cursor:pointer;">
+          <div class="process-card-body">
+            <div class="process-icon"><i class="bi bi-arrow-left-right"></i></div>
+            <h6 class="process-title">Rack Movement</h6>
+            <div class="badge bg-primary">{{ processFlowCounts.rack_movement }} </div>
+            <!-- <div class="badge bg-primary">{{ processFlowCounts.rack_movement }} {{ processFlowCounts.rack_movement === 1 ? 'item' : 'items' }}</div> -->
+          </div>
+          <div class="process-arrow"><i class="bi bi-arrow-right"></i></div>
+        </div>
+
+        <!-- Picking Tasks -->
+        <div class="process-card border-primary" (click)="navigateTo('outward')" style="cursor:pointer;">
+          <div class="process-card-body">
+            <div class="process-icon"><i class="bi bi-box-arrow-down"></i></div>
+            <h6 class="process-title">Picking Tasks</h6>
+            <div class="badge bg-primary">{{ processFlowCounts.picking_tasks }} </div>
+            <!-- <div class="badge bg-primary">{{ processFlowCounts.picking_tasks }} {{ processFlowCounts.picking_tasks === 1 ? 'item' : 'items' }}</div> -->
+          </div>
+          <div class="process-arrow"><i class="bi bi-arrow-right"></i></div>
+        </div>
+
+        <!-- Dispatch -->
+        <div class="process-card border-primary" (click)="navigateTo('outward')" style="cursor:pointer;">
+          <div class="process-card-body">
+            <div class="process-icon"><i class="bi bi-truck"></i></div>
+            <h6 class="process-title">Dispatch</h6>
+            <div class="badge bg-primary">{{ processFlowCounts.dispatch }} </div>
+            <!-- <div class="badge bg-primary">{{ processFlowCounts.dispatch }} {{ processFlowCounts.dispatch === 1 ? 'item' : 'items' }}</div> -->
           </div>
         </div>
+
       </div>
       
       <!-- Workflow Statistics -->
@@ -168,7 +233,10 @@
         <!-- Low Stock Alerts -->
         <div class="alert-card">
           <div class="card-header">
-            <h3 class="card-title"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Low Stock Alerts</h3>
+            <h3 class="card-title">
+              <i class="bi bi-exclamation-triangle text-warning me-2"></i>Low Stock Alerts
+              <span *ngIf="lowStockAlerts.total_alerts > 0" class="badge bg-danger ms-2">{{ lowStockAlerts.total_alerts }}</span>
+            </h3>
           </div>
           <div class="card-body">
             <div *ngIf="getLowStockItems().length === 0" class="empty-state">
@@ -177,8 +245,8 @@
             </div>
             <div *ngFor="let item of getLowStockItems()" class="alert-item">
               <div class="alert-content">
-                <div class="alert-title">Item ID: {{ item.itemId }}</div>
-                <small class="alert-subtitle">Quantity: {{ item.quantity }} units</small>
+                <div class="alert-title">{{ item.item_name || item.name || ('Item #' + item.item_id) }}</div>
+                <small class="alert-subtitle">Qty: {{ item.quantity ?? item.current_stock ?? 0 }} units</small>
               </div>
               <button class="btn btn-primary btn-sm" (click)="navigateTo('inward/new')">
                 <i class="bi bi-plus me-1"></i>Restock
@@ -199,12 +267,25 @@
             </div>
             <div *ngFor="let transaction of getRecentTransactions()" class="activity-item">
               <div class="activity-content">
-                <div class="activity-title">Transaction #{{ transaction.id }}</div>
-                <small class="activity-subtitle">{{ transaction.date | date:'shortDate' }}</small>
+                <div class="activity-title">
+                  {{ transaction.reference_no || ('Transaction #' + transaction.id) }}
+                </div>
+                <small class="activity-subtitle">
+                  {{ transaction.date | date:'shortDate' }}
+                  <span *ngIf="transaction.warehouse" class="ms-1 text-muted">· {{ transaction.warehouse }}</span>
+                </small>
               </div>
               <div class="activity-meta">
-                <span class="badge bg-info">{{ transaction.items?.length || 0 }} items</span>
-                <div class="small text-muted">{{ transaction.status || 'Completed' }}</div>
+                <span class="badge"
+                  [ngClass]="{
+                    'bg-success': transaction.activity_type === 'inward',
+                    'bg-danger':  transaction.activity_type === 'outward',
+                    'bg-info':    transaction.activity_type === 'requisition',
+                    'bg-warning text-dark': transaction.activity_type === 'relocation'
+                  }">
+                  {{ transaction.activity_type || 'activity' }}
+                </span>
+                <div class="small text-muted mt-1">{{ transaction.status || 'Completed' }}</div>
               </div>
             </div>
           </div>
@@ -226,7 +307,10 @@
             </div>
             <ul class="list-group list-group-flush">
               <li *ngFor="let it of getTopFastMovingItems()" class="list-group-item">
-                <span>{{ it.name }}</span>
+                <div>
+                  <div>{{ it.name }}</div>
+                  <small *ngIf="it.sku" class="text-muted">SKU: {{ it.sku }}</small>
+                </div>
                 <span class="badge bg-success">{{ it.qty }}</span>
               </li>
             </ul>
@@ -244,7 +328,10 @@
             </div>
             <ul class="list-group list-group-flush">
               <li *ngFor="let s of getSlowMovingItems()" class="list-group-item">
-                <span>{{ s.name || s.itemName }}</span>
+                <div>
+                  <div>{{ s.name || s.itemName }}</div>
+                  <small *ngIf="s.sku" class="text-muted">SKU: {{ s.sku }}</small>
+                </div>
                 <span class="badge bg-warning text-dark">{{ s.quantity }}</span>
               </li>
             </ul>

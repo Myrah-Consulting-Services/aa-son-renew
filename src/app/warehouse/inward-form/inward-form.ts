@@ -1139,6 +1139,18 @@ getcurrencysecond(){
       data.supplier = data.supplierId;
       data.poNo = this.getSelectedPoNumbers();
       data.totalAmount = this.calculateTotalAmount();
+
+      // Propagate global locationId and warehouseId into each item
+      // API expects locationId inside every item object
+      if (data.items && Array.isArray(data.items)) {
+        const globalWarehouseId = data.warehouseId;
+        const globalLocationId  = data.locationId;
+        data.items = data.items.map((item: any) => ({
+          ...item,
+          warehouseId: item.warehouseId || globalWarehouseId || null,
+          locationId:  item.locationId  || globalLocationId  || null,
+        }));
+      }
       
       // Add inward ID for update operations
       if (this.isEditMode && this.inwardId) {

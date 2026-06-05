@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Api } from '../../core/services/api';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 @Component({
   selector: 'app-eosb-accrual-dashboard',
@@ -11,262 +12,208 @@ import { Api } from '../../core/services/api';
   styleUrls: ['./eosb-accrual-dashboard.component.scss']
 })
 export class EosbAccrualDashboardComponent implements OnInit {
-  
-  // Forms
+
+  // ── Forms ─────────────────────────────────────────────────────────────────
   filterForm!: FormGroup;
-  
-  // Data
-  employees: any[] = [];
+
+  // ── Data ─────────────────────────────────────────────────────────────────
+  accrualData: any[]       = [];
   filteredEmployees: any[] = [];
-  accrualData: any[] = [];
-  
-  // UI States
-  isLoading: boolean = false;
-  isGeneratingReport: boolean = false;
-  showFilters: boolean = true;
-  
-  // Pagination
-  currentPage: number = 0;
-  pageSize: number = 25;
-  totalItems: number = 0;
-  Math=Math
-  // Filter Options
-  departmentOptions: any[] = [];
-  designationOptions: any[] = [];
-  serviceYearRanges = [
-    { min: 0, max: 1, label: '0-1 years' },
-    { min: 1, max: 3, label: '1-3 years' },
-    { min: 3, max: 5, label: '3-5 years' },
-    { min: 5, max: 10, label: '5-10 years' },
-    { min: 10, max: 999, label: '10+ years' }
+
+  // ── UI State ─────────────────────────────────────────────────────────────
+  isLoading            = false;
+  isGeneratingReport   = false;
+  showFilters          = true;
+
+  // ── Pagination (from API) ─────────────────────────────────────────────────
+  currentPage  = 1;
+  pageSize     = 20;
+  totalItems   = 0;
+  totalPages   = 1;
+  Math         = Math;
+
+  // ── Filter dropdowns ──────────────────────────────────────────────────────
+  departmentOptions:   any[] = [];
+  designationOptions:  any[] = [];
+  serviceYearOptions   = [
+    { value: 'all',    label: 'All'      },
+    { value: 'less1',  label: '< 1 year' },
+    { value: '1to3',   label: '1–3 years'},
+    { value: '3to5',   label: '3–5 years'},
+    { value: '5to10',  label: '5–10 years'},
+    { value: 'over10', label: '10+ years' },
   ];
-  
-  // Statistics
-  totalAccruedGratuity: number = 0;
-  averageAccruedGratuity: number = 0;
-  totalEmployees: number = 0;
-  eligibleEmployees: number = 0;
-  
-  // Settings
+
+  // ── Summary (from API) ───────────────────────────────────────────────────
+  totalAccruedGratuity  = 0;
+  averageAccruedGratuity = 0;
+  totalEmployees        = 0;
+  eligibleEmployees     = 0;
+  showingLabel          = '';
+
+  // ── Search debounce ──────────────────────────────────────────────────────
+  private searchSubject = new Subject<string>();
+
+  // ── Settings (display only) ──────────────────────────────────────────────
   gratuitySettings = {
-    basicSalaryPercentage: 21, // 21 days per year (UAE standard)
-    maxYears: 5, // Maximum years for calculation
+    basicSalaryPercentage: 21,
+    maxYears: 5,
     uaeLawCompliant: true
   };
 
-  constructor(
-    private fb: FormBuilder,
-    private api: Api
-  ) {
+  constructor(private fb: FormBuilder, private api: Api) {
     this.initializeForms();
   }
 
-  getcurrency() {
-    return this.api.getcurrencies();
-  }
+  getcurrency(): string { return this.api.getcurrencies() || 'AED'; }
 
   ngOnInit(): void {
-    this.loadEmployees();
+    this.loadDepartments();
+    this.loadDesignations();
+    this.loadAccrualData();
+
+    // Debounce the search box
+    this.searchSubject.pipe(debounceTime(400), distinctUntilChanged())
+      .subscribe(() => { this.currentPage = 1; this.loadAccrualData(); });
   }
 
   private initializeForms(): void {
     this.filterForm = this.fb.group({
-      searchTerm: [''],
-      department: [''],
-      designation: [''],
-      serviceYearRange: [''],
-      minBasicSalary: [''],
-      maxBasicSalary: [''],
+      search:          [''],
+      department_id:   [''],
+      designation_id:  [''],
+      service_years:   ['all'],
       calculationDate: [new Date().toISOString().split('T')[0]]
     });
   }
 
-  loadEmployees(): void {
+  // ── Dropdown loaders ─────────────────────────────────────────────────────
+
+  loadDepartments(): void {
+    this.api.get('/employee/list_departments/').subscribe({
+      next: (res: any) => {
+        if (res.status === 200 || res.data) {
+          this.departmentOptions = res.data || [];
+        }
+      }
+    });
+  }
+
+  loadDesignations(): void {
+    this.api.get('/employee/list_designations/').subscribe({
+      next: (res: any) => {
+        if (res.status === 200 || res.data) {
+          this.designationOptions = res.data || [];
+        }
+      }
+    });
+  }
+
+  // ── Main API call ─────────────────────────────────────────────────────────
+
+  loadAccrualData(): void {
     this.isLoading = true;
-    // Load active employees from API
-    this.api.post('/attendance/gratuity-accrual-report/', { 
-      company_id: this.api.getCompanyId(),
-      calculation_date: this.filterForm.get('calculationDate')?.value
-    }).subscribe({
-      next: (response: any) => {
-        if (response.status == 200) {
-          this.employees = response.data;
-          this.calculateAccrualForAllEmployees();
-        }
-      },
-      error: (error) => {
-        console.error('Error loading employees:', error);
-      },
-      complete: () => {
+    const f = this.filterForm.value;
+
+    const payload: any = {
+      company_id:       this.api.getCompanyId() ?? 1,
+      calculation_date: f.calculationDate,
+      page:             this.currentPage,
+      page_size:        this.pageSize,
+    };
+
+    if (f.search?.trim())        payload['search']         = f.search.trim();
+    if (f.department_id)         payload['department_id']  = +f.department_id;
+    if (f.designation_id)        payload['designation_id'] = +f.designation_id;
+    if (f.service_years && f.service_years !== 'all')
+                                 payload['service_years']  = f.service_years;
+    else                         payload['service_years']  = 'all';
+
+    this.api.post('/attendance/gratuity-accrual-report/', payload).subscribe({
+      next: (res: any) => {
         this.isLoading = false;
-      }
-    });
-  }
+        if (res.status === '200' || res.status === 200) {
+          this.accrualData       = res.data || [];
+          this.filteredEmployees = [...this.accrualData];
 
+          // Summary from API
+          const s = res.summary || {};
+          this.totalEmployees         = s.total_employees       ?? 0;
+          this.eligibleEmployees      = s.eligible_employees    ?? 0;
+          this.totalAccruedGratuity   = s.total_accrued_gratuity ?? 0;
+          this.averageAccruedGratuity = s.average_accrued_gratuity ?? 0;
 
-  calculateAccrualForAllEmployees(): void {
-    const calculationDate = new Date(this.filterForm.get('calculationDate')?.value);
-    
-    this.accrualData = this.employees.map(employee => {
-      const joiningDate = new Date(employee.joining_date);
-      const serviceYears = this.calculateServiceYears(joiningDate, calculationDate);
-      const accruedGratuity = this.calculateAccruedGratuity(employee.basic_salary, serviceYears);
-      
-      return {
-        ...employee,
-        serviceYears: serviceYears,
-        accruedGratuity: accruedGratuity,
-        eligible: serviceYears >= 1,
-        monthlyAccrual: this.calculateMonthlyAccrual(employee.basic_salary),
-        yearlyAccrual: this.calculateYearlyAccrual(employee.basic_salary)
-      };
-    });
-    
-    this.updateStatistics();
-    this.applyFilters();
-  }
+          // Pagination from API
+          const p = res.pagination || {};
+          this.currentPage = p.page       ?? 1;
+          this.pageSize    = p.page_size  ?? 20;
+          this.totalItems  = p.total_count ?? this.accrualData.length;
+          this.totalPages  = p.total_pages ?? 1;
 
-  private calculateServiceYears(joiningDate: Date, calculationDate: Date): number {
-    const timeDiff = calculationDate.getTime() - joiningDate.getTime();
-    const daysDiff = timeDiff / (1000 * 3600 * 24);
-    return daysDiff / 365.25;
-  }
-
-  private calculateAccruedGratuity(basicSalary: number, serviceYears: number): number {
-    if (serviceYears < 1) {
-      return 0;
-    }
-
-    let gratuityAmount = 0;
-    const fullYears = Math.floor(serviceYears);
-    const finalYearFraction = serviceYears - fullYears;
-
-    if (fullYears <= this.gratuitySettings.maxYears) {
-      // First 5 years: 21 days per year
-      const fullYearsAmount = (basicSalary / 30) * this.gratuitySettings.basicSalaryPercentage * fullYears;
-      const finalYearAmount = (basicSalary / 30) * this.gratuitySettings.basicSalaryPercentage * finalYearFraction;
-      gratuityAmount = fullYearsAmount + finalYearAmount;
-    } else {
-      // Beyond 5 years: 21 days for first 5 + 30 days for additional
-      const firstFiveYears = (basicSalary / 30) * this.gratuitySettings.basicSalaryPercentage * this.gratuitySettings.maxYears;
-      const additionalYears = Math.max(fullYears - this.gratuitySettings.maxYears, 0);
-      const additionalAmount = (basicSalary / 30) * 30 * additionalYears;
-      const finalYearAmount = (basicSalary / 30) * 30 * finalYearFraction;
-      gratuityAmount = firstFiveYears + additionalAmount + finalYearAmount;
-    }
-    return gratuityAmount;
-  }
-
-  private calculateMonthlyAccrual(basicSalary: number): number {
-    return (basicSalary / 30) * this.gratuitySettings.basicSalaryPercentage;
-  }
-
-  private calculateYearlyAccrual(basicSalary: number): number {
-    return (basicSalary / 30) * this.gratuitySettings.basicSalaryPercentage * 12;
-  }
-
-  updateStatistics(): void {
-    this.totalEmployees = this.accrualData.length;
-    this.eligibleEmployees = this.accrualData.filter(emp => emp.eligible).length;
-    this.totalAccruedGratuity = this.accrualData.reduce((total, emp) => total + emp.accruedGratuity, 0);
-    this.averageAccruedGratuity = this.eligibleEmployees > 0 ? this.totalAccruedGratuity / this.eligibleEmployees : 0;
-  }
-
-  applyFilters(): void {
-    const filters = this.filterForm.value;
-    
-    this.filteredEmployees = this.accrualData.filter(employee => {
-      // Search term filter
-      if (filters.searchTerm && !employee.employee_name.toLowerCase().includes(filters.searchTerm.toLowerCase())) {
-        return false;
-      }
-      
-      // Department filter
-      if (filters.department && employee.department !== filters.department) {
-        return false;
-      }
-      
-      // Designation filter
-      if (filters.designation && employee.designation !== filters.designation) {
-        return false;
-      }
-      
-      // Service year range filter
-      if (filters.serviceYearRange) {
-        const range = this.serviceYearRanges.find(r => r.label === filters.serviceYearRange);
-        if (range && (employee.serviceYears < range.min || employee.serviceYears >= range.max)) {
-          return false;
+          this.showingLabel = res.showing ?? '';
         }
-      }
-      
-      // Basic salary range filter
-      if (filters.minBasicSalary && employee.basic_salary < filters.minBasicSalary) {
-        return false;
-      }
-      if (filters.maxBasicSalary && employee.basic_salary > filters.maxBasicSalary) {
-        return false;
-      }
-      
-      return true;
+      },
+      error: () => { this.isLoading = false; }
     });
-    
-    this.totalItems = this.filteredEmployees.length;
-    this.currentPage = 0;
+  }
+
+  // ── Filter events ─────────────────────────────────────────────────────────
+
+  onSearchInput(): void {
+    this.searchSubject.next(this.filterForm.get('search')?.value ?? '');
   }
 
   onFilterChange(): void {
-    this.applyFilters();
+    this.currentPage = 1;
+    this.loadAccrualData();
   }
 
   clearFilters(): void {
-    this.filterForm.reset();
     this.filterForm.patchValue({
+      search:         '',
+      department_id:  '',
+      designation_id: '',
+      service_years:  'all',
       calculationDate: new Date().toISOString().split('T')[0]
     });
-    this.applyFilters();
+    this.currentPage = 1;
+    this.loadAccrualData();
   }
 
-  onPageChange(event: any): void {
-    this.currentPage = event.pageIndex;
-    this.pageSize = event.pageSize;
+  // ── Pagination ─────────────────────────────────────────────────────────────
+
+  onPageChange(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.loadAccrualData();
   }
 
-  getPaginatedEmployees(): any[] {
-    const startIndex = this.currentPage * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    return this.filteredEmployees.slice(startIndex, endIndex);
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.loadAccrualData();
   }
+
+  // ── Kept intact ────────────────────────────────────────────────────────────
 
   generateAccrualReport(): void {
     this.isGeneratingReport = true;
-    
     const reportData = {
-      company_id: this.api.getCompanyId(),
-      calculation_date: this.filterForm.get('calculationDate')?.value,
-      filters: this.filterForm.value,
-      total_employees: this.totalEmployees,
-      eligible_employees: this.eligibleEmployees,
-      total_accrued_gratuity: this.totalAccruedGratuity,
+      company_id:               this.api.getCompanyId(),
+      calculation_date:         this.filterForm.get('calculationDate')?.value,
+      filters:                  this.filterForm.value,
+      total_employees:          this.totalEmployees,
+      eligible_employees:       this.eligibleEmployees,
+      total_accrued_gratuity:   this.totalAccruedGratuity,
       average_accrued_gratuity: this.averageAccruedGratuity,
-      employee_data: this.filteredEmployees
+      employee_data:            this.filteredEmployees
     };
-
     this.api.post('/payroll/generate-accrual-report/', reportData).subscribe({
-      next: (response: any) => {
-        if (response.status === 200) {
-          alert('Accrual report generated successfully!');
-          this.downloadAccrualReport();
-        } else {
-          alert('Error generating accrual report.');
-        }
+      next: (res: any) => {
+        if (res.status === 200) { alert('Accrual report generated successfully!'); this.downloadAccrualReport(); }
+        else { alert('Error generating accrual report.'); }
       },
-      error: (error) => {
-        console.error('Error generating report:', error);
-        alert('Error generating accrual report. Please try again.');
-      },
-      complete: () => {
-        this.isGeneratingReport = false;
-      }
+      error: () => { alert('Error generating accrual report. Please try again.'); },
+      complete: () => { this.isGeneratingReport = false; }
     });
   }
 
@@ -276,78 +223,57 @@ export class EosbAccrualDashboardComponent implements OnInit {
   }
 
   private generateCSV(): string {
+    const curr = this.getcurrency();
     const headers = [
-      'Employee ID',
-      'Employee Name',
-      'Department',
-      'Designation',
-      'Joining Date',
-      `Basic Salary (${this.getcurrency()})`,
-      `Gross Salary (${this.getcurrency()})`,
-      'Service Years',
-      `Monthly Accrual (${this.getcurrency()})`,
-      `Yearly Accrual (${this.getcurrency()})`,
-      `Total Accrued Gratuity (${this.getcurrency()})`,
-      'Eligible for EOSB',
-      'Calculation Date'
+      'Employee ID','Employee Name','Department','Designation','Joining Date',
+      `Basic Salary (${curr})`,`Gross Salary (${curr})`,'Service Years',
+      `Monthly Accrual (${curr})`,`Yearly Accrual (${curr})`,`Total Accrued (${curr})`,
+      'Eligible for EOSB','Status','Calculation Date'
     ];
-
-    const rows = this.filteredEmployees.map(employee => [
-      employee.employee_id,
-      employee.employee_name,
-      employee.department || 'N/A',
-      employee.designation || 'N/A',
-      employee.joining_date,
-      employee.basic_salary,
-      employee.gross_salary,
-      employee.serviceYears.toFixed(2),
-      employee.monthlyAccrual.toFixed(2),
-      employee.yearlyAccrual.toFixed(2),
-      employee.accruedGratuity.toFixed(2),
-      employee.eligible ? 'Yes' : 'No',
+    const rows = this.filteredEmployees.map((e: any) => [
+      e.employee_id, e.employee_name, e.department || 'N/A', e.designation || 'N/A',
+      e.joining_date, e.basic_salary, e.gross_salary,
+      (e.service_years ?? 0).toFixed(2),
+      (e.monthly_accrual ?? 0).toFixed(2),
+      (e.yearly_accrual ?? 0).toFixed(2),
+      (e.accrued_gratuity ?? e.total_accrued ?? 0).toFixed(2),
+      e.eligible ? 'Yes' : 'No',
+      e.status ?? '',
       this.filterForm.get('calculationDate')?.value
     ]);
-
-    return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   }
 
   private downloadCSV(content: string, filename: string): void {
-    const blob = new Blob([content], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
+    const blob  = new Blob([content], { type: 'text/csv' });
+    const url   = window.URL.createObjectURL(blob);
+    const link  = document.createElement('a');
+    link.href     = url;
     link.download = filename;
     link.click();
     window.URL.revokeObjectURL(url);
   }
 
-  refreshData(): void {
-    this.calculateAccrualForAllEmployees();
-  }
-
-  toggleFilters(): void {
-    this.showFilters = !this.showFilters;
-  }
+  refreshData(): void { this.currentPage = 1; this.loadAccrualData(); }
+  toggleFilters(): void { this.showFilters = !this.showFilters; }
 
   getCurrencyFormat(amount: number): string {
-    const code = this.getcurrency() || 'AED';
+    const code = this.getcurrency();
     return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: code,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+      style: 'currency', currency: code,
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    }).format(amount || 0);
   }
 
   getServiceYearClass(serviceYears: number): string {
-    if (serviceYears < 1) return 'text-danger';
-    if (serviceYears < 3) return 'text-warning';
-    if (serviceYears < 5) return 'text-info';
+    if (serviceYears < 1)  return 'text-danger';
+    if (serviceYears < 3)  return 'text-warning';
+    if (serviceYears < 5)  return 'text-info';
     if (serviceYears < 10) return 'text-primary';
     return 'text-success';
   }
 
   getEligibilityBadge(eligible: boolean): string {
-    return eligible ? 'badge-success' : 'badge-danger';
+    return eligible ? 'completed' : 'rejected';
   }
-} 
+}

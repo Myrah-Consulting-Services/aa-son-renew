@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Api } from '../../core/services/api';
 
 @Component({
   selector: 'app-warehouse-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './warehouse-dashboard.html',
   styleUrl: './warehouse-dashboard.scss'
 })
@@ -17,11 +18,44 @@ export class WarehouseDashboard implements OnInit {
   outwardTransactions: any[] = [];
   damages: any[] = [];
   requisitions: any[] = [];
+
   // Dashboard UI state (single page)
   selectedRange: '7d' | '30d' | '90d' = '7d';
   searchTerm: string = '';
   autoRefreshEnabled: boolean = false;
   private autoRefreshTimer: any = null;
+
+  // ── Custom date filter ──────────────────────────────────────────────────────
+  filterStartDate: string = '';
+  filterEndDate: string = '';
+  dashboardLoading = false;
+
+  // ── Data from dashboard API ─────────────────────────────────────────────────
+  dashboardKpis: any = { warehouses: 0, rack_locations: 0, total_stock_items: 0, outward_transactions: 0 };
+  processFlowCards: any[] = [];
+  processFlowCounts: {
+    loading_bay: number;
+    putaway_tasks: number;
+    rack_storage: number;
+    rack_movement: number;
+    picking_tasks: number;
+    dispatch: number;
+  } = {
+    loading_bay: 0,
+    putaway_tasks: 0,
+    rack_storage: 0,
+    rack_movement: 0,
+    picking_tasks: 0,
+    dispatch: 0
+  };
+  putawayStatistics: any = null;
+  rackMovementsStatistics: any = null;
+  pickingStatistics: any = null;
+  loadingBayStatus: any[] = [];
+  lowStockAlerts: any = { total_alerts: 0, critical_count: 0, warning_count: 0, items: [] };
+  recentActivity: any[] = [];
+  fastMovingItems: any[] = [];
+  slowMovingItems: any[] = [];
 
   // Workflow status tracking
   workflowStats = {
@@ -100,9 +134,106 @@ export class WarehouseDashboard implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Default date range: last 30 days
+    const range = this.svc.getDateRange();
+    this.filterStartDate = range.start_date;
+    this.filterEndDate = range.end_date;
+
+    this.loadDashboardData();
     this.loadData();
-    this.loadWorkflowStats();
   }
+
+  // ── New single-API dashboard loader ────────────────────────────────────────
+
+  loadDashboardData() {
+    if (!this.filterStartDate || !this.filterEndDate) return;
+    this.dashboardLoading = true;
+
+    const payload = {
+      company: this.svc.getCompanyId() ?? 1,
+      warehouse: null,
+      start_date: this.filterStartDate,
+      end_date: this.filterEndDate
+    };
+
+    this.svc.post('/warehouses/warehouse-dashboard/', payload).subscribe({
+      next: (res: any) => {
+        this.dashboardLoading = false;
+        if (res.status === 200) {
+          // KPIs
+          this.dashboardKpis = res.kpis || this.dashboardKpis;
+
+          // Sync warehouses / locations / stock counts for existing template bindings
+          this.warehouses = Array(this.dashboardKpis.warehouses).fill({});
+          this.locations  = Array(this.dashboardKpis.rack_locations).fill({});
+          this.stock      = Array(this.dashboardKpis.total_stock_items).fill({});
+          this.outwardTransactions = Array(this.dashboardKpis.outward_transactions).fill({});
+
+          // Process flow counts — stored in a flat object, bound directly in HTML
+          this.processFlowCards = res.process_flow_cards || [];
+          const pfc = res.process_flow_counts || {};
+          const cardOverrides: Record<string, number> = {};
+          this.processFlowCards.forEach((c: any) => { cardOverrides[c.key] = c.count; });
+          this.processFlowCounts = {
+            loading_bay:   cardOverrides['loading_bay']   ?? pfc.loading_bay   ?? 0,
+            putaway_tasks: cardOverrides['putaway_tasks'] ?? pfc.putaway_tasks  ?? 0,
+            rack_storage:  cardOverrides['rack_storage']  ?? pfc.rack_storage   ?? 0,
+            rack_movement: cardOverrides['rack_movement'] ?? pfc.rack_movement  ?? 0,
+            picking_tasks: cardOverrides['picking_tasks'] ?? pfc.picking_tasks  ?? 0,
+            dispatch:      cardOverrides['dispatch']      ?? pfc.dispatch       ?? 0,
+          };
+
+          // Workflow stats
+          const pf = res.process_flow || {};
+          this.workflowStats.putawayTasks.pending  = pf.putaway_tasks_pending  ?? 0;
+          this.workflowStats.rackMovements.pending = pf.rack_movements_pending ?? 0;
+          this.workflowStats.pickingTasks.pending  = pf.picking_tasks_pending  ?? 0;
+          this.workflowStats.loadingBay.utilization = pf.loading_bay_utilization_percent ?? 0;
+
+          // Putaway statistics
+          if (res.putaway_statistics) {
+            this.putawayStatistics = res.putaway_statistics;
+            const byStatus = res.putaway_statistics.by_putaway_status || [];
+            const completed = byStatus.find((s: any) => s.putaway_status === 'Completed');
+            const inProgress = byStatus.find((s: any) => s.putaway_status === 'In Progress');
+            this.workflowStats.putawayTasks.completed  = completed?.count  ?? 0;
+            this.workflowStats.putawayTasks.inProgress = inProgress?.count ?? 0;
+          }
+
+          // Picking statistics
+          if (res.picking_statistics) {
+            this.pickingStatistics = res.picking_statistics;
+            this.workflowStats.pickingTasks.pending = res.picking_statistics.pending ?? 0;
+          }
+
+          // Rack movements statistics
+          this.rackMovementsStatistics = res.rack_movements_statistics || null;
+
+          // Loading bay status
+          this.loadingBayStatus = res.loading_bay_status || [];
+
+          // Low stock alerts
+          this.lowStockAlerts = res.low_stock_alerts || this.lowStockAlerts;
+
+          // Recent activity
+          this.recentActivity = res.recent_activity || [];
+
+          // Fast / slow moving items
+          this.fastMovingItems = res.fast_moving_items || [];
+          this.slowMovingItems = res.slow_moving_items  || [];
+        }
+      },
+      error: () => {
+        this.dashboardLoading = false;
+      }
+    });
+  }
+
+  applyDateFilter() {
+    this.loadDashboardData();
+  }
+
+  // ── Existing methods kept intact ────────────────────────────────────────────
 
   loadData() {
     this.loadWarehouses();
@@ -118,7 +249,7 @@ export class WarehouseDashboard implements OnInit {
     this.svc.get('/warehouse/putaway-tasks/statistics').subscribe((res: any) => {
       if (res.status === 200) {
         this.workflowStats.putawayTasks = res.data;
-        this.processFlow[1].count = res.data.pending + res.data.inProgress;
+        // processFlow counts owned by loadDashboardData
       }
     });
 
@@ -126,7 +257,7 @@ export class WarehouseDashboard implements OnInit {
     this.svc.get('/warehouse/rack-movements/statistics').subscribe((res: any) => {
       if (res.status === 200) {
         this.workflowStats.rackMovements = res.data;
-        this.processFlow[3].count = res.data.pending + res.data.inProgress;
+        // processFlow counts owned by loadDashboardData
       }
     });
 
@@ -134,7 +265,7 @@ export class WarehouseDashboard implements OnInit {
     this.svc.get('/warehouse/loading-bays/status').subscribe((res: any) => {
       if (res.status === 200) {
         this.workflowStats.loadingBay = res.data;
-        this.processFlow[0].count = res.data.items;
+        // processFlow counts owned by loadDashboardData
       }
     });
 
@@ -142,12 +273,11 @@ export class WarehouseDashboard implements OnInit {
     this.svc.get('/warehouse/outward/picking-tasks/statistics').subscribe((res: any) => {
       if (res.status === 200) {
         this.workflowStats.pickingTasks = res.data;
-        this.processFlow[4].count = res.data.pending + res.data.inProgress;
+        // processFlow counts owned by loadDashboardData
       }
     });
 
-    // Update rack storage count
-    this.processFlow[2].count = this.getTotalStockValue();
+    // processFlow[2] rack storage count owned by loadDashboardData
   }
 
   loadWarehouses() {
@@ -167,18 +297,18 @@ export class WarehouseDashboard implements OnInit {
   }
 
   loadStock() {
-    this.svc.post('/items/list-item/s=/', { company: 1,warehouse: 1 }).subscribe((res: any) => {
-      if(res.status == 200){
+    this.svc.post('/items/list-item/s=/', { company: 1, warehouse: 1 }).subscribe((res: any) => {
+      if (res.status == 200) {
         this.stock = res.data;
-        this.processFlow[2].count =res.total_count;
+        // processFlow[2] count is owned by loadDashboardData — do not overwrite here
       }
     });
   }
 
   loadOutward() {
-    this.svc.get('/outward/list-outward/s=/', { company: 1 }).subscribe((res:any) => {
+    this.svc.get('/outward/list-outward/s=/', { company: 1 }).subscribe((res: any) => {
       this.outwardTransactions = res.data;
-      this.processFlow[5].count = res.data.filter((item: any) => item.status === 'ready').length;
+      // processFlow[5] count is owned by loadDashboardData — do not overwrite here
     });
   }
 
@@ -191,10 +321,17 @@ export class WarehouseDashboard implements OnInit {
   }
 
   getTotalStockValue(): number {
-    return this.stock.reduce((total, item) => total + item.quantity, 0);
+    return this.stock.reduce((total, item) => total + (item.quantity || 0), 0);
   }
 
   getLowStockItems(): any[] {
+    // Use API low stock alerts when available, else fall back to local stock filter
+    if (this.lowStockAlerts?.items?.length) {
+      const items = this.lowStockAlerts.items;
+      if (!this.searchTerm) return items;
+      const q = this.searchTerm.toLowerCase();
+      return items.filter((i: any) => (i.item_name || i.name || i.itemName || '').toLowerCase().includes(q));
+    }
     const list = this.stock.filter(item => item.quantity < 10);
     if (!this.searchTerm) return list;
     const q = this.searchTerm.toLowerCase();
@@ -202,6 +339,16 @@ export class WarehouseDashboard implements OnInit {
   }
 
   getRecentTransactions(): any[] {
+    // Use API recent activity when available
+    if (this.recentActivity.length) {
+      if (!this.searchTerm) return this.recentActivity.slice(0, 10);
+      const q = this.searchTerm.toLowerCase();
+      return this.recentActivity.filter((t: any) =>
+        (t.reference_no || '').toLowerCase().includes(q) ||
+        (t.warehouse || '').toLowerCase().includes(q) ||
+        (t.activity_type || '').toLowerCase().includes(q)
+      ).slice(0, 10);
+    }
     const data = this.filterTransactionsByRange(this.outwardTransactions);
     const recent = data.slice(-10);
     if (!this.searchTerm) return recent;
@@ -241,6 +388,7 @@ export class WarehouseDashboard implements OnInit {
   }
 
   refreshNow(): void {
+    this.loadDashboardData();
     this.loadData();
     this.loadWorkflowStats();
   }
@@ -249,6 +397,7 @@ export class WarehouseDashboard implements OnInit {
     this.autoRefreshEnabled = !this.autoRefreshEnabled;
     if (this.autoRefreshEnabled) {
       this.autoRefreshTimer = setInterval(() => {
+        this.loadDashboardData();
         this.loadWorkflowStats();
       }, 60000);
     } else if (this.autoRefreshTimer) {
@@ -289,6 +438,14 @@ export class WarehouseDashboard implements OnInit {
   }
 
   getTopFastMovingItems(limit: number = 5): any[] {
+    // Use API data when available
+    if (this.fastMovingItems.length) {
+      return this.fastMovingItems.slice(0, limit).map((i: any) => ({
+        name: i.item_name || i.name,
+        qty: i.total_quantity ?? i.qty ?? 0,
+        sku: i.sku
+      }));
+    }
     const map: any = {};
     this.filterTransactionsByRange(this.outwardTransactions).forEach((t: any) => {
       (t.items || []).forEach((it: any) => {
@@ -304,6 +461,14 @@ export class WarehouseDashboard implements OnInit {
   }
 
   getSlowMovingItems(limit: number = 5): any[] {
+    // Use API data when available
+    if (this.slowMovingItems.length) {
+      return this.slowMovingItems.slice(0, limit).map((i: any) => ({
+        name: i.item_name || i.name || i.itemName,
+        quantity: i.quantity ?? 0,
+        sku: i.sku
+      }));
+    }
     // Slow = low outbound quantity, but present in stock
     const fastKeys = new Set(this.getTopFastMovingItems(100).map(i => i.name));
     const candidates = this.stock.filter((s: any) => !fastKeys.has(s.name || s.itemName));

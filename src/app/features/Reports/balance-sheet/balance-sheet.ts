@@ -32,52 +32,57 @@ export class BalanceSheet implements OnInit {
 
   generateReport() {
     this.isLoading = true;
-    this.loadHardcodedData();
-    this.isLoading = false;
-    this.toast.show('Success', 'Balance Sheet loaded successfully', 'success');
-  }
-
-  private loadHardcodedData() {
-    const current_assets: ReportRow[] = [
-      { account: 'Cash and Cash Equivalents', amount: 55000 },
-      { account: 'Accounts Receivable', amount: 45000 },
-      { account: 'Inventory', amount: 75000 }
-    ];
-    const non_current_assets: ReportRow[] = [
-      { account: 'Property, Plant, and Equipment', amount: 250000 }
-    ];
-    const liabilities: ReportRow[] = [
-      { account: 'Accounts Payable', amount: 40000 }
-    ];
-    const equity: ReportRow[] = [
-      { account: 'Owner\'s Capital', amount: 341000 },
-      { account: 'Retained Earnings', amount: 44000 }
-    ];
-    
-    const total_current_assets = current_assets.reduce((sum, item) => sum + item.amount, 0);
-    const total_non_current_assets = non_current_assets.reduce((sum, item) => sum + item.amount, 0);
-    const total_assets = total_current_assets + total_non_current_assets;
-    
-    const total_liabilities = liabilities.reduce((sum, item) => sum + item.amount, 0);
-    const total_equity = equity.reduce((sum, item) => sum + item.amount, 0);
-    const total_liabilities_and_equity = total_liabilities + total_equity;
-
-    this.reportData = {
-      assets: {
-        current: current_assets,
-        non_current: non_current_assets,
-        total_current: total_current_assets,
-        total_non_current: total_non_current_assets,
-        total: total_assets
-      },
-      liabilities_and_equity: {
-        liabilities,
-        equity,
-        total_liabilities,
-        total_equity,
-        total: total_liabilities_and_equity
-      }
+    const payload = {
+      company: this.api.getCompanyId() ?? 1,
+      as_of_date: this.reportDate
     };
+    this.api.post('/reports/balance-sheet/', payload).subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+        if (res.status === 200) {
+          // Map API response → existing BalanceSheetData shape used by the HTML
+          const mapItems = (items: any[]) =>
+            (items || []).map((i: any) => ({ account: i.line_name ?? i.account, amount: i.amount ?? 0 }));
+
+          const assets     = res.assets     || {};
+          const liabEquity = res.liabilities_and_equity || {};
+          const equity     = res.equity     || {};
+
+          const currentItems    = mapItems(assets.current_assets?.items    || []);
+          const nonCurrentItems = mapItems(assets.non_current_assets?.items || []);
+          const liabItems       = mapItems(liabEquity.current_liabilities?.items || liabEquity.liabilities?.items || []);
+          const equityItems     = mapItems(equity.items || liabEquity.equity?.items || []);
+
+          const totalCurrent    = assets.current_assets?.total    ?? currentItems.reduce((s: number, i: any) => s + i.amount, 0);
+          const totalNonCurrent = assets.non_current_assets?.total ?? nonCurrentItems.reduce((s: number, i: any) => s + i.amount, 0);
+          const totalAssets     = assets.total_assets              ?? totalCurrent + totalNonCurrent;
+          const totalLiab       = liabEquity.total_liabilities     ?? liabItems.reduce((s: number, i: any) => s + i.amount, 0);
+          const totalEquity     = liabEquity.total_equity ?? equity.total ?? equityItems.reduce((s: number, i: any) => s + i.amount, 0);
+
+          this.reportData = {
+            assets: {
+              current:           currentItems,
+              non_current:       nonCurrentItems,
+              total_current:     totalCurrent,
+              total_non_current: totalNonCurrent,
+              total:             totalAssets,
+            },
+            liabilities_and_equity: {
+              liabilities:       liabItems,
+              equity:            equityItems,
+              total_liabilities: totalLiab,
+              total_equity:      totalEquity,
+              total:             totalLiab + totalEquity,
+            }
+          };
+          this.toast.show('Success', 'Balance Sheet loaded successfully', 'success');
+        }
+      },
+      error: () => {
+        this.isLoading = false;
+        this.toast.show('Error', 'Failed to load Balance Sheet', 'danger');
+      }
+    });
   }
 
   onDateChange() {

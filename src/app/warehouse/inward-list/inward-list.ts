@@ -6,6 +6,7 @@ import { InwardForm } from '../inward-form/inward-form';
 import { Api } from '../../core/services/api';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../core/services/toast.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 interface InwardReceipt {
   id: number;
@@ -67,7 +68,8 @@ export class InwardList implements OnInit {
   constructor(
     private svc: Api,
     private modalService: NgbModal,
-    private toast: ToastService
+    private toast: ToastService,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -301,7 +303,44 @@ export class InwardList implements OnInit {
   }
 
   exportData() {
-    // TODO: Implement export functionality
-    this.toast.show('Info', 'Export functionality coming soon', 'info');
+    const company  = this.svc.getCompanyId() ?? 1;
+    const start    = this.fromDate;
+    const end      = this.toDate;
+
+    if (!start || !end) {
+      this.toast.show('Warning', 'Please set date range before exporting', 'warning');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    const url = `https://aasonsapi.esarwa.com/invoice/export-inward/?company=${company}&start_date=${start}&end_date=${end}`;
+
+    this.toast.show('Info', 'Preparing export...', 'info');
+
+    this.http.get(url, { headers, responseType: 'blob' }).subscribe({
+      next: (blob: Blob) => {
+        // Determine file extension from blob type
+        const isExcel = blob.type.includes('spreadsheet') || blob.type.includes('excel') || blob.type.includes('openxmlformats');
+        const ext      = isExcel ? 'xlsx' : 'csv';
+        const fileName = `inward_${start}_to_${end}.${ext}`;
+
+        // Trigger browser download
+        const url    = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href     = url;
+        anchor.download = fileName;
+        anchor.click();
+        window.URL.revokeObjectURL(url);
+
+        this.toast.show('Success', 'Export downloaded successfully', 'success');
+      },
+      error: () => {
+        this.toast.show('Error', 'Failed to export data', 'danger');
+      }
+    });
   }
 }

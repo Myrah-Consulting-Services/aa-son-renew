@@ -4,8 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { WarehouseForm } from '../warehouse-form/warehouse-form';
+import { WarehouseDetailModal } from '../warehouse-detail-modal/warehouse-detail-modal';
 import { Api } from '../../core/services/api';
 import { ToastService } from '../../core/services/toast.service';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-warehouse-list',
@@ -16,10 +19,23 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class WarehouseList implements OnInit {
   warehouses: any[] = [];
-  filteredWarehouses: any[] = [];
   loading = false;
-  searchText = '';
-  selectedStatus = '';
+
+  // ── Filters (server-side) ────────────────────────────────────────────────────
+  searchText   = '';
+  selectedStatus = '';          // '' | 'true' | 'false'
+
+  // ── Pagination ───────────────────────────────────────────────────────────────
+  currentPage = 1;
+  pageSize    = 10;
+  totalCount  = 0;
+
+  // ── KPI counts ───────────────────────────────────────────────────────────────
+  totalWarehouses = 0;
+  activeCount     = 0;
+  inactiveCount   = 0;
+
+  private searchSubject = new Subject<string>();
 
   constructor(
     private svc: Api,
@@ -28,188 +44,130 @@ export class WarehouseList implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Debounce search input — wait 400ms before hitting API
+    this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.loadWarehouses();
+    });
+
     this.loadWarehouses();
   }
 
+  // ── API call ─────────────────────────────────────────────────────────────────
   loadWarehouses() {
     this.loading = true;
-    this.svc.get('/warehouses/list-warehouse/').subscribe((res: any) => {
-      this.loading = false;
-      if(res.status == 200){
-        this.warehouses = res.data || [];
-        this.filteredWarehouses = [...this.warehouses];
-      } else {
-        this.setDefaultData();
+
+    const params: any = {
+      page:      this.currentPage,
+      page_size: this.pageSize
+    };
+
+    if (this.searchText.trim()) {
+      params['search'] = this.searchText.trim();
+    }
+
+    if (this.selectedStatus !== '') {
+      params['is_active'] = this.selectedStatus;   // 'true' or 'false'
+    }
+
+    this.svc.get('/warehouses/list-warehouse/', params).subscribe({
+      next: (res: any) => {
+        this.loading = false;
+        if (res.status === 200 || res.data) {
+          this.warehouses = res.data || [];
+
+          // Read pagination from paginated_data
+          const pagination = res.paginated_data || {};
+          this.currentPage = pagination.current_page ?? 1;
+          this.totalCount  = pagination.total_data   ?? this.warehouses.length;
+          const totalPages = pagination.total_pages  ?? 1;
+          // If API returns page_size as string, parse it
+          const apiPageSize = pagination.page_size;
+          if (apiPageSize && typeof apiPageSize === 'string') {
+            this.pageSize = parseInt(apiPageSize, 10);
+          }
+
+          // KPI counts
+          this.totalWarehouses = this.totalCount;
+          this.activeCount     = this.warehouses.filter((w: any) => w.is_active === true).length;
+          this.inactiveCount   = this.warehouses.filter((w: any) => w.is_active === false).length;
+        }
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error('Error loading warehouses:', err);
+        this.toast.show('Error', 'Failed to load warehouses', 'danger');
       }
-    }, (error) => {
-      this.loading = false;
-      console.error('Error loading warehouses:', error);
-      this.setDefaultData();
     });
   }
 
-  setDefaultData() {
-    this.warehouses = [
-      {
-        id: 1,
-        name: 'Main Warehouse',
-        code: 'WH-001',
-        address: 'Industrial Zone 1, Dubai',
-        city: 'Dubai',
-        state: 'UAE',
-        contactPerson: 'Ahmad Al Mansouri',
-        phone: '+971 50 123 4567',
-        email: 'ahmad@warehouse.com',
-        status: 'active',
-        locations: 25,
-        capacity: 85,
-        totalCapacity: 100
-      },
-      {
-        id: 2,
-        name: 'Showroom Warehouse',
-        code: 'WH-002',
-        address: 'Business Bay, Sheikh Zayed Road',
-        city: 'Dubai',
-        state: 'UAE',
-        contactPerson: 'Fatima Al Zahra',
-        phone: '+971 50 987 6543',
-        email: 'fatima@showroom.com',
-        status: 'active',
-        locations: 12,
-        capacity: 65,
-        totalCapacity: 80
-      },
-      {
-        id: 3,
-        name: 'Cold Storage Facility',
-        code: 'WH-003',
-        address: 'Jebel Ali Free Zone',
-        city: 'Dubai',
-        state: 'UAE',
-        contactPerson: 'Omar Abdullah',
-        phone: '+971 50 555 1234',
-        email: 'omar@coldstorage.com',
-        status: 'active',
-        locations: 8,
-        capacity: 45,
-        totalCapacity: 60
-      },
-      {
-        id: 4,
-        name: 'Electronics Warehouse',
-        code: 'WH-004',
-        address: 'Silicon Oasis, Dubai',
-        city: 'Dubai',
-        state: 'UAE',
-        contactPerson: 'Layla Mohammed',
-        phone: '+971 50 777 8888',
-        email: 'layla@electronics.com',
-        status: 'maintenance',
-        locations: 18,
-        capacity: 30,
-        totalCapacity: 50
-      },
-      {
-        id: 5,
-        name: 'Furniture Storage',
-        code: 'WH-005',
-        address: 'Al Quoz Industrial Area',
-        city: 'Dubai',
-        state: 'UAE',
-        contactPerson: 'Hassan Al Maktoum',
-        phone: '+971 50 999 0000',
-        email: 'hassan@furniture.com',
-        status: 'inactive',
-        locations: 15,
-        capacity: 20,
-        totalCapacity: 40
-      }
-    ];
-    this.filteredWarehouses = [...this.warehouses];
-    this.toast.show('Info', 'Showing default warehouse data', 'info');
+  // ── Filter handlers ──────────────────────────────────────────────────────────
+  onSearchInput() {
+    this.searchSubject.next(this.searchText);
   }
 
-  refreshData() {
+  onStatusChange() {
+    this.currentPage = 1;
     this.loadWarehouses();
   }
 
-  searchWarehouses() {
-    this.applyFilters();
-  }
-
-  filterByStatus() {
-    this.applyFilters();
-  }
-
-  applyFilters() {
-    let filtered = [...this.warehouses];
-
-    // Apply text search
-    if (this.searchText.trim()) {
-      const searchLower = this.searchText.toLowerCase();
-      filtered = filtered.filter(warehouse =>
-        warehouse.name?.toLowerCase().includes(searchLower) ||
-        warehouse.code?.toLowerCase().includes(searchLower) ||
-        warehouse.address?.toLowerCase().includes(searchLower) ||
-        warehouse.contactPerson?.toLowerCase().includes(searchLower) ||
-        warehouse.email?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply status filter
-    if (this.selectedStatus) {
-      filtered = filtered.filter(warehouse => warehouse.status === this.selectedStatus);
-    }
-
-    this.filteredWarehouses = filtered;
-  }
-
   clearFilters() {
-    this.searchText = '';
+    this.searchText     = '';
     this.selectedStatus = '';
-    this.filteredWarehouses = [...this.warehouses];
-    this.toast.show('Info', 'Filters cleared', 'info');
+    this.currentPage    = 1;
+    this.loadWarehouses();
   }
 
-  // Statistics methods
-  getActiveWarehouses(): number {
-    return this.warehouses.filter(w => w.status === 'active').length;
+  refreshData() {
+    this.currentPage = 1;
+    this.loadWarehouses();
   }
 
-  getTotalLocations(): number {
-    return this.warehouses.reduce((total, w) => total + (w.locations || 0), 0);
+  // ── Pagination ───────────────────────────────────────────────────────────────
+  get totalPages(): number {
+    return Math.ceil(this.totalCount / this.pageSize) || 1;
   }
 
-  getTotalCapacity(): number {
-    return this.warehouses.reduce((total, w) => total + (w.totalCapacity || 0), 0);
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) return;
+    this.currentPage = page;
+    this.loadWarehouses();
   }
 
-  getCapacityPercentage(warehouse: any): number {
-    if (!warehouse.totalCapacity || warehouse.totalCapacity === 0) return 0;
-    return Math.round((warehouse.capacity / warehouse.totalCapacity) * 100);
-  }
-
-  getCapacityText(warehouse: any): string {
-    const percentage = this.getCapacityPercentage(warehouse);
-    return `${warehouse.capacity}/${warehouse.totalCapacity} (${percentage}%)`;
-  }
-
-  getStatusBadgeClass(status: string): string {
-    const statusClasses = {
-      'active': 'bg-success',
-      'inactive': 'bg-secondary',
-      'maintenance': 'bg-warning'
-    };
-    return statusClasses[status as keyof typeof statusClasses] || 'bg-success';
-  }
-
-  viewWarehouse(id: number): void {
-    const warehouse = this.warehouses.find(w => w.id === id);
-    if (warehouse) {
-      this.toast.show('Info', `Viewing details for ${warehouse.name}`, 'info');
-      // Implement detailed view functionality
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadWarehouses();
     }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadWarehouses();
+    }
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 1;
+    this.loadWarehouses();
+  }
+
+  // ── KPI helpers ──────────────────────────────────────────────────────────────
+  getActiveWarehouses(): number  { return this.activeCount; }
+  getInactiveWarehouses(): number { return this.inactiveCount; }
+
+  getStatusBadgeClass(isActive: boolean): string {
+    return isActive ? 'badge-active' : 'badge-inactive';
+  }
+
+  // ── CRUD ─────────────────────────────────────────────────────────────────────
+  viewWarehouse(id: number): void {
+    const modalRef = this.modalService.open(WarehouseDetailModal, { centered: true, size: 'md' });
+    modalRef.componentInstance.id = id;
   }
 
   openForm(id?: number) {
@@ -221,20 +179,24 @@ export class WarehouseList implements OnInit {
       if (result === 'saved') {
         this.loadWarehouses();
       }
-    })
+    }).catch(() => {});
   }
 
   delete(id: number) {
-    const warehouse = this.warehouses.find(w => w.id === id);
-    if (warehouse && confirm(`Are you sure you want to delete ${warehouse.name}?`)) {
-      this.svc.delete('/warehouses/delete-warehouse/' + id).subscribe((res: any) => {
-        if(res.status == 200){
-          this.loadWarehouses();
-          this.toast.show('Warehouse Deleted', 'Warehouse has been deleted successfully.', 'success');
-        }
-      }, (error) => {
-        console.error('Error deleting warehouse:', error);
-        this.toast.show('Error', 'Failed to delete warehouse', 'danger');
+    const warehouse = this.warehouses.find((w: any) => w.id === id);
+    if (warehouse && confirm(`Are you sure you want to delete "${warehouse.name}"?`)) {
+      this.svc.delete('/warehouses/delete-warehouse/' + id).subscribe({
+        next: (res: any) => {
+          if (res.status === 200) {
+            this.toast.show('Deleted', 'Warehouse deleted successfully.', 'success');
+            // If last item on page > 1, go back one page
+            if (this.warehouses.length === 1 && this.currentPage > 1) {
+              this.currentPage--;
+            }
+            this.loadWarehouses();
+          }
+        },
+        error: () => this.toast.show('Error', 'Failed to delete warehouse', 'danger')
       });
     }
   }

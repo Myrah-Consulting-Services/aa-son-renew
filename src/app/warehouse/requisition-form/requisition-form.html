@@ -108,25 +108,59 @@
               <tr *ngFor="let item of itemsArray.controls; let i = index" [formGroupName]="i">
                 <td>{{ i + 1 }}</td>
                 <td *ngIf="isCreateMode" class="search-cell">
-                  <div class="search-container">
+                  <!-- Searchable dropdown — same pattern as inward form -->
+                  <div class="position-relative search-container">
                     <input
                       type="text"
                       class="form-control table-input"
                       [value]="itemSearchTerms[i] || ''"
-                      placeholder="Search items..."
+                      placeholder="Search item..."
+                      autocomplete="off"
                       (input)="onSearchInput($event, i)"
                       (focus)="onSearchFocus(i)"
                       (blur)="onSearchBlur()">
 
-                    <div class="search-results" *ngIf="shouldShowSearchResults(i)">
-                      <button
-                        type="button"
-                        class="search-result-item"
+                    <!-- Loading indicator -->
+                    <div *ngIf="searchingItems && activeSearchIndex === i"
+                         class="position-absolute"
+                         style="top:50%;right:8px;transform:translateY(-50%);">
+                      <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                        <span class="visually-hidden">Searching...</span>
+                      </div>
+                    </div>
+
+                    <!-- Results dropdown -->
+                    <div class="dropdown-menu show position-absolute w-100"
+                         *ngIf="shouldShowSearchResults(i) && searchResults.length > 0"
+                         style="top:100%;left:0;z-index:1055;max-height:220px;overflow-y:auto;min-width:320px;">
+                      <div
+                        class="dropdown-item py-2 px-3"
                         *ngFor="let result of searchResults"
-                        (mousedown)="selectItem(result, i)">
-                        <span>{{ result.name }}</span>
-                        <small>{{ result.item_code }}</small>
-                      </button>
+                        (mousedown)="selectItem(result, i)"
+                        style="cursor:pointer;border-bottom:1px solid #f0f0f0;">
+                        <div class="d-flex justify-content-between align-items-start">
+                          <div>
+                            <div class="small fw-semibold text-dark">{{ result.name }}</div>
+                            <div class="d-flex gap-2 mt-1">
+                              <small class="text-muted">
+                                <i class="bi bi-hash"></i> {{ result.item_code || '—' }}
+                              </small>
+                              <small class="text-muted" *ngIf="result.barcode1">
+                                <i class="bi bi-upc-scan"></i> {{ result.barcode1 }}
+                              </small>
+                            </div>
+                          </div>
+                          <small class="badge bg-light text-secondary ms-2" *ngIf="result.units?.length">
+                            {{ result.units[0]?.unit || result.units[0]?.name }}
+                          </small>
+                        </div>
+                      </div>
+
+                      <!-- No results -->
+                      <div *ngIf="searchResults.length === 0 && !searchingItems"
+                           class="dropdown-item text-muted small py-2">
+                        No items found
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -134,7 +168,7 @@
                   <input 
                     type="number" 
                     formControlName="itemId" 
-                    class="form-control table-input"
+                    class="form-control table-input text-muted"
                     placeholder="Item ID"
                     [class.invalid]="item.get('itemId')?.invalid && item.get('itemId')?.touched"
                     readonly>
@@ -143,9 +177,8 @@
                   <input 
                     type="text" 
                     formControlName="item_code" 
-                    class="form-control table-input"
+                    class="form-control table-input text-muted"
                     placeholder="Item Code"
-                    [class.invalid]="item.get('item_code')?.invalid && item.get('item_code')?.touched"
                     readonly>
                 </td>
                 <td>
@@ -154,14 +187,13 @@
                     formControlName="item_name" 
                     class="form-control table-input"
                     placeholder="Item Name"
-                    [class.invalid]="item.get('item_name')?.invalid && item.get('item_name')?.touched"
                     readonly>
                 </td>
                 <td>
                   <input 
                     type="text" 
                     formControlName="barcode" 
-                    class="form-control table-input"
+                    class="form-control table-input text-muted"
                     placeholder="Barcode"
                     readonly>
                 </td>
@@ -178,9 +210,11 @@
                   <select
                     formControlName="unit" 
                     class="form-control table-input"
-                    [class.invalid]="item.get('unit')?.invalid && item.get('unit')?.touched">
-                    <option readonly value="">Select Unit</option>
-                    <option readonly *ngFor="let unit of itemUnits[i] || units" [value]="unit.id">{{ unit.name }}</option>
+                    [attr.disabled]="!isCreateMode ? true : null">
+                    <option value="">Unit</option>
+                    <option *ngFor="let u of (itemUnits[i] || [])" [value]="u.id">
+                      {{ u.unit || u.name }}
+                    </option>
                   </select>
                 </td>
                 <td *ngIf="isCreateMode">

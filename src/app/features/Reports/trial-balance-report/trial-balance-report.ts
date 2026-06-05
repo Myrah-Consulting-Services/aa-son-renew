@@ -33,22 +33,30 @@ export class TrialBalanceReport implements OnInit {
 
   generateReport() {
     this.isLoading = true;
-    this.loadHardcodedData();
-    this.isLoading = false;
-    this.toast.show('Success', 'Trial Balance loaded successfully', 'success');
-  }
-
-  private loadHardcodedData() {
-    this.reportData = [
-      { account_code: '1010', account_name: 'Cash', debit: 50000, credit: null },
-      { account_code: '1200', account_name: 'Accounts Receivable', debit: 75000, credit: null },
-      { account_code: '2100', account_name: 'Accounts Payable', debit: null, credit: 40000 },
-      { account_code: '3000', account_name: 'Owner\'s Capital', debit: null, credit: 160000 },
-      { account_code: '4000', account_name: 'Sales Revenue', debit: null, credit: 175000 },
-      { account_code: '5000', account_name: 'Cost of Goods Sold', debit: 80000, credit: null },
-      { account_code: '6000', account_name: 'Rent Expense', debit: 70000, credit: null }
-    ];
-    this.calculateTotals();
+    const payload = {
+      company: this.api.getCompanyId() ?? 1,
+      as_of_date: this.reportDate
+    };
+    this.api.post('/reports/trial-balance/', payload).subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+        if (res.status === 200) {
+          // Map API fields → existing TrialBalanceEntry shape
+          this.reportData = (res.data || []).map((item: any) => ({
+            account_code: item.account_code,
+            account_name: item.account_name,
+            debit:  item.debit  ?? 0,
+            credit: item.credit ?? 0,
+          }));
+          this.calculateTotals();
+          this.toast.show('Success', 'Trial Balance loaded successfully', 'success');
+        }
+      },
+      error: () => {
+        this.isLoading = false;
+        this.toast.show('Error', 'Failed to load Trial Balance', 'danger');
+      }
+    });
   }
   
   calculateTotals() {

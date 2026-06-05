@@ -1,5 +1,6 @@
 <div class="warehouse-list-container">
-  <!-- Breadcrumb Section -->
+
+  <!-- Breadcrumb -->
   <section class="breadcrumb-section">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
@@ -10,13 +11,11 @@
     </nav>
   </section>
 
-  <!-- Header Section -->
+  <!-- Header -->
   <section class="header-section">
     <div class="warehouse-list-header">
       <div class="d-flex align-items-center gap-2">
-        <span class="warehouse-logo">
-          <i class="bi bi-building"></i>
-        </span>
+        <span class="warehouse-logo"><i class="bi bi-building"></i></span>
         <div>
           <h1 class="header-title">Warehouses</h1>
           <p class="header-subtitle">Manage your warehouse locations and facilities</p>
@@ -33,184 +32,191 @@
     </div>
   </section>
 
-  <!-- KPI Section -->
+  <!-- KPI Cards -->
   <section class="kpi-section">
-    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-building"></i>
-        </div>
+        <div class="stat-icon"><i class="bi bi-building"></i></div>
         <div class="stat-content">
           <h3>Total Warehouses</h3>
-          <p class="stat-number">{{ warehouses.length }}</p>
+          <p class="stat-number">{{ totalCount }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-check-circle"></i>
-        </div>
+        <div class="stat-icon active-icon"><i class="bi bi-check-circle"></i></div>
         <div class="stat-content">
           <h3>Active</h3>
           <p class="stat-number">{{ getActiveWarehouses() }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-geo-alt"></i>
-        </div>
+        <div class="stat-icon inactive-icon"><i class="bi bi-x-circle"></i></div>
         <div class="stat-content">
-          <h3>Total Locations</h3>
-          <p class="stat-number">{{ getTotalLocations() }}</p>
+          <h3>Inactive</h3>
+          <p class="stat-number">{{ getInactiveWarehouses() }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-box-seam"></i>
-        </div>
+        <div class="stat-icon page-icon"><i class="bi bi-layers"></i></div>
         <div class="stat-content">
-          <h3>Total Capacity</h3>
-          <p class="stat-number">{{ getTotalCapacity() }}</p>
+          <h3>This Page</h3>
+          <p class="stat-number">{{ warehouses.length }}</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Main Content Section -->
+  <!-- Filters + Table -->
   <section class="main-content-section">
-    <!-- Filters Section -->
-    <div class="filters-section">
-      <div class="filters-bar">
-        <div class="filter-item">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input 
-              type="text" 
-              class="form-control" 
-              placeholder="Search warehouses..." 
-              [(ngModel)]="searchText"
-              (input)="searchWarehouses()"
-            >
-          </div>
-        </div>
-        <div class="filter-item">
-          <select class="form-select form-select-sm" [(ngModel)]="selectedStatus" (change)="filterByStatus()">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="maintenance">Maintenance</option>
-          </select>
-        </div>
-        <div class="filter-item">
-          <button class="btn btn-secondary btn-sm w-100" (click)="clearFilters()">
-            <i class="bi bi-x-circle me-1"></i>Clear
+
+    <!-- Filter Bar -->
+    <div class="filters-bar">
+      <!-- Search -->
+      <div class="filter-search">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search by name, address..."
+            [(ngModel)]="searchText"
+            (input)="onSearchInput()"
+          >
+          <button *ngIf="searchText" class="btn btn-outline-secondary" type="button" (click)="searchText=''; onSearchInput()">
+            <i class="bi bi-x"></i>
           </button>
         </div>
       </div>
+
+      <!-- Status Filter -->
+      <div class="filter-status">
+        <select class="form-select form-select-sm" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+          <option value="">All Status</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+
+      <!-- Clear -->
+      <button class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
+        <i class="bi bi-x-circle me-1"></i>Clear
+      </button>
+
+      <!-- Result count -->
+      <span class="result-count ms-auto">
+        {{ totalCount }} result{{ totalCount !== 1 ? 's' : '' }}
+      </span>
     </div>
 
-    <!-- Table Section -->
-    <div class="table-section">
-      <div class="table-container">
-        <div class="table-header">
-          <h3 class="table-title">
-            <i class="bi bi-list-ul me-2"></i>Warehouse List ({{ filteredWarehouses.length }})
-          </h3>
-        </div>
-        <div class="table-body">
-          <!-- Loading State -->
-          <div *ngIf="loading" class="loading-state">
-            <i class="bi bi-arrow-repeat spinner"></i>
-            <p>Loading warehouses...</p>
-          </div>
+    <!-- Table -->
+    <div class="table-wrapper">
 
-          <!-- Empty State -->
-          <div *ngIf="!loading && filteredWarehouses.length === 0" class="empty-state">
-            <i class="bi bi-building"></i>
-            <p>No warehouses found</p>
-            <button class="btn btn-primary btn-sm" (click)="openForm()">
-              <i class="bi bi-plus-lg me-1"></i>Create First Warehouse
-            </button>
-          </div>
+      <!-- Loading -->
+      <div *ngIf="loading" class="state-box">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Loading warehouses...</p>
+      </div>
 
-          <!-- Table -->
-          <table *ngIf="!loading && filteredWarehouses.length > 0" class="compact-table">
-            <thead>
-              <tr>
-                <th>Warehouse Details</th>
-                <th>Location</th>
-                <th>Contact Information</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let warehouse of filteredWarehouses; let i = index">
-                <td>
-                  <div class="warehouse-info">
-                    <div class="warehouse-icon">
-                      <i class="bi bi-building"></i>
-                    </div>
-                    <div class="warehouse-details">
-                      <div class="warehouse-name">{{ warehouse.name }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="location-info">
-                    <div class="location-text">{{ warehouse.address }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="contact-info">
-                    <div class="contact-person">{{ warehouse.contactPerson }}</div>
-                    <small class="contact-detail">
-                      <i class="bi bi-telephone me-1"></i>{{ warehouse.phone }}
-                    </small>
-                    <br>
-                    <small class="contact-detail">
-                      <i class="bi bi-envelope me-1"></i>{{ warehouse.email }}
-                    </small>
-                  </div>
-                </td>
-                <td>
-                  <span class="badge" [ngClass]="getStatusBadgeClass(warehouse.status)">
-                    {{ warehouse.status || 'Active' }}
-                  </span>
-                </td>
-                <td class="text-end">
-                  <div class="action-buttons">
-                    <button 
-                      class="btn-action-icon view" 
-                      (click)="viewWarehouse(warehouse.id)"
-                      title="View Details"
-                    >
-                      <i class="bi bi-eye"></i>
-                    </button>
-                    <button 
-                      class="btn-action-icon edit" 
-                      (click)="openForm(warehouse.id)"
-                      title="Edit"
-                    >
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button 
-                      class="btn-action-icon delete" 
-                      (click)="delete(warehouse.id)"
-                      title="Delete"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <!-- Empty -->
+      <div *ngIf="!loading && warehouses.length === 0" class="state-box">
+        <i class="bi bi-building text-muted" style="font-size:2.5rem;"></i>
+        <p class="mt-2 text-muted">No warehouses found</p>
+        <button class="btn btn-primary btn-sm mt-1" (click)="openForm()">
+          <i class="bi bi-plus-lg me-1"></i>Create First Warehouse
+        </button>
+      </div>
+
+      <!-- Table -->
+      <table *ngIf="!loading && warehouses.length > 0" class="wh-table">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Contact Person</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let w of warehouses; let i = index">
+            <td class="row-num">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+            <td>
+              <div class="wh-name">
+                <span class="wh-icon"><i class="bi bi-building"></i></span>
+                {{ w.name }}
+              </div>
+            </td>
+            <td>
+              <div class="address-cell" [title]="w.address">{{ w.address }}</div>
+            </td>
+            <td>{{ w.contactPerson || w.contact_person || '—' }}</td>
+            <td>
+              <a *ngIf="w.phone" [href]="'tel:' + w.phone" class="contact-link">
+                <i class="bi bi-telephone me-1"></i>{{ w.phone }}
+              </a>
+              <span *ngIf="!w.phone" class="text-muted">—</span>
+            </td>
+            <td>
+              <a *ngIf="w.email" [href]="'mailto:' + w.email" class="contact-link">
+                <i class="bi bi-envelope me-1"></i>{{ w.email }}
+              </a>
+              <span *ngIf="!w.email" class="text-muted">—</span>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusBadgeClass(w.is_active)">
+                <i class="bi me-1" [ngClass]="w.is_active ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                {{ w.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="text-end">
+              <div class="action-btns">
+                <button class="action-btn view-btn" (click)="viewWarehouse(w.id)" title="View">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="action-btn edit-btn" (click)="openForm(w.id)" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="action-btn delete-btn" (click)="delete(w.id)" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && totalCount > 0" class="pagination-bar">
+      <!-- Items per page -->
+      <div class="items-per-page">
+        <label class="me-2">Items per page:</label>
+        <select class="form-select form-select-sm" style="width:auto;" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </div>
+
+      <!-- Page info -->
+      <div class="page-info">
+        Page {{ currentPage }} of {{ totalPages }} &nbsp;·&nbsp; Showing {{ warehouses.length }} of {{ totalCount }}
+      </div>
+
+      <!-- Navigation -->
+      <div class="page-nav">
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="currentPage === 1" (click)="prevPage()">
+          <i class="bi bi-chevron-left"></i> Previous
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="currentPage === totalPages" (click)="nextPage()">
+          Next <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
+
   </section>
 </div>

@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { Api } from '../../../core/services/api';
 
 interface Account {
   code: string;
@@ -15,119 +17,109 @@ interface Account {
 @Component({
   selector: 'app-chart-of-accounts',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './chart-of-accounts.html',
   styleUrls: ['./chart-of-accounts.scss']
 })
 export class ChartOfAccounts implements OnInit {
   accounts: Account[] = [];
   filteredAccounts: Account[] = [];
-  categories: string[] = [];
+  categories: string[] = ['All'];
   selectedCategory: string = 'All';
   searchTerm: string = '';
   selectedAccount: Account | null = null;
   editingAccountCode: string | null = null;
   editDraft: Account | null = null;
 
+  isLoading = false;
+
+  // KPI from API
+  kpis: any = { total_accounts: 0, active_accounts: 0, categories: 0 };
+  balanceSummary: any = { total_assets: 0, total_liabilities: 0, total_equity: 0,
+                          total_assets_formatted: '0.00', total_liabilities_formatted: '0.00', total_equity_formatted: '0.00' };
+
+  // Pagination
+  currentPage  = 1;
+  pageSize     = 10;
+  totalCount   = 0;
+
+  constructor(private api: Api) {}
+
   ngOnInit() {
-    this.generateAccounts();
-    this.filterAccounts();
+    this.loadAccounts();
   }
 
-  generateAccounts() {
-    // Mock data for development/demo
-    this.accounts = [
-      // Assets
-      { code: '1000', name: 'Cash on Hand', category: 'Current Assets', type: 'Asset', balance: 55000, is_active: true },
-      { code: '1010', name: 'Petty Cash', category: 'Current Assets', type: 'Asset', balance: 1200, is_active: true },
-      { code: '1100', name: 'Main Bank Account', category: 'Current Assets', type: 'Asset', balance: 125000, is_active: true },
-      { code: '1110', name: 'Savings Bank Account', category: 'Current Assets', type: 'Asset', balance: 40000, is_active: true },
-      { code: '1200', name: 'Accounts Receivable', category: 'Current Assets', type: 'Asset', balance: 45000, is_active: true },
-      { code: '1300', name: 'Inventory', category: 'Current Assets', type: 'Asset', balance: 75000, is_active: true },
-      { code: '1400', name: 'Prepaid Expenses', category: 'Current Assets', type: 'Asset', balance: 5000, is_active: true },
-      { code: '1450', name: 'Input VAT Receivable', category: 'Current Assets', type: 'Asset', balance: 9200, is_active: true },
-      { code: '1500', name: 'Equipment', category: 'Fixed Assets', type: 'Asset', balance: 250000, is_active: true },
-      { code: '1600', name: 'Accumulated Depreciation', category: 'Fixed Assets', type: 'Asset', balance: -50000, is_active: true },
-      { code: '1700', name: 'Vehicles', category: 'Fixed Assets', type: 'Asset', balance: 90000, is_active: false },
-      
-      // Liabilities
-      { code: '2000', name: 'Accounts Payable', category: 'Current Liabilities', type: 'Liability', balance: 40000, is_active: true },
-      { code: '2100', name: 'Accrued Expenses', category: 'Current Liabilities', type: 'Liability', balance: 8000, is_active: true },
-      { code: '2150', name: 'VAT Payable', category: 'Current Liabilities', type: 'Liability', balance: 14500, is_active: true },
-      { code: '2200', name: 'Bank Loan', category: 'Long-term Liabilities', type: 'Liability', balance: 100000, is_active: true },
-      { code: '2300', name: 'Employee Benefits Payable', category: 'Long-term Liabilities', type: 'Liability', balance: 18000, is_active: true },
-      
-      // Equity
-      { code: '3000', name: 'Owner\'s Capital', category: 'Equity', type: 'Equity', balance: 200000, is_active: true },
-      { code: '3100', name: 'Retained Earnings', category: 'Equity', type: 'Equity', balance: 44000, is_active: true },
-      { code: '3200', name: 'Current Year Earnings', category: 'Equity', type: 'Equity', balance: 26000, is_active: true },
-      
-      // Revenue
-      { code: '4000', name: 'Sales Revenue', category: 'Revenue', type: 'Revenue', balance: -175000, is_active: true },
-      { code: '4100', name: 'Service Revenue', category: 'Revenue', type: 'Revenue', balance: -25000, is_active: true },
-      { code: '4200', name: 'Other Income', category: 'Revenue', type: 'Revenue', balance: -3500, is_active: true },
-      
-      // Expenses
-      { code: '5000', name: 'Cost of Goods Sold', category: 'Cost of Sales', type: 'Expense', balance: 80000, is_active: true },
-      { code: '6000', name: 'Salaries and Wages', category: 'Operating Expenses', type: 'Expense', balance: 35000, is_active: true },
-      { code: '6100', name: 'Rent Expense', category: 'Operating Expenses', type: 'Expense', balance: 12000, is_active: true },
-      { code: '6200', name: 'Utilities', category: 'Operating Expenses', type: 'Expense', balance: 3000, is_active: true },
-      { code: '6300', name: 'Office Supplies', category: 'Operating Expenses', type: 'Expense', balance: 1500, is_active: true },
-      { code: '6400', name: 'Insurance Expense', category: 'Operating Expenses', type: 'Expense', balance: 2200, is_active: true },
-      { code: '6500', name: 'Bank Charges', category: 'Operating Expenses', type: 'Expense', balance: 600, is_active: false }
-    ];
+  loadAccounts() {
+    this.isLoading = true;
+    const payload: any = {
+      company:     this.api.getCompanyId() ?? 1,
+      page_number: this.currentPage,
+      page_size:   this.pageSize,
+    };
+    if (this.searchTerm.trim())                        payload['search']   = this.searchTerm.trim();
+    if (this.selectedCategory && this.selectedCategory !== 'All') payload['category'] = this.selectedCategory;
 
-    this.categories = ['All', ...new Set(this.accounts.map(acc => acc.category))];
-  }
+    this.api.post('/ledger/chart-of-accounts/', payload).subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+        if (res.status === 200) {
+          // KPIs
+          this.kpis          = res.kpis          || this.kpis;
+          this.balanceSummary = res.balance_summary || this.balanceSummary;
+          this.totalCount     = res.kpis?.total_accounts ?? 0;
 
-  filterAccounts() {
-    this.filteredAccounts = this.accounts.filter(account => {
-      const matchesCategory = this.selectedCategory === 'All' || account.category === this.selectedCategory;
-      const matchesSearch = !this.searchTerm || 
-        account.code.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        account.name.toLowerCase().includes(this.searchTerm.toLowerCase());
-      return matchesCategory && matchesSearch;
+          // Category options from API
+          const apiCategories = res.category_options || [];
+          this.categories = ['All', ...apiCategories];
+
+          // Map data → existing Account interface
+          this.accounts = (res.data || []).map((item: any) => ({
+            code:        item.account_code  ?? item.code ?? '',
+            name:        item.account_name  ?? item.name ?? '',
+            category:    item.category      ?? '',
+            type:        item.account_type  ?? item.type ?? 'Asset',
+            balance:     item.balance       ?? 0,
+            is_active:   item.is_active     ?? true,
+            description: item.description   ?? '',
+          }));
+          this.filteredAccounts = [...this.accounts];
+        }
+      },
+      error: () => { this.isLoading = false; }
     });
   }
 
-  onCategoryChange() {
-    this.filterAccounts();
+  // Keep existing filter functions working
+  generateAccounts() { this.loadAccounts(); }
+
+  filterAccounts() {
+    this.currentPage = 1;
+    this.loadAccounts();
   }
 
-  onSearchChange() {
-    this.filterAccounts();
-  }
+  onCategoryChange() { this.filterAccounts(); }
+  onSearchChange()   { this.filterAccounts(); }
 
   getAccountTypeClass(type: string): string {
     switch (type) {
-      case 'Asset': return 'text-primary';
+      case 'Asset':     return 'text-primary';
       case 'Liability': return 'text-danger';
-      case 'Equity': return 'text-success';
-      case 'Revenue': return 'text-info';
-      case 'Expense': return 'text-warning';
-      default: return 'text-muted';
+      case 'Equity':    return 'text-success';
+      case 'Revenue':   return 'text-info';
+      case 'Expense':   return 'text-warning';
+      default:          return 'text-muted';
     }
   }
 
   getActiveAccountsCount(): number {
-    return this.filteredAccounts.filter(acc => acc.is_active).length;
+    return this.kpis.active_accounts ?? this.filteredAccounts.filter(a => a.is_active).length;
   }
 
-  getTotalAssets(): number {
-    return this.filteredAccounts.filter(acc => acc.type === 'Asset').reduce((sum, acc) => sum + acc.balance, 0);
-  }
+  getTotalAssets(): number      { return this.balanceSummary.total_assets      ?? 0; }
+  getTotalLiabilities(): number { return this.balanceSummary.total_liabilities ?? 0; }
+  getTotalEquity(): number      { return this.balanceSummary.total_equity      ?? 0; }
 
-  getTotalLiabilities(): number {
-    return this.filteredAccounts.filter(acc => acc.type === 'Liability').reduce((sum, acc) => sum + acc.balance, 0);
-  }
-
-  getTotalEquity(): number {
-    return this.filteredAccounts.filter(acc => acc.type === 'Equity').reduce((sum, acc) => sum + acc.balance, 0);
-  }
-
-  onViewAccount(account: Account): void {
-    this.selectedAccount = account;
-  }
+  onViewAccount(account: Account): void { this.selectedAccount = account; }
 
   onEditAccount(account: Account): void {
     this.editingAccountCode = account.code;
@@ -140,19 +132,13 @@ export class ChartOfAccounts implements OnInit {
   }
 
   onSaveEdit(): void {
-    if (!this.editDraft) {
-      return;
+    if (!this.editDraft) return;
+    const idx = this.accounts.findIndex(a => a.code === this.editingAccountCode);
+    if (idx !== -1) {
+      this.accounts[idx]  = { ...this.editDraft };
+      this.selectedAccount = this.accounts[idx];
     }
-
-    const accountIndex = this.accounts.findIndex(acc => acc.code === this.editingAccountCode);
-    if (accountIndex === -1) {
-      this.onCancelEdit();
-      return;
-    }
-
-    this.accounts[accountIndex] = { ...this.editDraft };
-    this.selectedAccount = this.accounts[accountIndex];
     this.onCancelEdit();
-    this.filterAccounts();
+    this.filteredAccounts = [...this.accounts];
   }
 } 

@@ -34,6 +34,7 @@ export class WarehouseForm implements OnInit {
       contactPerson: [''],
       phone: [''],
       email: ['', Validators.email],
+      is_active: [true],
       id: [null],
       company: [this.svc.getUserCompany(), Validators.required],
     });
@@ -62,8 +63,19 @@ export class WarehouseForm implements OnInit {
   loadWarehouse() {
     if (this.id) {
       this.svc.get('/warehouses/get-warehouse/' + this.id).subscribe((res: any) => {
-        if(res.status == 200){
-          this.form.patchValue(res.data);
+        if (res.status == 200) {
+          const data = res.data;
+          this.form.patchValue({
+            name: data.name,
+            address: data.address,
+            // API may return contact_person (snake_case) — handle both
+            contactPerson: data.contact_person ?? data.contactPerson ?? '',
+            phone: data.phone ?? '',
+            email: data.email ?? '',
+            is_active: data.is_active ?? true,
+            id: data.id,
+            company: data.company ?? this.svc.getUserCompany(),
+          });
         }
       });
     }
@@ -71,18 +83,28 @@ export class WarehouseForm implements OnInit {
 
   save() {
     if (this.form.valid) {
-      const formData = this.form.value;
-      formData.id = this.id;
+      const raw = this.form.value;
+      // Normalize to API field names
+      const formData: any = {
+        id: this.id ?? raw.id,
+        name: raw.name,
+        address: raw.address,
+        contact_person: raw.contactPerson,
+        phone: raw.phone,
+        email: raw.email,
+        is_active: raw.is_active,
+        company: raw.company,
+      };
+
       if (this.isEditMode && this.id) {
         this.svc.put('/warehouses/update-warehouse/', formData).subscribe((res: any) => {
-          if(res.status == 200){
+          if (res.status == 200) {
             this.toast.show('Warehouse Updated', 'Warehouse has been updated successfully.', 'success');
             this.handleSuccess();
           }
         });
       } else {
-        const newWarehouse = { id: Date.now(), ...formData };
-        this.svc.post('/warehouses/create-warehouse/', newWarehouse).subscribe((res: any) => {
+        this.svc.post('/warehouses/create-warehouse/', formData).subscribe((res: any) => {
           console.log(res);
           this.toast.show('Warehouse Created', 'Warehouse has been created successfully.', 'success');
           this.handleSuccess();

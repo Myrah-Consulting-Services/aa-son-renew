@@ -24,6 +24,53 @@
         </div>
       </div>
       <div class="header-actions">
+        <!-- Date Range + Type Filter -->
+        <div class="date-filter-group">
+          <div class="date-filter-inputs">
+            <!-- Type dropdown -->
+            <div class="date-input-wrap">
+              <label class="date-label">Type</label>
+              <select
+                class="form-select form-select-sm type-select"
+                [(ngModel)]="selectedType"
+                (change)="onTypeChange()"
+                [disabled]="typesLoading"
+              >
+                <option [ngValue]="null">All Types</option>
+                <option *ngFor="let t of itemTypes" [ngValue]="t.id">{{ t.name }}</option>
+              </select>
+            </div>
+
+            <span class="date-sep">|</span>
+
+            <!-- From date -->
+            <div class="date-input-wrap">
+              <label class="date-label">From</label>
+              <input
+                type="date"
+                class="form-control form-control-sm"
+                [(ngModel)]="filterStartDate"
+                [max]="filterEndDate"
+              >
+            </div>
+            <span class="date-sep">—</span>
+            <!-- To date -->
+            <div class="date-input-wrap">
+              <label class="date-label">To</label>
+              <input
+                type="date"
+                class="form-control form-control-sm"
+                [(ngModel)]="filterEndDate"
+                [min]="filterStartDate"
+              >
+            </div>
+            <button class="btn btn-primary btn-sm" (click)="applyFilter()" [disabled]="dashboardLoading">
+              <span *ngIf="dashboardLoading" class="spinner-border spinner-border-sm me-1" role="status"></span>
+              <i *ngIf="!dashboardLoading" class="bi bi-search me-1"></i>Apply
+            </button>
+          </div>
+        </div>
+
         <button class="btn btn-secondary btn-sm" routerLink="../list">
           <i class="bi bi-list me-1"></i>View All Tasks
         </button>
@@ -39,39 +86,35 @@
     <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-list-task"></i>
-        </div>
+        <div class="stat-icon"><i class="bi bi-list-task"></i></div>
         <div class="stat-content">
           <h3>Total Tasks</h3>
           <p class="stat-number">{{ stats.totalTasks }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-hourglass-split"></i>
-        </div>
+        <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
         <div class="stat-content">
           <h3>Pending</h3>
           <p class="stat-number">{{ stats.pendingTasks }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-play-circle"></i>
+        <div class="stat-icon"><i class="bi bi-person-check"></i></div>
+        <div class="stat-content">
+          <h3>Assigned</h3>
+          <p class="stat-number">{{ stats.assignedTasks }}</p>
         </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-play-circle"></i></div>
         <div class="stat-content">
           <h3>In Progress</h3>
           <p class="stat-number">{{ stats.inProgressTasks }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-check-circle"></i>
-        </div>
+        <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
         <div class="stat-content">
           <h3>Completed</h3>
           <p class="stat-number">{{ stats.completedTasks }}</p>
@@ -83,16 +126,21 @@
   <!-- Main Content Section -->
   <section class="main-content-section">
     <div class="dashboard-grid">
-      <!-- Priority Tasks -->
+
+      <!-- High Priority Tasks -->
       <div class="dashboard-card">
         <div class="card-header-section">
           <h3 class="card-title">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            High Priority Tasks
+            <i class="bi bi-exclamation-triangle me-2"></i>High Priority Tasks
           </h3>
         </div>
         <div class="card-body-section">
-          <div class="table-container">
+          <!-- Empty state -->
+          <div *ngIf="priorityTasks.length === 0" class="empty-state">
+            <i class="bi bi-check2-all text-success"></i>
+            <p>No high priority tasks</p>
+          </div>
+          <div class="table-container" *ngIf="priorityTasks.length > 0">
             <table class="compact-table">
               <thead>
                 <tr>
@@ -112,12 +160,12 @@
                   </td>
                   <td>
                     <div class="item-name">{{ task.itemName }}</div>
-                    <small class="text-muted">Qty: {{ task.quantity }}</small>
+                    <small class="text-muted">Qty: {{ task.quantity }} &nbsp;|&nbsp; Rem: {{ task.remainingQty }}</small>
                   </td>
                   <td>
                     <div class="location-flow">
-                      <span class="badge bg-warning text-dark me-2">{{ task.fromLocation }}</span>
-                      <i class="bi bi-arrow-right me-2"></i>
+                      <span class="badge bg-warning text-dark me-1">{{ task.fromLocation }}</span>
+                      <i class="bi bi-arrow-right me-1"></i>
                       <span class="badge bg-info text-white">{{ task.toLocation }}</span>
                     </div>
                   </td>
@@ -128,15 +176,13 @@
                     </div>
                   </td>
                   <td>
-                    <div class="due-time text-danger fw-medium">{{ task.dueTime | date:'shortTime' }}</div>
-                    <small class="text-muted">{{ task.estimatedTime }} min</small>
+                    <div class="due-time text-danger fw-medium">{{ task.dueTime }}</div>
+                    <small class="text-muted" *ngIf="task.minutesRemaining > 0">{{ task.minutesRemaining }} min left</small>
+                    <small class="text-danger" *ngIf="task.minutesRemaining === 0">Overdue</small>
                   </td>
                   <td>
-                    <span class="badge" 
-                          [class.bg-warning]="task.status === 'pending'"
-                          [class.bg-info]="task.status === 'assigned'"
-                          [class.bg-primary]="task.status === 'in_progress'">
-                      {{ task.status | titlecase }}
+                    <span class="badge" [ngClass]="getStatusBadgeClass(task.status)">
+                      {{ task.status }}
                     </span>
                   </td>
                 </tr>
@@ -148,15 +194,16 @@
 
       <!-- Sidebar Cards -->
       <div class="sidebar-cards">
+
         <!-- Worker Performance -->
         <div class="dashboard-card">
           <div class="card-header-section">
-            <h3 class="card-title">
-              <i class="bi bi-people me-2"></i>
-              Worker Performance
-            </h3>
+            <h3 class="card-title"><i class="bi bi-people me-2"></i>Worker Performance</h3>
           </div>
           <div class="card-body-section">
+            <div *ngIf="workerPerformance.length === 0" class="empty-state">
+              <p>No worker data</p>
+            </div>
             <div *ngFor="let worker of workerPerformance" class="worker-performance-item">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
@@ -165,7 +212,9 @@
                 </div>
                 <div class="text-end">
                   <div class="completed-count text-success fw-bold">{{ worker.completedToday }}</div>
-                  <small class="text-muted">tasks today</small>
+                  <small class="text-muted">completed</small>
+                  <div *ngIf="worker.inProgress > 0" class="text-info small">{{ worker.inProgress }} in progress</div>
+                  <div class="text-muted small">{{ worker.tasksToday }} tasks today</div>
                 </div>
               </div>
             </div>
@@ -175,16 +224,16 @@
         <!-- Loading Bay Status -->
         <div class="dashboard-card">
           <div class="card-header-section">
-            <h3 class="card-title">
-              <i class="bi bi-truck-flatbed me-2"></i>
-              Loading Bay Status
-            </h3>
+            <h3 class="card-title"><i class="bi bi-truck-flatbed me-2"></i>Loading Bay Status</h3>
           </div>
           <div class="card-body-section">
+            <div *ngIf="loadingBays.length === 0" class="empty-state">
+              <p>No bay data</p>
+            </div>
             <div *ngFor="let bay of loadingBays" class="loading-bay-item">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="bay-name fw-medium">{{ bay.name }}</span>
-                <span class="badge" 
+                <span class="badge"
                       [class.bg-success]="bay.utilization < 70"
                       [class.bg-warning]="bay.utilization >= 70 && bay.utilization < 90"
                       [class.bg-danger]="bay.utilization >= 90">
@@ -192,13 +241,13 @@
                 </span>
               </div>
               <div class="progress" style="height: 8px;">
-                <div class="progress-bar" 
+                <div class="progress-bar"
                      [class.bg-success]="bay.utilization < 70"
                      [class.bg-warning]="bay.utilization >= 70 && bay.utilization < 90"
                      [class.bg-danger]="bay.utilization >= 90"
                      [style.width.%]="bay.utilization"></div>
               </div>
-              <small class="text-muted">{{ bay.itemsCount }} items waiting</small>
+              <small class="text-muted">{{ bay.itemsCount }} items &nbsp;|&nbsp; {{ bay.qtyWaiting }} qty waiting</small>
             </div>
           </div>
         </div>
@@ -206,10 +255,7 @@
         <!-- Quick Actions -->
         <div class="dashboard-card">
           <div class="card-header-section">
-            <h3 class="card-title">
-              <i class="bi bi-lightning me-2"></i>
-              Quick Actions
-            </h3>
+            <h3 class="card-title"><i class="bi bi-lightning me-2"></i>Quick Actions</h3>
           </div>
           <div class="card-body-section">
             <div class="quick-actions-grid">
@@ -228,11 +274,8 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </section>
 </div>
-
-
-
-

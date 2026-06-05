@@ -27,25 +27,24 @@
         </div>
     </div>
 
-    <!-- Filter Buttons -->
+    <!-- Filter Buttons (dynamic from API) -->
     <div class="filter-section">
-        <button 
-            class="filter-btn" 
-            [class.active]="filterType === 'all'"
-            (click)="filterType = 'all'">
+        <button
+            class="filter-btn"
+            [class.active]="selectedTypeId === null"
+            (click)="selectTypeFilter(null)">
             <i class="bi bi-grid"></i> All
         </button>
-        <button 
-            class="filter-btn" 
-            [class.active]="filterType === 'product'"
-            (click)="filterType = 'product'">
-            <i class="bi bi-box"></i> Products
-        </button>
-        <button 
-            class="filter-btn" 
-            [class.active]="filterType === 'service'"
-            (click)="filterType = 'service'">
-            <i class="bi bi-tools"></i> Services
+        <button
+            *ngFor="let t of itemTypes"
+            class="filter-btn"
+            [class.active]="selectedTypeId === t.id"
+            (click)="selectTypeFilter(t.id)">
+            <i class="bi bi-box"    *ngIf="t.id === 1"></i>
+            <i class="bi bi-tools"  *ngIf="t.id === 2"></i>
+            <i class="bi bi-shop"   *ngIf="t.id === 3"></i>
+            <i class="bi bi-tag"    *ngIf="t.id > 3"></i>
+            {{ t.name }}
         </button>
     </div>
 

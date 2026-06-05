@@ -113,7 +113,7 @@ $warm-dark: #1f2937;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 8px;
-    overflow: hidden;
+    // overflow: hidden;
     margin-top: 0.75rem;
   }
   
@@ -306,12 +306,30 @@ $warm-dark: #1f2937;
     margin-top: 0.25rem;
   }
   
-  // Search Results (if needed)
+  // Search container & dropdown (matches inward form pattern)
   .search-container {
     position: relative;
     min-width: 220px;
   }
 
+  // Override Bootstrap dropdown-item hover inside table
+  .dropdown-menu {
+    .dropdown-item {
+      white-space: normal;
+      line-height: 1.3;
+
+      &:hover, &:focus {
+        background: rgba($warm-orange, 0.07);
+        color: $warm-dark;
+      }
+
+      &:active {
+        background: rgba($warm-orange, 0.15);
+      }
+    }
+  }
+
+  // Legacy search-results kept for backwards compatibility
   .search-results {
     max-height: 200px;
     overflow-y: auto;
@@ -321,7 +339,7 @@ $warm-dark: #1f2937;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     margin-top: 0.25rem;
     position: absolute;
-    z-index: 10;
+    z-index: 1055;
     width: 100%;
     left: 0;
     top: calc(100% + 2px);
@@ -338,20 +356,10 @@ $warm-dark: #1f2937;
     gap: 0.125rem;
     cursor: pointer;
 
-    span {
-      font-size: 0.8125rem;
-      color: $warm-dark;
-      font-weight: 500;
-    }
+    span { font-size: 0.8125rem; color: $warm-dark; font-weight: 500; }
+    small { font-size: 0.75rem; color: $warm-gray; }
 
-    small {
-      font-size: 0.75rem;
-      color: $warm-gray;
-    }
-
-    &:hover {
-      background: rgba($warm-orange, 0.07);
-    }
+    &:hover { background: rgba($warm-orange, 0.07); }
   }
 }
 

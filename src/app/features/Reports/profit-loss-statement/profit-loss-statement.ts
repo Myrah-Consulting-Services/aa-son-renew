@@ -34,41 +34,50 @@ export class ProfitLossStatement implements OnInit {
 
   generateReport() {
     this.isLoading = true;
-    this.loadHardcodedData();
-    this.isLoading = false;
-    this.toast.show('Success', 'Profit & Loss Statement loaded successfully', 'success');
-  }
-
-  private loadHardcodedData() {
-    const revenue: ReportRow[] = [
-      { account: 'Product Sales', amount: 150000 },
-      { account: 'Service Revenue', amount: 25000 }
-    ];
-    const cost_of_sales: ReportRow[] = [
-      { account: 'Cost of Goods Sold', amount: 80000 }
-    ];
-    const operating_expenses: ReportRow[] = [
-      { account: 'Salaries and Wages', amount: 35000 },
-      { account: 'Rent Expense', amount: 12000 },
-      { account: 'Utilities', amount: 3000 }
-    ];
-    
-    const total_revenue = revenue.reduce((sum, item) => sum + item.amount, 0);
-    const total_cost_of_sales = cost_of_sales.reduce((sum, item) => sum + item.amount, 0);
-    const gross_profit = total_revenue - total_cost_of_sales;
-    const total_operating_expenses = operating_expenses.reduce((sum, item) => sum + item.amount, 0);
-    const net_income = gross_profit - total_operating_expenses;
-
-    this.reportData = {
-      revenue,
-      cost_of_sales,
-      operating_expenses,
-      total_revenue,
-      total_cost_of_sales,
-      gross_profit,
-      total_operating_expenses,
-      net_income
+    const payload = {
+      company: this.api.getCompanyId() ?? 1,
+      from_date: this.dateFrom,
+      to_date:   this.dateTo
     };
+    this.api.post('/reports/profit-and-loss/', payload).subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+        if (res.status === 200) {
+          const mapItems = (items: any[]) =>
+            (items || []).map((i: any) => ({ account: i.line_name ?? i.account, amount: i.amount ?? 0 }));
+
+          const revenue      = res.revenue      || {};
+          const costOfSales  = res.cost_of_sales || {};
+          const opExpenses   = res.operating_expenses || {};
+
+          const revenueItems   = mapItems(revenue.items      || []);
+          const cosItems       = mapItems(costOfSales.items  || []);
+          const opExpItems     = mapItems(opExpenses.items   || []);
+
+          const totalRevenue   = revenue.total      ?? revenueItems.reduce((s: number, i: any) => s + i.amount, 0);
+          const totalCOS       = costOfSales.total  ?? cosItems.reduce((s: number, i: any) => s + i.amount, 0);
+          const grossProfit    = res.gross_profit   ?? totalRevenue - totalCOS;
+          const totalOpExp     = opExpenses.total   ?? opExpItems.reduce((s: number, i: any) => s + i.amount, 0);
+          const netIncome      = res.net_income     ?? grossProfit - totalOpExp;
+
+          this.reportData = {
+            revenue:                  revenueItems,
+            cost_of_sales:            cosItems,
+            operating_expenses:       opExpItems,
+            total_revenue:            totalRevenue,
+            total_cost_of_sales:      totalCOS,
+            gross_profit:             grossProfit,
+            total_operating_expenses: totalOpExp,
+            net_income:               netIncome,
+          };
+          this.toast.show('Success', 'Profit & Loss Statement loaded successfully', 'success');
+        }
+      },
+      error: () => {
+        this.isLoading = false;
+        this.toast.show('Error', 'Failed to load Profit & Loss Statement', 'danger');
+      }
+    });
   }
 
   onDateChange() {

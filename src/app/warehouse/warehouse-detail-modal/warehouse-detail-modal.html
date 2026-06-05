@@ -1,0 +1,94 @@
+<!-- Modal Header -->
+<div class="modal-header">
+  <h5 class="modal-title">
+    <i class="bi bi-building me-2"></i>Warehouse Details
+  </h5>
+  <button type="button" class="btn-close" (click)="close()"></button>
+</div>
+
+<!-- Modal Body -->
+<div class="modal-body">
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2 text-muted">Loading warehouse details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!loading && error" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+  </div>
+
+  <!-- Warehouse Details -->
+  <div *ngIf="!loading && !error && warehouse">
+    <!-- Status Badge -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span class="badge fs-6 px-3 py-2"
+            [ngClass]="warehouse.is_active ? 'bg-success' : 'bg-secondary'">
+        <i class="bi me-1" [ngClass]="warehouse.is_active ? 'bi-check-circle' : 'bi-x-circle'"></i>
+        {{ warehouse.is_active ? 'Active' : 'Inactive' }}
+      </span>
+      <small class="text-muted">ID: #{{ warehouse.id }}</small>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Warehouse Name -->
+      <div class="detail-item">
+        <span class="detail-label"><i class="bi bi-building me-1"></i>Warehouse Name</span>
+        <span class="detail-value">{{ warehouse.name || '—' }}</span>
+      </div>
+
+      <!-- Address -->
+      <div class="detail-item full-width">
+        <span class="detail-label"><i class="bi bi-geo-alt me-1"></i>Address</span>
+        <span class="detail-value">{{ warehouse.address || '—' }}</span>
+      </div>
+
+      <!-- Contact Person -->
+      <div class="detail-item">
+        <span class="detail-label"><i class="bi bi-person me-1"></i>Contact Person</span>
+        <span class="detail-value">{{ warehouse.contact_person || warehouse.contactPerson || '—' }}</span>
+      </div>
+
+      <!-- Phone -->
+      <div class="detail-item">
+        <span class="detail-label"><i class="bi bi-telephone me-1"></i>Phone</span>
+        <span class="detail-value">{{ warehouse.phone || '—' }}</span>
+      </div>
+
+      <!-- Email -->
+      <div class="detail-item full-width">
+        <span class="detail-label"><i class="bi bi-envelope me-1"></i>Email</span>
+        <span class="detail-value">{{ warehouse.email || '—' }}</span>
+      </div>
+
+      <!-- Company -->
+      <div class="detail-item" *ngIf="warehouse.company">
+        <span class="detail-label"><i class="bi bi-briefcase me-1"></i>Company</span>
+        <span class="detail-value">{{ warehouse.company }}</span>
+      </div>
+
+      <!-- Created At -->
+      <div class="detail-item" *ngIf="warehouse.created_at">
+        <span class="detail-label"><i class="bi bi-calendar me-1"></i>Created At</span>
+        <span class="detail-value">{{ warehouse.created_at | date:'medium' }}</span>
+      </div>
+
+      <!-- Updated At -->
+      <div class="detail-item" *ngIf="warehouse.updated_at">
+        <span class="detail-label"><i class="bi bi-calendar-check me-1"></i>Updated At</span>
+        <span class="detail-value">{{ warehouse.updated_at | date:'medium' }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Footer -->
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="close()">
+    <i class="bi bi-x me-1"></i>Close
+  </button>
+</div>

@@ -94,51 +94,64 @@
     <!-- Filters Section -->
     <div class="filters-section" *ngIf="showFilters">
       <div class="filters-bar">
-        <form [formGroup]="filterForm" (ngSubmit)="onFilterChange()">
-          <div class="row g-2 align-items-end">
-            <div class="col-md-3">
-              <label class="form-label">Search</label>
-              <input type="text" class="form-control form-control-sm" formControlName="searchTerm" placeholder="Search by name">
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Department</label>
-              <select class="form-select form-select-sm" formControlName="department">
-                <option value="">All</option>
-                <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Designation</label>
-              <select class="form-select form-select-sm" formControlName="designation">
-                <option value="">All</option>
-                <option *ngFor="let desig of designationOptions" [value]="desig">{{ desig }}</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Service Years</label>
-              <select class="form-select form-select-sm" formControlName="serviceYearRange">
-                <option value="">All</option>
-                <option *ngFor="let range of serviceYearRanges" [value]="range.label">{{ range.label }}</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Calc. Date</label>
-              <input type="date" class="form-control form-control-sm" formControlName="calculationDate" (change)="calculateAccrualForAllEmployees()">
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Min Basic</label>
-              <input type="number" class="form-control form-control-sm" formControlName="minBasicSalary" [placeholder]="'Min ' + (getcurrency() || '')">
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Max Basic</label>
-              <input type="number" class="form-control form-control-sm" formControlName="maxBasicSalary" [placeholder]="'Max ' + (getcurrency() || '')">
-            </div>
-            <div class="col-md-2">
-              <button type="button" class="btn-secondary w-100" (click)="clearFilters()">
+        <form [formGroup]="filterForm" class="filter-inline-row">
+
+          <!-- Search -->
+          <div class="filter-field filter-search">
+            <label class="filter-label">Search</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              formControlName="search"
+              placeholder="Employee name..."
+              (input)="onSearchInput()">
+          </div>
+
+          <!-- Department -->
+          <div class="filter-field">
+            <label class="filter-label">Department</label>
+            <select class="form-select form-select-sm" formControlName="department_id" (change)="onFilterChange()">
+              <option value="">All Departments</option>
+              <option *ngFor="let d of departmentOptions" [value]="d.id">{{ d.department_name }}</option>
+            </select>
+          </div>
+
+          <!-- Designation -->
+          <div class="filter-field">
+            <label class="filter-label">Designation</label>
+            <select class="form-select form-select-sm" formControlName="designation_id" (change)="onFilterChange()">
+              <option value="">All Designations</option>
+              <option *ngFor="let d of designationOptions" [value]="d.id">{{ d.designation_name }}</option>
+            </select>
+          </div>
+
+          <!-- Service Years -->
+          <div class="filter-field">
+            <label class="filter-label">Service Years</label>
+            <select class="form-select form-select-sm" formControlName="service_years" (change)="onFilterChange()">
+              <option *ngFor="let s of serviceYearOptions" [value]="s.value">{{ s.label }}</option>
+            </select>
+          </div>
+
+          <!-- Calculation Date -->
+          <div class="filter-field">
+            <label class="filter-label">Calc. Date</label>
+            <input type="date" class="form-control form-control-sm" formControlName="calculationDate" (change)="onFilterChange()">
+          </div>
+
+          <!-- Actions -->
+          <div class="filter-field filter-actions">
+            <label class="filter-label">&nbsp;</label>
+            <div class="d-flex gap-1">
+              <button type="button" class="btn btn-primary btn-sm" (click)="onFilterChange()" [disabled]="isLoading">
+                <i class="bi bi-search me-1"></i>Apply
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="clearFilters()">
                 <i class="bi bi-x-circle me-1"></i>Clear
               </button>
             </div>
           </div>
+
         </form>
       </div>
     </div>
@@ -146,7 +159,9 @@
     <!-- Results Summary -->
     <div class="results-summary-section">
       <div class="summary-info">
-        <span class="summary-text">Showing <strong>{{ filteredEmployees.length }}</strong> of <strong>{{ totalEmployees }}</strong></span>
+        <span class="summary-text">
+          <strong>{{ showingLabel || (filteredEmployees.length + ' of ' + totalItems) }}</strong> results
+        </span>
         <span class="summary-text">Total Accrued: <strong>{{ getCurrencyFormat(totalAccruedGratuity) }}</strong></span>
       </div>
     </div>
@@ -190,24 +205,32 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let employee of getPaginatedEmployees()" [ngClass]="{'table-warning': !employee.eligible}">
+              <tr *ngFor="let employee of filteredEmployees" [ngClass]="{'table-warning': !employee.eligible}">
                 <td>
                   <div class="employee-info">
                     <div class="employee-name">{{ employee.employee_name }}</div>
-                    <small class="text-muted">ID: {{ employee.employee_id }}</small>
+                    <small class="text-muted">{{ employee.employee_code }} · ID: {{ employee.employee_id }}</small>
                   </div>
                 </td>
                 <td><span class="department-badge">{{ employee.department || 'N/A' }}</span></td>
                 <td><span class="designation-text">{{ employee.designation || 'N/A' }}</span></td>
-                <td><span class="date-text">{{ employee.joining_date | date:'shortDate' }}</span></td>
+                <td><span class="date-text">{{ employee.joining_date | date:'dd MMM yyyy' }}</span></td>
                 <td><span class="salary-text">{{ getCurrencyFormat(employee.basic_salary) }}</span></td>
-                <td><span class="service-years" [ngClass]="getServiceYearClass(employee.serviceYears)">{{ employee.serviceYears.toFixed(2) }} years</span></td>
-                <td><span class="accrual-text">{{ getCurrencyFormat(employee.monthlyAccrual) }}</span></td>
-                <td><span class="accrual-text">{{ getCurrencyFormat(employee.yearlyAccrual) }}</span></td>
-                <td><span class="total-accrual" [ngClass]="{'text-danger': !employee.eligible}">{{ getCurrencyFormat(employee.accruedGratuity) }}</span></td>
                 <td>
-                  <span class="badge" [ngClass]="employee.eligible ? 'completed' : 'rejected'">
-                    {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
+                  <span class="service-years" [ngClass]="getServiceYearClass(employee.service_years ?? 0)">
+                    {{ (employee.service_years ?? 0).toFixed(2) }} yrs
+                  </span>
+                </td>
+                <td><span class="accrual-text">{{ getCurrencyFormat(employee.monthly_accrual) }}</span></td>
+                <td><span class="accrual-text">{{ getCurrencyFormat(employee.yearly_accrual) }}</span></td>
+                <td>
+                  <span class="total-accrual" [ngClass]="{'text-danger': !employee.eligible}">
+                    {{ getCurrencyFormat(employee.accrued_gratuity ?? employee.total_accrued) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getEligibilityBadge(employee.eligible)">
+                    {{ employee.status || (employee.eligible ? 'Eligible' : 'Not Eligible') }}
                   </span>
                 </td>
               </tr>
@@ -218,23 +241,30 @@
     </div>
 
     <!-- Pagination Section -->
-    <div class="pagination-section" *ngIf="filteredEmployees.length > 0">
+    <div class="pagination-section" *ngIf="!isLoading && totalItems > 0">
       <div class="pagination-bar">
         <div class="page-info">
           <small class="text-muted">
-            Showing {{ (currentPage * pageSize) + 1 }} to {{ Math.min((currentPage + 1) * pageSize, totalItems) }} of {{ totalItems }} results
+            Page {{ currentPage }} of {{ totalPages }} &nbsp;·&nbsp; {{ totalItems }} total
           </small>
         </div>
         <div class="pagination-controls">
           <div class="page-navigation">
-            <button class="btn-page" (click)="onPageChange({pageIndex: currentPage - 1, pageSize: pageSize})" [disabled]="currentPage === 0">
-              <i class="bi bi-chevron-left"></i>Prev
+            <button class="btn-page" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage <= 1">
+              <i class="bi bi-chevron-left"></i> Prev
             </button>
-            <span class="page-info">Page {{ currentPage + 1 }} of {{ Math.ceil(totalItems / pageSize) }}</span>
-            <button class="btn-page" (click)="onPageChange({pageIndex: currentPage + 1, pageSize: pageSize})" [disabled]="(currentPage + 1) * pageSize >= totalItems">
+            <span class="page-info mx-2">{{ currentPage }} / {{ totalPages }}</span>
+            <button class="btn-page" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage >= totalPages">
               Next <i class="bi bi-chevron-right"></i>
             </button>
           </div>
+          <!-- Items per page -->
+          <select class="form-select form-select-sm ms-3" style="width:auto;" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
         </div>
       </div>
     </div>

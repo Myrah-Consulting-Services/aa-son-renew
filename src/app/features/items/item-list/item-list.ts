@@ -44,16 +44,16 @@ export class ItemList implements OnInit {
   
   loadItems() {
     this.api.post('/items/list-item/s=/', {
-      company:  this.api.getUserCompany(),
-      page_size: 9,
-      page: 1
+      company:   this.api.getUserCompany(),
+      type:      1,
+      page:      1,
+      page_size: 9
     }).subscribe({
       next: (response: any) => {
-        if(response.status === 200){
+        if (response.status === 200) {
           this.items = response.data;
-          // this.toast.show('Success', 'Items loaded successfully', 'success');
-          if(response.data.length > 0){
-            this.onAddItem(response.data[0])
+          if (response.data.length > 0) {
+            this.onAddItem(response.data[0]);
             this.selectedItem = response.data[0];
           }
         }
