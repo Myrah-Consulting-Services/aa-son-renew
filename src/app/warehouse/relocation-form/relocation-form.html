@@ -1,5 +1,5 @@
 <div class="modal-header bg-light border-bottom-0">
-  <h4 class="modal-title fw-bold text-primary">New Item Relocation</h4>
+  <h4 class="modal-title fw-bold text-primary">{{ isEditMode ? 'Edit Item Relocation' : 'New Item Relocation' }}</h4>
   <button type="button" class="btn-close" (click)="activeModal.dismiss()" aria-label="Close"></button>
 </div>
 <div class="modal-body">
@@ -112,6 +112,6 @@
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary btn-sm" (click)="cancel()">Cancel</button>
   <button type="button" class="btn btn-primary btn-sm" (click)="save()" [disabled]="form.invalid">
-    Relocate Items ({{ itemsArray.length }})
+    {{ isEditMode ? 'Update Relocation' : 'Relocate Items (' + itemsArray.length + ')' }}
   </button>
 </div>

@@ -62,20 +62,32 @@ export class RelocationForm implements OnInit {
   }
 
   loadRelocation(relocation: any) {
-    console.log('RelocationData:', relocation);
+    if (relocation.date) {
+      const dateStr = String(relocation.date).split('T')[0];
+      this.form.patchValue({
+        date: dateStr,
+        reason: relocation.reason || ''
+      });
+    }
 
-   
-
-    // Clear current items
     const itemsArray = this.form.get('items') as FormArray;
     while (itemsArray.length) {
       itemsArray.removeAt(0);
     }
 
-    // Patch the item row
-    const itemId = Number(relocation.id ?? relocation.item_id);
-    const fromLocationId = Number(relocation.locations[0].location_id ?? relocation.from_location_id);
-    const toLocationId = Number(relocation.toLocationId ?? relocation.to_location_id);
+    const itemId = Number(relocation.item_id ?? relocation.id);
+    const fromLocationId = Number(
+      relocation.from_location_id ??
+      relocation.locations?.[0]?.location_id ??
+      this.resolveLocationIdFromDisplay(relocation.location, 0) ??
+      ''
+    );
+    const toLocationId = Number(
+      relocation.to_location_id ??
+      relocation.toLocationId ??
+      this.resolveLocationIdFromDisplay(relocation.location, 1) ??
+      ''
+    );
     const quantity = relocation.quantity || 1;
 
     const matchedItem = this.items?.find((itm: any) => Number(itm.id) === itemId);
@@ -89,12 +101,24 @@ export class RelocationForm implements OnInit {
     });
     itemsArray.push(itemForm);
 
-    this.itemSearchTerms = [matchedItem ? matchedItem.name : ''];
+    this.itemSearchTerms = [matchedItem ? matchedItem.name : (relocation.items || '')];
     this.filteredItems = [[]];
     this.showItemDropdown = [false];
     this.itemLocations = [matchedItem ? matchedItem.locations : []];
+  }
 
-    console.log('Patched item form:', itemForm.value, matchedItem);
+  private resolveLocationIdFromDisplay(locationStr: string | undefined, index: 0 | 1): number | null {
+    if (!locationStr?.includes('->')) {
+      return null;
+    }
+    const name = locationStr.split('->').map(part => part.trim())[index];
+    if (!name || !this.locations?.length) {
+      return null;
+    }
+    const loc = this.locations.find((l: any) =>
+      (l.name || l.location_name || '').trim() === name
+    );
+    return loc ? Number(loc.id ?? loc.location_id) : null;
   }
     getwarehouse(){
       this.svc.get('/warehouses/list-warehouse/').subscribe((res: any) => {
@@ -107,6 +131,7 @@ getlocation(){
   this.svc.get('/warehouses/warehouse-wise-location/1/').subscribe((res: any) => {
     if(res.status == 200){
       this.locations = res.data;
+      this.tryLoadRelocationForEdit();
     }
   });
 }
@@ -114,13 +139,27 @@ getlocation(){
     this.svc.post('/items/list-item/s=/', { company: 1, warehouse: 1 }).subscribe((res: any) => {
       if (res.status == 200) {
         this.items = res.data;
-        // If editing, patch the form now
-        if (this.relocationData) {
-          console.log('Patching form with relocationData:', this.relocationData);
-          this.loadRelocation(this.relocationData);
-        }
+        this.tryLoadRelocationForEdit();
       }
     });
+  }
+
+  initializeEditMode(relocation: any) {
+    this.relocationData = relocation;
+    this.isEditMode = true;
+
+    const itemsArray = this.form.get('items') as FormArray;
+    while (itemsArray.length) {
+      itemsArray.removeAt(0);
+    }
+
+    this.tryLoadRelocationForEdit();
+  }
+
+  private tryLoadRelocationForEdit() {
+    if (this.relocationData && this.items?.length && this.locations?.length) {
+      this.loadRelocation(this.relocationData);
+    }
   }
 
   processItemLocationData() {

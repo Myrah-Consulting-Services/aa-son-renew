@@ -19,6 +19,7 @@ export class RelocationList implements OnInit {
   warehouses: any[] = [];
   locations: any[] = [];
   items: any[] = [];
+  readonly relocateTransactionType = 3;
   loading = false;
   // Filters and pagination
   searchText = '';
@@ -30,13 +31,13 @@ export class RelocationList implements OnInit {
   totalData = 0;
   Math = Math;
   summaryCards = [
-    { title: 'Total Relocations', value: () => this.relocations.length, icon: 'bi bi-arrows-move', bg: 'bg-primary' },
+    { title: 'Total Relocations', value: () => this.totalData || this.relocations.length, icon: 'bi bi-arrows-move', bg: 'bg-primary' },
     { title: 'Total Items', value: () => this.getTotalQuantity(), icon: 'bi bi-box-seam', bg: 'bg-success' },
     { title: 'Warehouses', value: () => this.getRelocationWarehouseCount(), icon: 'bi bi-building', bg: 'bg-info' },
     { title: 'Locations', value: () => this.getRelocationLocationCount(), icon: 'bi bi-geo-alt', bg: 'bg-warning' }
   ];
-itemId: any;
-viewRelocationData: any;
+  itemId: any;
+  viewRelocationData: any = null;
 
   constructor(
     public svc: Api,
@@ -45,40 +46,17 @@ viewRelocationData: any;
   ) {}
 
   ngOnInit() {
-    // Set default date range to today
+    // Set default date range: start of current month to today
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
-    const formattedToday = `${yyyy}-${mm}-${dd}`;
-    this.startDate = formattedToday;
-    this.endDate = formattedToday;
+    const firstDay = '01';
+    this.startDate = `${yyyy}-${mm}-${firstDay}`;
+    this.endDate = `${yyyy}-${mm}-${dd}`;
     this.loadData();
     this.loadWarehouses();
     this.loadLocations();
-    // this.loadlog(null)
-    // For testing - you can remove this after confirming the API works
-    // this.loadSampleData();
-  }
-  loadlog(id:any){
-    this.svc.post('/warehouses/list-reloaction/',{item:id}).subscribe({
-      next: (res: any) => {
-        if(res.status == 200){
-          this.viewRelocationData = res.data;
-          if (res.paginated_data) {
-            this.currentPage = res.paginated_data.current_page;
-            this.totalPages = res.paginated_data.total_pages;
-            this.totalData = res.paginated_data.total_data;
-            this.pageSize = res.paginated_data.page_size;
-          }
-        }
-       
-      },
-      error: (error) => {
-        console.error('Error loading relocations:', error);
-        
-      }
-    })
   }
 
   loadData(page: number = this.currentPage) {
@@ -86,22 +64,22 @@ viewRelocationData: any;
     this.currentPage = page;
     const payload: any = {
       company: 1,
-      warehouse: 1,
+      transaction_type: this.relocateTransactionType,
+      start_date: this.startDate,
+      end_date: this.endDate,
       page_number: this.currentPage,
       page_size: this.pageSize,
-      start_date: this.startDate,
-      end_date: this.endDate
+      search: this.searchText || ''
     };
-    const search = this.searchText ? this.searchText : '';
-    this.svc.post('/items/list-item/s=' + search + '/', payload).subscribe({
+    this.svc.post('/items/movement-transactions/', payload).subscribe({
       next: (res: any) => {
-        if(res.status == 200){
+        if (res.status == 200) {
           this.relocations = res.data;
-          if (res) {
-            this.currentPage = res.current_page;
-            this.totalPages = res.total_pages;
-            this.totalData = res.total_data;
-            this.pageSize = res.page_size;
+          if (res.paginated_data) {
+            this.currentPage = res.paginated_data.current_page;
+            this.totalPages = res.paginated_data.total_pages;
+            this.totalData = res.paginated_data.total_data;
+            this.pageSize = res.paginated_data.page_size;
           }
         }
         this.loading = false;
@@ -150,9 +128,8 @@ viewRelocationData: any;
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
-    const formattedToday = `${yyyy}-${mm}-${dd}`;
-    this.startDate = formattedToday;
-    this.endDate = formattedToday;
+    this.startDate = `${yyyy}-${mm}-01`;
+    this.endDate = `${yyyy}-${mm}-${dd}`;
     this.loadData(1);
   }
 
@@ -196,16 +173,15 @@ viewRelocationData: any;
     }).catch(() => {});
   }
 
-    onView(modal: any,item: any) {
-      this.loadlog(item.id)
-    const modalRef = this.modalService.open(modal, { centered: true, size: 'lg' });
-
+    onView(modal: any, item: any) {
+    this.viewRelocationData = item;
+    this.modalService.open(modal, { centered: true, size: 'lg' });
     console.log('View relocation item:', item);
   }
 
   onEdit(item: any) {
     const modalRef = this.modalService.open(RelocationForm, { centered: true, size: 'lg' });
-    modalRef.componentInstance.relocationData = item;
+    modalRef.componentInstance.initializeEditMode(item);
     modalRef.result.then((result) => {
       if (result === 'saved') {
         this.loadData();
@@ -270,30 +246,33 @@ viewRelocationData: any;
 
   // Calculate total quantity of items moved
   getTotalQuantity(): number {
-    return this.relocations.reduce((sum, item) => sum + this.getTotalQty(item.locations), 0);
+    return this.relocations.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
   }
 
-  // Get status badge class based on transaction type
-  getStatusBadgeClass(type: string): string {
-    switch(type?.toLowerCase()) {
-      case 'transfer':
-        return 'bg-info';
-      case 'movement':
-        return 'bg-warning';
-      case 'adjustment':
-        return 'bg-secondary';
-      default:
-        return 'bg-primary';
+  // Get status badge class based on status
+  getStatusBadgeClass(status: string): string {
+    switch (status) {
+      case '1': return 'bg-success';
+      case '0': return 'bg-warning';
+      default: return 'bg-secondary';
+    }
+  }
+
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case '1': return 'Completed';
+      case '0': return 'Pending';
+      default: return status || '-';
     }
   }
 
   // Check if relocation is recent (within 7 days)
-  isRecentRelocation(createdAt: string): boolean {
-    if (!createdAt) return false;
-    const createdDate = new Date(createdAt);
+  isRecentRelocation(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return createdDate > sevenDaysAgo;
+    return d > sevenDaysAgo;
   }
 
   // Refresh data
@@ -303,53 +282,24 @@ viewRelocationData: any;
     this.loadLocations();
   }
 
-  // Load sample data for testing - remove this after API integration
-  loadSampleData() {
-    const sampleData = [
-      {
-        "id": 2,
-        "quantity": 1,
-        "transaction_type": "transfer",
-        "transaction_date": "2025-06-25T13:59:01+05:30",
-        "created_at": "2025-06-25T13:59:01+05:30",
-        "updated_at": null,
-        "deleted": false,
-        "company": 1,
-        "from_warehouse": 1,
-        "to_warehouse": 2,
-        "from_location": 1,
-        "to_location": 3,
-        "item": 2,
-        "batch": null
-      }
-    ];
-    
-    // Only use sample data if no data is loaded from API
-    if (this.relocations.length === 0) {
-      this.relocations = sampleData;
-      this.toast.show('Info', 'Loaded sample data for testing', 'info');
-    }
-  }
-
-  getUniqueWarehouses(locations: any[]): string[] {
-    if (!locations) return [];
-    const names = locations.map(l => l.warehouse_name);
-    return [...new Set(names)];
-  }
-
-  getWarehousesWithLocations(locations: any[]): { name: string, locations: any[] }[] {
-    if (!locations) return [];
-    const map = new Map<string, any[]>();
-    locations.forEach(loc => {
-      if (!map.has(loc.warehouse_name)) {
-        map.set(loc.warehouse_name, []);
-      }
-      const arr = map.get(loc.warehouse_name);
-      if (arr) {
-        arr.push(loc);
+  getRelocationWarehouseCount(): number {
+    const set = new Set<string>();
+    this.relocations.forEach(item => {
+      if (item.warehouse) {
+        item.warehouse.split('->').forEach((w: string) => set.add(w.trim()));
       }
     });
-    return Array.from(map.entries()).map(([name, locations]) => ({ name, locations }));
+    return set.size;
+  }
+
+  getRelocationLocationCount(): number {
+    const set = new Set<string>();
+    this.relocations.forEach(item => {
+      if (item.location) {
+        item.location.split('->').forEach((l: string) => set.add(l.trim()));
+      }
+    });
+    return set.size;
   }
 
   getTotalQty(locations: any[]): number {
@@ -361,39 +311,5 @@ viewRelocationData: any;
     if (qty <= 5) return 'text-danger';
     if (qty <= 15) return 'text-warning';
     return 'text-success';
-  }
-
-  getStockStatus(qty: number): string {
-    if (qty <= 5) return 'Low Stock';
-    if (qty <= 15) return 'Reorder';
-    return 'In Stock';
-  }
-
-  getRelocationWarehouseCount(): number {
-    const warehouseNames = new Set<string>();
-    this.relocations.forEach(item => {
-      if (item.locations) {
-        item.locations.forEach((loc: any) => {
-          if (loc.warehouse_name) {
-            warehouseNames.add(loc.warehouse_name);
-          }
-        });
-      }
-    });
-    return warehouseNames.size;
-  }
-
-  getRelocationLocationCount(): number {
-    const locationNames = new Set<string>();
-    this.relocations.forEach(item => {
-      if (item.locations) {
-        item.locations.forEach((loc: any) => {
-          if (loc.location_name) {
-            locationNames.add(loc.location_name);
-          }
-        });
-      }
-    });
-    return locationNames.size;
   }
 }

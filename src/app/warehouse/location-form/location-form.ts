@@ -34,7 +34,7 @@ export class LocationForm implements OnInit {
       warehouse: ['', Validators.required],
       description: [''],
       capacity: [null, [Validators.min(0)]],
-      isActive: [true],
+      is_active: [true],
       id: [null]
     });
   }
