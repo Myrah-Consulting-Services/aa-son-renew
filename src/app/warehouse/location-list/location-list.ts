@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { LocationForm } from '../location-form/location-form';
 import { Api } from '../../core/services/api';
 import { ToastService } from '../../core/services/toast.service';
@@ -22,6 +24,22 @@ export class LocationList implements OnInit {
   searchText: string = '';
   loading = false;
 
+  kpis = {
+    total_locations: 0,
+    active_locations: 0,
+    inactive_locations: 0,
+    total_warehouses: 0,
+    locations_with_stock: 0,
+    empty_locations: 0
+  };
+
+  currentPage = 1;
+  pageSize = 10;
+  totalPages = 0;
+  totalData = 0;
+
+  private searchSubject = new Subject<string>();
+
   constructor(
     private svc: Api,
     private modalService: NgbModal,
@@ -29,80 +47,130 @@ export class LocationList implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.loadData();
+    });
+
+    this.loadWarehouses();
     this.loadData();
   }
 
-  // Getter methods for template calculations
-  get activeLocationsCount(): number {
-    return this.filteredLocations.filter(l => l.is_active).length;
+  loadWarehouses() {
+    this.svc.get('/warehouses/list-warehouse/').subscribe({
+      next: (res: any) => {
+        if (res.status === 200) {
+          this.warehouses = res.data || [];
+        }
+      },
+      error: () => {
+        this.toast.show('Error', 'Failed to load warehouses', 'danger');
+      }
+    });
   }
 
-  get inactiveLocationsCount(): number {
-    return this.filteredLocations.filter(l => !l.is_active).length;
-  }
-
-  loadData() {
+  loadData(page: number = this.currentPage) {
     this.loading = true;
-    
-    // Load warehouses
-    this.svc.get('/warehouses/list-warehouse/').subscribe((res: any) => {
-      if(res.status == 200){
-        this.warehouses = res.data;
+    this.currentPage = page;
+
+    const payload: any = {
+      company: this.svc.getCompanyId() ?? 1,
+      warehouse: this.selectedWarehouse ? Number(this.selectedWarehouse) : null,
+      search: this.searchText.trim() || null,
+      page_number: this.currentPage,
+      page_size: this.pageSize
+    };
+
+    this.svc.post('/warehouses/list-location/', payload).subscribe({
+      next: (res: any) => {
+        if (res.status === 200) {
+          this.locations = res.data || [];
+          this.filteredLocations = [...this.locations];
+
+          if (res.kpis) {
+            this.kpis = {
+              total_locations: res.kpis.total_locations ?? 0,
+              active_locations: res.kpis.active_locations ?? 0,
+              inactive_locations: res.kpis.inactive_locations ?? 0,
+              total_warehouses: res.kpis.total_warehouses ?? 0,
+              locations_with_stock: res.kpis.locations_with_stock ?? 0,
+              empty_locations: res.kpis.empty_locations ?? 0
+            };
+          }
+
+          if (res.paginated_data) {
+            this.currentPage = res.paginated_data.current_page ?? this.currentPage;
+            this.totalPages = res.paginated_data.total_pages ?? 0;
+            this.totalData = res.paginated_data.total_data ?? this.locations.length;
+            const apiPageSize = res.paginated_data.page_size;
+            if (apiPageSize != null) {
+              this.pageSize = typeof apiPageSize === 'string' ? parseInt(apiPageSize, 10) : apiPageSize;
+            }
+          } else {
+            this.totalData = this.locations.length;
+            this.totalPages = 1;
+          }
+        }
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.toast.show('Error', 'Failed to load locations', 'danger');
       }
     });
-
-    // Load locations
-    this.svc.post('/warehouses/list-location/').subscribe((res: any) => {
-      if(res.status == 200){
-        this.locations = res.data;
-        this.filteredLocations = [...this.locations];
-        this.applyFilters();
-      }
-      this.loading = false;
-    });
-  }
-
-  applyFilters() {
-    let filtered = [...this.locations];
-
-    // Filter by warehouse
-    if (this.selectedWarehouse) {
-      filtered = filtered.filter(location => 
-        location.warehouse == this.selectedWarehouse || location.warehouseId == this.selectedWarehouse
-      );
-    }
-
-    // Filter by search text
-    if (this.searchText.trim()) {
-      const searchTerm = this.searchText.toLowerCase();
-      filtered = filtered.filter(location =>
-        location.name?.toLowerCase().includes(searchTerm) ||
-        location.description?.toLowerCase().includes(searchTerm) ||
-        this.getWarehouseName(location.warehouse || location.warehouseId)?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    this.filteredLocations = filtered;
   }
 
   onWarehouseFilter() {
-    this.applyFilters();
+    this.currentPage = 1;
+    this.loadData(1);
   }
 
   onSearch() {
-    this.applyFilters();
+    this.searchSubject.next(this.searchText);
   }
 
   clearFilters() {
     this.selectedWarehouse = '';
     this.searchText = '';
-    this.filteredLocations = [...this.locations];
+    this.currentPage = 1;
+    this.loadData(1);
   }
 
-  getWarehouseName(warehouseId: number): string {
+  onPageChange(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.loadData(page);
+    }
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 1;
+    this.loadData(1);
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.loadData(this.currentPage + 1);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.loadData(this.currentPage - 1);
+    }
+  }
+
+  getWarehouseName(warehouseId: number, warehouseName?: string): string {
+    if (warehouseName) return warehouseName;
     if (!warehouseId) return 'No Warehouse';
     const warehouse = this.warehouses.find(w => w.id === warehouseId);
     return warehouse ? warehouse.name : 'Unknown Warehouse';
+  }
+
+  getStatusBadgeClass(isActive: boolean): string {
+    return isActive ? 'badge-active' : 'badge-inactive';
   }
 
   openForm(id?: number) {
@@ -120,7 +188,10 @@ export class LocationList implements OnInit {
   delete(id: number) {
     if (confirm('Are you sure you want to delete this location?')) {
       this.svc.post('/warehouses/delete-location/', { id: id }).subscribe((res: any) => {
-        if(res.status == 200){
+        if (res.status === 200) {
+          if (this.locations.length === 1 && this.currentPage > 1) {
+            this.currentPage--;
+          }
           this.loadData();
           this.toast.show('Success', 'Location deleted successfully', 'success');
         }
@@ -129,6 +200,7 @@ export class LocationList implements OnInit {
   }
 
   refreshData() {
-    this.loadData();
+    this.currentPage = 1;
+    this.loadData(1);
   }
 }

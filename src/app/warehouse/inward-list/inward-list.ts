@@ -33,6 +33,8 @@ interface InwardReceipt {
   warehouse?: any;
   location?: any;
   items?: any[];
+  putaway_status_id?: number;
+  putaway_status_name?: string;
 }
 
 @Component({
@@ -124,7 +126,7 @@ export class InwardList implements OnInit {
     this.loading = true;
     this.currentPage = page;
     const payload: any = {
-      company: 1,
+      company: this.svc.getCompanyId() ?? 1,
       start_date: this.fromDate,
       end_date: this.toDate,
       page_number: this.currentPage,
@@ -134,15 +136,27 @@ export class InwardList implements OnInit {
     this.svc.post('/invoice/list-inward/s=' + search + '/', payload).subscribe({
       next: (res: any) => {
         if (res.status === 200) {
-          this.receipts = res.data;
+          this.receipts = res.data || [];
           this.filteredReceipts = [...this.receipts];
-          if (res.paginated_data) {
-            this.currentPage = res.paginated_data.current_page;
-            this.totalPages = res.paginated_data.total_pages;
-            this.totalData = res.paginated_data.total_count;
-            this.pageSize = res.paginated_data.page_size;
+
+          if (res.kpis) {
+            this.totalReceipts = res.kpis.total_receipts ?? 0;
+            this.totalAmount = Number(res.kpis.total_amount ?? 0);
+            this.todayReceipts = res.kpis.today ?? 0;
+            this.thisMonthReceipts = res.kpis.this_month ?? 0;
+          } else {
+            this.calculateSummary();
           }
-          this.calculateSummary();
+
+          if (res.paginated_data) {
+            this.currentPage = res.paginated_data.current_page ?? this.currentPage;
+            this.totalPages = res.paginated_data.total_pages ?? 0;
+            this.totalData = res.paginated_data.total_data ?? res.paginated_data.total_count ?? 0;
+            const apiPageSize = res.paginated_data.page_size;
+            if (apiPageSize != null) {
+              this.pageSize = typeof apiPageSize === 'string' ? parseInt(apiPageSize, 10) : apiPageSize;
+            }
+          }
         }
         this.loading = false;
       },
@@ -280,6 +294,18 @@ export class InwardList implements OnInit {
       4: 'badge bg-secondary'
     };
     return classes[type as keyof typeof classes] || 'badge bg-secondary';
+  }
+
+  canEditReceipt(receipt: InwardReceipt): boolean {
+    return (receipt.putaway_status_name || '').trim().toLowerCase() === 'pending';
+  }
+
+  getPutawayStatusBadgeClass(statusName?: string): string {
+    const status = (statusName || '').trim().toLowerCase();
+    if (status === 'pending') return 'badge bg-warning';
+    if (status === 'completed') return 'badge bg-success';
+    if (status === 'in progress') return 'badge bg-info';
+    return 'badge bg-secondary';
   }
 
   deleteReceipt(id: number) {

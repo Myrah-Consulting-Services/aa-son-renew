@@ -100,12 +100,25 @@ export class StockList implements OnInit {
   }
 
   onWarehouseChange() {
-    // Reload data when warehouse selection changes
-    this.loadData();
+    this.currentPage = 1;
+    this.loadData(1);
   }
 
   refreshData() {
-    this.loadData();
+    this.currentPage = 1;
+    this.loadData(1);
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.loadData(this.currentPage - 1);
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.loadData(this.currentPage + 1);
+    }
   }
 
   // Statistics methods
@@ -122,6 +135,20 @@ export class StockList implements OnInit {
     if (qty >= 50) return 'In Stock';
     if (qty < 10) return 'Low Stock';
     return 'Reorder';
+  }
+
+  getStockStatusBadgeClass(item: any): string {
+    const qty = this.getTotalQuantity(item);
+    if (qty >= 50) return 'badge-active';
+    if (qty < 10) return 'badge-inactive';
+    return 'badge-warning';
+  }
+
+  getStockStatusIcon(item: any): string {
+    const qty = this.getTotalQuantity(item);
+    if (qty >= 50) return 'bi-check-circle-fill';
+    if (qty < 10) return 'bi-exclamation-circle-fill';
+    return 'bi-arrow-repeat';
   }
 
   processLocationData() {

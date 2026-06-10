@@ -30,47 +30,35 @@
     </div>
   </section>
 
-  <!-- KPI Section -->
+  <!-- KPI Cards -->
   <section class="kpi-section">
-    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-box-seam"></i>
-        </div>
+        <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
         <div class="stat-content">
           <h3>Total Items</h3>
-          <p class="stat-number">{{ stock.length }}</p>
+          <p class="stat-number">{{ totalData || total_count || 0 }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-check-circle"></i>
-        </div>
+        <div class="stat-icon active-icon"><i class="bi bi-check-circle"></i></div>
         <div class="stat-content">
           <h3>In Stock</h3>
           <p class="stat-number">{{ getInStockCount() }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-exclamation-triangle"></i>
-        </div>
+        <div class="stat-icon inactive-icon"><i class="bi bi-exclamation-triangle"></i></div>
         <div class="stat-content">
           <h3>Low Stock</h3>
           <p class="stat-number">{{ getLowStockCount() }}</p>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="bi bi-calculator"></i>
-        </div>
+        <div class="stat-icon page-icon"><i class="bi bi-layers"></i></div>
         <div class="stat-content">
-          <h3>Total Quantity</h3>
-          <p class="stat-number">{{ total_count || getTotalStockValue() }}</p>
+          <h3>This Page</h3>
+          <p class="stat-number">{{ stock.length }}</p>
         </div>
       </div>
     </div>
@@ -113,155 +101,118 @@
       </div>
     </div>
 
-    <!-- Table Section -->
-    <div class="table-section">
-      <div class="table-container">
-        <div class="table-header">
-          <h3 class="table-title">
-            <i class="bi bi-list-ul me-2"></i>Stock List ({{ stock.length }})
-          </h3>
-        </div>
-        <div class="table-body">
-          <!-- Loading State -->
-          <div *ngIf="loading" class="loading-state">
-            <i class="bi bi-arrow-repeat spinner"></i>
-            <p>Loading stock data...</p>
-          </div>
+    <!-- Table -->
+    <div class="table-wrapper">
 
-          <!-- Empty State -->
-          <div *ngIf="!loading && stock.length === 0" class="empty-state">
-            <i class="bi bi-box"></i>
-            <h6>No stock data found</h6>
-            <p>Try selecting a different warehouse or showroom</p>
-          </div>
+      <div *ngIf="loading" class="state-box">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Loading stock data...</p>
+      </div>
 
-          <!-- Table -->
-          <table *ngIf="!loading && stock.length > 0" class="compact-table">
-            <thead>
-              <tr>
-                <th>Item Details</th>
-                <th>SKU/Code</th>
-                <th>Warehouse</th>
-                <th *ngIf="selectedWarehouseId === 1">Location</th>
-                <th class="text-end">Quantity</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let s of stock; let i = index">
-                <td>
-                  <div class="item-info">
-                    <div class="item-icon">
-                      <i class="bi bi-box"></i>
-                    </div>
-                    <div class="item-details">
-                      <div class="item-name">{{ s.name }}</div>
-                      <small class="item-description">{{ s.description || 'No description' }}</small>
-                    </div>
+      <div *ngIf="!loading && stock.length === 0" class="state-box">
+        <i class="bi bi-box text-muted" style="font-size:2.5rem;"></i>
+        <p class="mt-2 text-muted">No stock data found</p>
+        <p class="text-muted small">Try selecting a different warehouse or showroom</p>
+      </div>
+
+      <table *ngIf="!loading && stock.length > 0" class="wh-table">
+        <thead>
+          <tr>
+            <!--<th style="width:40px">#</th> -->
+            <th>Item Name</th>
+            <th>Item SKU/Code</th>
+            <th>Warehouse Name</th>
+            <th *ngIf="selectedWarehouseId === 1">Location Name</th>
+            <th class="text-end">Item Qty.</th>
+            <th>Item Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of stock; let i = index">
+            <!--<td class="row-num">{{ (currentPage - 1) * pageSize + i + 1 }}</td> -->
+            <td>
+              <div class="wh-name">
+                <span class="wh-icon"><i class="bi bi-box-seam"></i></span>
+                <div>
+                  <div>{{ s.name }}</div>
+                  <small class="item-description">{{ s.description || 'No description' }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="sku-code">{{ s.item_code || '—' }}</span>
+            </td>
+            <td>
+              <div *ngIf="s.locations && s.locations.length > 0; else singleWarehouse">
+                <div *ngFor="let loc of s.locations" class="cell-line">
+                  <div class="wh-name compact">
+                    <span class="wh-icon warehouse-icon"><i class="bi bi-building"></i></span>
+                    {{ loc.warehouse_name }}
                   </div>
-                </td>
-                <td>
-                  <span class="badge bg-light">{{ s.item_code || 'N/A' }}</span>
-                </td>
-                <td>
-                  <div *ngIf="s.locations && s.locations.length > 0">
-                    <div *ngFor="let loc of s.locations" class="location-badge-item">
-                      <span class="badge bg-info">{{ loc.warehouse_name }}</span>
-                    </div>
-                  </div>
-                  <div *ngIf="!s.locations">
-                    <span class="badge bg-secondary">{{ getWarehouseName(s.warehouseId) }}</span>
-                  </div>
-                </td>
-                <td *ngIf="selectedWarehouseId === 1">
-                  <div *ngIf="s.locations && s.locations.length > 0">
-                    <div *ngFor="let loc of s.locations" class="location-badge-item">
-                      <span class="badge bg-outline-secondary">{{ loc.location_name }}</span>
-                      <small class="text-muted ms-1">({{ loc.qty }})</small>
-                    </div>
-                  </div>
-                  <div *ngIf="!s.locations">
-                    <span class="badge bg-outline-secondary">{{ s.location || 'N/A' }}</span>
-                  </div>
-                </td>
-                <td class="text-end">
-                  <span class="quantity-text" 
-                        [class.text-success]="getTotalQuantity(s) >= 50"
-                        [class.text-warning]="getTotalQuantity(s) < 50 && getTotalQuantity(s) >= 10"
-                        [class.text-danger]="getTotalQuantity(s) < 10">
-                    {{ getTotalQuantity(s) }}
-                  </span>
-                </td>
-                <td>
-                  <span class="badge" 
-                    [class.bg-success]="getTotalQuantity(s) >= 50"
-                    [class.bg-warning]="getTotalQuantity(s) < 50 && getTotalQuantity(s) >= 10"
-                    [class.bg-danger]="getTotalQuantity(s) < 10">
-                    {{ getStockStatus(s) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                </div>
+              </div>
+              <ng-template #singleWarehouse>
+                <div class="wh-name compact">
+                  <span class="wh-icon warehouse-icon"><i class="bi bi-building"></i></span>
+                  {{ getWarehouseName(s.warehouseId) }}
+                </div>
+              </ng-template>
+            </td>
+            <td *ngIf="selectedWarehouseId === 1">
+              <div *ngIf="s.locations && s.locations.length > 0; else singleLocation">
+                <div *ngFor="let loc of s.locations" class="cell-line">
+                  <span class="location-text">{{ loc.location_name }}</span>
+                  <small class="text-muted ms-1">({{ loc.qty }})</small>
+                </div>
+              </div>
+              <ng-template #singleLocation>
+                <span class="location-text">{{ s.location || '—' }}</span>
+              </ng-template>
+            </td>
+            <td class="text-end">
+              <span class="quantity-text"
+                    [class.qty-success]="getTotalQuantity(s) >= 50"
+                    [class.qty-warning]="getTotalQuantity(s) < 50 && getTotalQuantity(s) >= 10"
+                    [class.qty-danger]="getTotalQuantity(s) < 10">
+                {{ getTotalQuantity(s) }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="getStockStatusBadgeClass(s)">
+                <i class="bi me-1" [ngClass]="getStockStatusIcon(s)"></i>
+                {{ getStockStatus(s) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && totalData > 0" class="pagination-bar">
+      <div class="items-per-page">
+        <label class="me-2">Items per page:</label>
+        <select class="form-select form-select-sm" style="width:auto;" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </div>
+
+      <div class="page-info">
+        Page {{ currentPage }} of {{ totalPages || 1 }} &nbsp;·&nbsp; Showing {{ stock.length }} of {{ totalData || total_count || 0 }}
+      </div>
+
+      <div class="page-nav">
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="currentPage === 1" (click)="prevPage()">
+          <i class="bi bi-chevron-left"></i> Previous
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="currentPage === totalPages || totalPages === 0" (click)="nextPage()">
+          Next <i class="bi bi-chevron-right"></i>
+        </button>
       </div>
     </div>
 
-    <!-- Pagination Section -->
-    <div class="pagination-section" *ngIf="!loading && stock.length > 0">
-      <div class="pagination-bar">
-        <div class="pagination-info">
-          <label class="me-2">Items per page:</label>
-          <select 
-            class="form-select form-select-sm page-size" 
-            [(ngModel)]="pageSize"
-            (change)="onPageSizeChange()">
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-        </div>
-        <div class="pagination-controls">
-          <button 
-            class="btn-page" 
-            (click)="onPageChange(currentPage - 1)"
-            [disabled]="currentPage === 1">
-            <i class="bi bi-chevron-left"></i>
-          </button>
-          <button 
-            *ngFor="let page of getPageNumbers()"
-            class="btn-page"
-            [class.active]="page === currentPage"
-            (click)="onPageChange(page)">
-            {{ page }}
-          </button>
-          <button 
-            class="btn-page" 
-            (click)="onPageChange(currentPage + 1)"
-            [disabled]="currentPage === totalPages">
-            <i class="bi bi-chevron-right"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Summary Footer -->
-    <div class="summary-footer" *ngIf="!loading && stock.length > 0">
-      <div class="summary-grid">
-        <div class="summary-item">
-          <small class="summary-label">Total Items</small>
-          <div class="summary-value">{{ stock.length }}</div>
-        </div>
-        <div class="summary-item">
-          <small class="summary-label">Total Quantity</small>
-          <div class="summary-value">{{ total_count || getTotalStockValue() }}</div>
-        </div>
-        <div class="summary-item">
-          <small class="summary-label">Location Type</small>
-          <div class="summary-value">{{ selectedWarehouseId === 1 ? 'Warehouse' : 'Showroom' }}</div>
-        </div>
-      </div>
-    </div>
   </section>
 </div>

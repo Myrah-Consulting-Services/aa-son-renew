@@ -135,7 +135,7 @@
         </div>
         <div class="filter-item">
           <div class="results-summary">
-            <small>{{ filteredReceipts.length }} records found</small>
+            <small>{{ totalData }} records found</small>
           </div>
         </div>
       </div>
@@ -181,6 +181,7 @@
                 <th>Reference</th>
                 <th>Received By</th>
                 <th>Amount</th>
+                <th>Putaway Status</th>
                 <th class="text-end">Actions</th>
               </tr>
             </thead>
@@ -235,10 +236,16 @@
                     </small>
                   </div>
                 </td>
+                <td>
+                  <span [class]="getPutawayStatusBadgeClass(receipt.putaway_status_name)" class="badge">
+                    {{ receipt.putaway_status_name || '—' }}
+                  </span>
+                </td>
                 <td class="text-end">
                   <div class="action-buttons">
-                    <button 
-                      class="btn-action-icon edit" 
+                    <button
+                      *ngIf="canEditReceipt(receipt)"
+                      class="btn-action-icon edit"
                       (click)="openForm(receipt.id)"
                       title="Edit"
                     >
