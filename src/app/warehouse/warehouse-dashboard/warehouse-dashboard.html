@@ -105,7 +105,7 @@
   <section class="main-content-section">
     <!-- Workflow Process Flow -->
     <div class="process-flow-section">
-      <h2 class="section-title"><i class="bi bi-diagram-2 me-2"></i>Warehouse Process Flow</h2>
+      <h2 class="section-title"><i class="bi bi-diagram-2 me-2"></i>Warehouse Process Flow/Steps</h2>
       <div class="process-flow-grid">
 
         <!-- Loading Bay -->
@@ -156,7 +156,7 @@
         <div class="process-card border-primary" (click)="navigateTo('outward')" style="cursor:pointer;">
           <div class="process-card-body">
             <div class="process-icon"><i class="bi bi-box-arrow-down"></i></div>
-            <h6 class="process-title">Picking Tasks</h6>
+            <h6 class="process-title">Pickup Tasks</h6>
             <div class="badge bg-primary">{{ processFlowCounts.picking_tasks }} </div>
             <!-- <div class="badge bg-primary">{{ processFlowCounts.picking_tasks }} {{ processFlowCounts.picking_tasks === 1 ? 'item' : 'items' }}</div> -->
           </div>
@@ -176,7 +176,7 @@
       </div>
       
       <!-- Workflow Statistics -->
-      <div class="workflow-stats">
+     <!-- <div class="workflow-stats">
         <div class="workflow-stat-item">
           <div class="stat-value">{{ workflowStats.putawayTasks.pending }}</div>
           <small class="stat-label">Putaway Tasks Pending</small>
@@ -193,11 +193,12 @@
           <div class="stat-value">{{ workflowStats.loadingBay.utilization }}%</div>
           <small class="stat-label">Loading Bay Utilization</small>
         </div>
-      </div>
+      </div> -->
+      
     </div>
 
     <!-- Quick Actions -->
-    <div class="quick-actions-section">
+    <!-- <div class="quick-actions-section">
       <h2 class="section-title"><i class="bi bi-lightning me-2"></i>Quick Actions</h2>
       <div class="actions-grid">
         <button class="action-btn" (click)="navigateTo('inward/new')">
@@ -225,7 +226,7 @@
           <span>Reports</span>
         </button>
       </div>
-    </div>
+    </div>  -->
 
     <!-- Alerts and Recent Activity -->
     <div class="alerts-activity-section">

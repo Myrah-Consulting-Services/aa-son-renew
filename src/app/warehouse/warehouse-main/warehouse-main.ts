@@ -12,7 +12,7 @@ import { ToastService } from '../../core/services/toast.service';
   styleUrls: ['./warehouse-main.scss']
 })
 export class WarehouseMain {
-  isSidebarMode: boolean = false; // Default to tab mode
+  isSidebarMode: boolean = true; // Default to tab mode
   
   // Navigation links
   navLinks = [
