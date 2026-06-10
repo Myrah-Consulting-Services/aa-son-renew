@@ -139,7 +139,9 @@ export class RequisitionForm implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.generateInvoiceNumber();
+    if (this.isCreateMode) {
+      this.generateInvoiceNumber();
+    }
     this.setCurrentDateTime();
     this.setCurrentUser();
     this.addItem();
@@ -238,12 +240,19 @@ export class RequisitionForm implements OnInit, OnDestroy {
   }
 
   generateInvoiceNumber(): void {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const invoiceNo = `REQ-${year}-${month}${day}`;
+    if (!this.isCreateMode) {
+      return;
+    }
+
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const timestamp = Date.now().toString().slice(-6);
+    const invoiceNo = `REQ-${year}-${month}${day}-${timestamp}`;
+
     this.requisitionForm.patchValue({ invoiceNo });
+    this.errorMessage = null;
   }
 
   setCurrentDateTime(): void {
@@ -444,6 +453,8 @@ export class RequisitionForm implements OnInit, OnDestroy {
       return;
     }
 
+    this.errorMessage = null;
+
     const raw = this.requisitionForm.getRawValue();
     const payload = {
       invoiceNo: raw.invoiceNo,
@@ -468,17 +479,44 @@ export class RequisitionForm implements OnInit, OnDestroy {
       }))
     };
 
-    this.api.post('/invoice/create_requisition/', payload).subscribe((res: any) => {
-      if (res?.status === 200 || res?.status === 201) {
-        this.toast.show('Success', 'Requisition created successfully', 'success');
-        this.requisitionCreated.emit(res);
-        this.modalRef?.close('saved');
-      } else {
-        this.toast.show('Error', 'Failed to create requisition', 'danger');
+    this.api.post('/invoice/create_requisition/', payload).subscribe({
+      next: (res: any) => {
+        if (this.isSuccessResponse(res)) {
+          this.errorMessage = null;
+          this.toast.show('Success', 'Requisition created successfully', 'success');
+          this.requisitionCreated.emit(res);
+          this.modalRef?.close('saved');
+          return;
+        }
+
+        this.errorMessage = this.extractApiErrorMessage(res);
+        this.toast.show('Error', this.errorMessage, 'danger');
+      },
+      error: (err) => {
+        this.errorMessage = this.extractApiErrorMessage(err?.error ?? err);
+        this.toast.show('Error', this.errorMessage, 'danger');
       }
-    }, () => {
-      this.toast.show('Error', 'Failed to create requisition', 'danger');
     });
+  }
+
+  private isSuccessResponse(res: any): boolean {
+    return res?.status === 200 || res?.status === 201;
+  }
+
+  private extractApiErrorMessage(res: any): string {
+    if (!res) {
+      return 'Failed to create requisition';
+    }
+
+    if (typeof res === 'string') {
+      return res;
+    }
+
+    if (res.status && !this.isSuccessResponse(res)) {
+      return res.error || res.message || 'Failed to create requisition';
+    }
+
+    return res.error || res.message || 'Failed to create requisition';
   }
 
   onCancel(): void {

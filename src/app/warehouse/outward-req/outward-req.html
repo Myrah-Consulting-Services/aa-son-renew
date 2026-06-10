@@ -64,7 +64,7 @@
           <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
               <span class="fw-bold">Items</span>
-              <button type="button" class="btn btn-sm btn-success" (click)="addItem()">
+              <button *ngIf="!editOutwardId" type="button" class="btn btn-sm btn-success" (click)="addItem()">
                 <i class="bi bi-plus"></i> Add Item
               </button>
             </div>
