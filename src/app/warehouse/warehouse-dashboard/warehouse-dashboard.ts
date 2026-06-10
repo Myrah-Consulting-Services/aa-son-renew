@@ -135,7 +135,7 @@ export class WarehouseDashboard implements OnInit {
 
   ngOnInit() {
     // Default date range: last 30 days
-    const range = this.svc.getDateRange();
+    const range = this.getDefaultDateRange();
     this.filterStartDate = range.start_date;
     this.filterEndDate = range.end_date;
 
@@ -231,6 +231,16 @@ export class WarehouseDashboard implements OnInit {
 
   applyDateFilter() {
     this.loadDashboardData();
+  }
+
+  private getDefaultDateRange(): { start_date: string; end_date: string } {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 30);
+    return {
+      start_date: start.toISOString().split('T')[0],
+      end_date: end.toISOString().split('T')[0]
+    };
   }
 
   // ── Existing methods kept intact ────────────────────────────────────────────
