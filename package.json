@@ -5,6 +5,9 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration production",
+    "deploy": "powershell -ExecutionPolicy Bypass -File scripts/deploy-firebase.ps1",
+    "deploy:hosting": "firebase deploy --only hosting --project esarwawms",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

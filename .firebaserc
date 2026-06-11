@@ -1,9 +1,5 @@
 {
   "projects": {
-    "default": "esarwawms",
-    "dxbesarwa": "dxbesarwa",
-    "esarwawms": "esarwawms"
-  },
-  "targets": {},
-  "etags": {}
+    "default": "esarwawms"
+  }
 }
