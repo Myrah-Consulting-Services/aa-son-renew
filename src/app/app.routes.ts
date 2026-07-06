@@ -12,6 +12,16 @@ export const routes: Routes = [
           import('./features/auth/login/login').then(m => m.Login)
       },
     {
+        path: 'select-company',
+        loadComponent: () =>
+          import('./features/auth/select-company/select-company').then(m => m.SelectCompany)
+      },
+    {
+        path: 'create-company',
+        loadComponent: () =>
+          import('./features/auth/create-company/create-company').then(m => m.CreateCompany)
+      },
+    {
         path: '',
         loadChildren: () => import('./features/features-routing-module').then(m => m.FeaturesRoutingModule)
     },

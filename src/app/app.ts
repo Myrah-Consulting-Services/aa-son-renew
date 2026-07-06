@@ -25,6 +25,13 @@ export class App implements OnInit {
   }
 
   get showNavbar() {
-    return this.router.url !== '/login';
+    const path = this.router.url.split('?')[0];
+    if (path === '/login' || path === '/select-company') {
+      return false;
+    }
+    if (path === '/create-company' && this.router.url.includes('from=select')) {
+      return false;
+    }
+    return true;
   }
 }

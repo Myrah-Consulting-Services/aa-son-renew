@@ -1,0 +1,231 @@
+<div class="create-company-page">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-xl-10 col-lg-11">
+        <div class="card overflow-hidden">
+          <div class="page-header">
+            <div>
+              <h4 class="mb-1">Create Company</h4>
+              <p class="mb-0 text-muted">Set up a new business profile to get started</p>
+            </div>
+            <img src="assets/images/logo_dark.png" width="120" alt="ESARWA Logo">
+          </div>
+
+          <div class="card-body">
+            <form [formGroup]="companyForm" (ngSubmit)="onSubmit()">
+              <section class="form-section">
+                <h5>Business Information</h5>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Business Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="business_name" placeholder="Business Name">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Business Name (Arabic)</label>
+                    <input type="text" class="form-control" formControlName="business_name_arabic" placeholder="Arabic Name" style="direction: rtl; text-align: right;">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                    <input type="tel" class="form-control" formControlName="phone_no" placeholder="971501234567">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Alternate Phone</label>
+                    <input type="tel" class="form-control" formControlName="alternate_business_no" placeholder="Alternate Phone">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Legal Type</label>
+                    <input type="text" class="form-control" formControlName="legal_type" placeholder="LLC">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" formControlName="email" placeholder="info@company.com">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Alternate Email</label>
+                    <input type="email" class="form-control" formControlName="alternate_email" placeholder="accounts@company.com">
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label">Activity</label>
+                    <input type="text" class="form-control" formControlName="activity" placeholder="General Trading">
+                  </div>
+                </div>
+              </section>
+
+              <section class="form-section">
+                <h5>Address</h5>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Address Line 1</label>
+                    <input type="text" class="form-control" formControlName="address1" placeholder="Office 101, Business Bay">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Address Line 2</label>
+                    <input type="text" class="form-control" formControlName="address2" placeholder="Dubai, UAE">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">P.O. Box</label>
+                    <input type="text" class="form-control" formControlName="po_box" placeholder="12345">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Country <span class="text-danger">*</span></label>
+                    <div class="searchable-select">
+                      <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Search country..."
+                        [value]="countrySearchText"
+                        (input)="onCountrySearchInput($event)"
+                        (focus)="openCountryDropdown()"
+                        (keydown)="onCountryKeydown($event)"
+                      >
+                      <button type="button" class="clear-btn" *ngIf="companyForm.get('country')?.value" (click)="clearCountry()">×</button>
+                      <div class="dropdown-menu show" *ngIf="showCountryDropdown && filteredCountries.length">
+                        <button
+                          type="button"
+                          class="dropdown-item"
+                          *ngFor="let country of filteredCountries; let i = index"
+                          [class.active]="i === activeCountryIndex"
+                          (click)="selectCountry(country)"
+                        >
+                          {{ country.label }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4" *ngIf="isUaeSelected">
+                    <label class="form-label">Emirate</label>
+                    <div class="searchable-select">
+                      <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Search emirate..."
+                        [value]="emirateSearchText"
+                        (input)="onEmirateSearchInput($event)"
+                        (focus)="openEmirateDropdown()"
+                        (keydown)="onEmirateKeydown($event)"
+                      >
+                      <button type="button" class="clear-btn" *ngIf="companyForm.get('emirates')?.value" (click)="clearEmirate()">×</button>
+                      <div class="dropdown-menu show" *ngIf="showEmirateDropdown && filteredEmirates.length">
+                        <button
+                          type="button"
+                          class="dropdown-item"
+                          *ngFor="let emirate of filteredEmirates; let i = index"
+                          [class.active]="i === activeEmirateIndex"
+                          (click)="selectEmirate(emirate)"
+                        >
+                          {{ emirate.label }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="form-section">
+                <h5>License Information</h5>
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">License Number</label>
+                    <input type="text" class="form-control" formControlName="license_number" placeholder="DED-123456">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">License Type</label>
+                    <input type="text" class="form-control" formControlName="license_type" placeholder="Commercial">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Issued By</label>
+                    <input type="text" class="form-control" formControlName="issued_by" placeholder="DED">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">License Expiry</label>
+                    <input type="date" class="form-control" formControlName="license_expiry">
+                  </div>
+                </div>
+              </section>
+
+              <section class="form-section">
+                <h5>Owner Information</h5>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Owner Name</label>
+                    <input type="text" class="form-control" formControlName="owner_name" placeholder="John Doe">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Nationality</label>
+                    <input type="text" class="form-control" formControlName="owner_nationality" placeholder="Indian">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Emirates ID</label>
+                    <input type="text" class="form-control" formControlName="owner_emirates_id" placeholder="784-XXXX-XXXXXXX-X">
+                  </div>
+                </div>
+              </section>
+
+              <section class="form-section">
+                <h5>Tax & Currency</h5>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Tax Registration Number</label>
+                    <input type="text" class="form-control" formControlName="tax_registration_number" placeholder="100123456700003">
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                      <input type="checkbox" class="form-check-input" id="vat_registered" formControlName="vat_registered">
+                      <label class="form-check-label" for="vat_registered">VAT Registered</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                      <input type="checkbox" class="form-check-input" id="is_currency_conversion" formControlName="is_currency_conversion">
+                      <label class="form-check-label" for="is_currency_conversion">Enable Currency Conversion</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4" *ngIf="companyForm.get('is_currency_conversion')?.value">
+                    <label class="form-label">Conversion Currency</label>
+                    <div class="searchable-select">
+                      <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Search currency..."
+                        [value]="currencySearchText"
+                        (input)="onCurrencySearchInput($event)"
+                        (focus)="openCurrencyDropdown()"
+                        (keydown)="onCurrencyKeydown($event)"
+                      >
+                      <button type="button" class="clear-btn" *ngIf="companyForm.get('curency_conversion')?.value" (click)="clearCurrency()">×</button>
+                      <div class="dropdown-menu show" *ngIf="showCurrencyDropdown && filteredCurrencies.length">
+                        <button
+                          type="button"
+                          class="dropdown-item"
+                          *ngFor="let currency of filteredCurrencies; let i = index"
+                          [class.active]="i === activeCurrencyIndex"
+                          (click)="selectCurrency(currency)"
+                        >
+                          {{ currency.label }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4" *ngIf="companyForm.get('is_currency_conversion')?.value">
+                    <label class="form-label">Conversion Rate</label>
+                    <input type="number" class="form-control" formControlName="currency_conversion_rate" min="0" step="0.0001">
+                  </div>
+                </div>
+              </section>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="isSubmitting">
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
+                  <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+                  {{ isSubmitting ? 'Creating...' : 'Create Company' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

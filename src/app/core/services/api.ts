@@ -27,6 +27,11 @@ export class Api {
     return headers;
   }
   getUserCompany(){
+    const activeCompanyId = localStorage.getItem('active_company_id');
+    if (activeCompanyId) {
+      return Number(activeCompanyId);
+    }
+
     const userData = localStorage.getItem('user');
     if (userData) {
       const user = JSON.parse(userData);
@@ -76,12 +81,7 @@ export class Api {
     return this.http.delete<T>(`${this.baseUrl}${path}`, { headers });
   }
   getCompanyId(){
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      return user[0]?.company[0]?.company;
-    }
-    return null;
+    return this.getUserCompany();
   }
   uplaoadImg(url: string,data: any){
     return this.http.post(this.baseUrl + url, data,this.fileHeader2())

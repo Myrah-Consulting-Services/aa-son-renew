@@ -10,6 +10,18 @@
       <i class="bi bi-receipt me-2"></i>
       Invoice Setting
     </div>
+    <div class="tab-item" [class.active]="activeTab === 'payment'" (click)="switchTab('payment')">
+      <i class="bi bi-credit-card me-2"></i>
+      Payment Setting
+    </div>
+    <div class="tab-item" [class.active]="activeTab === 'loyalty'" (click)="switchTab('loyalty')">
+      <i class="bi bi-gift me-2"></i>
+      Loyalty & Gift Cards
+    </div>
+    <div class="tab-item" [class.active]="activeTab === 'marketplace'" (click)="switchTab('marketplace')">
+      <i class="bi bi-shop me-2"></i>
+      Marketplace Sync
+    </div>
     <!-- <div class="tab-item" [class.active]="activeTab === 'invoice-template'" (click)="switchTab('invoice-template')">
       <i class="bi bi-file-earmark-text me-2"></i>
       Invoice Template
@@ -458,6 +470,195 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Payment Setting Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'payment'">
+      <div class="tab-header">
+        <h3 class="tab-title">Payment Settings</h3>
+        <p class="tab-description">Configure payment methods and POS / gateway integrations</p>
+      </div>
+      <div class="tab-body">
+        <form [formGroup]="paymentForm" class="setting-form-compact payment-settings-form" (ngSubmit)="savePaymentSettings()">
+
+          <!-- Accepted Payment Methods -->
+          <div class="setting-section payment-methods-section">
+            <div class="section-header">
+              <span class="section-icon">💳</span>
+              <h4 class="section-title">Accepted Payment Methods</h4>
+            </div>
+            <p class="section-hint">Enable the payment options your business accepts at checkout and POS.</p>
+            <div class="payment-method-chips">
+              <label
+                *ngFor="let method of paymentMethods"
+                class="payment-chip"
+                [class.active]="isPaymentMethodEnabled(method.id)"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="isPaymentMethodEnabled(method.id)"
+                  (change)="togglePaymentMethod(method.id)"
+                  class="payment-chip-input"
+                >
+                <i [class]="method.icon"></i>
+                <span class="payment-chip-label">{{ method.label }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- POS / Gateway Providers -->
+          <div class="setting-section gateway-section">
+            <div class="section-header">
+              <span class="section-icon">🔗</span>
+              <h4 class="section-title">POS & Payment Gateways</h4>
+            </div>
+            <p class="section-hint">Connect Razorpay, Pine Labs, or other providers. Expand a card to enter credentials.</p>
+
+            <div class="gateway-grid">
+              <div
+                *ngFor="let provider of paymentProviders"
+                class="gateway-card"
+                [class.enabled]="paymentForm.get(provider.id + '_enabled')?.value"
+                [class.expanded]="expandedProvider === provider.id"
+              >
+                <div class="gateway-card-header" (click)="toggleProviderExpand(provider.id)">
+                  <div class="gateway-brand">
+                    <div class="gateway-logo" [style.background]="provider.color">
+                      <i [class]="provider.icon"></i>
+                    </div>
+                    <div class="gateway-info">
+                      <span class="gateway-name">{{ provider.name }}</span>
+                      <span class="gateway-type">{{ provider.type }}</span>
+                    </div>
+                  </div>
+                  <div class="gateway-header-actions" (click)="$event.stopPropagation()">
+                    <span
+                      class="gateway-status-badge"
+                      [class.connected]="isProviderConfigured(provider.id)"
+                      [class.disconnected]="!isProviderConfigured(provider.id)"
+                    >
+                      <i class="bi" [class.bi-check-circle-fill]="isProviderConfigured(provider.id)" [class.bi-circle]="!isProviderConfigured(provider.id)"></i>
+                      {{ isProviderConfigured(provider.id) ? 'Configured' : 'Not set' }}
+                    </span>
+                    <label class="gateway-toggle">
+                      <input
+                        type="checkbox"
+                        [formControlName]="provider.id + '_enabled'"
+                        (change)="onProviderToggle(provider.id)"
+                      >
+                      <span class="toggle-slider"></span>
+                    </label>
+                    <button type="button" class="gateway-expand-btn" [class.rotated]="expandedProvider === provider.id">
+                      <i class="bi bi-chevron-down"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="gateway-card-body" *ngIf="expandedProvider === provider.id && paymentForm.get(provider.id + '_enabled')?.value">
+                  <div class="gateway-fields">
+                    <div class="form-group" *ngFor="let field of provider.fields">
+                      <label [for]="provider.id + '_' + field.key" class="form-label">
+                        {{ field.label }}
+                        <span class="required" *ngIf="field.required">*</span>
+                      </label>
+                      <div class="secret-input-wrap" *ngIf="field.secret; else plainInput">
+                        <input
+                          [id]="provider.id + '_' + field.key"
+                          [type]="isSecretVisible(provider.id, field.key) ? 'text' : 'password'"
+                          class="form-control"
+                          [formControlName]="provider.id + '_' + field.key"
+                          [placeholder]="field.placeholder"
+                          autocomplete="off"
+                        >
+                        <button
+                          type="button"
+                          class="secret-toggle-btn"
+                          (click)="toggleSecretVisibility(provider.id, field.key)"
+                          [attr.aria-label]="isSecretVisible(provider.id, field.key) ? 'Hide' : 'Show'"
+                        >
+                          <i class="bi" [class.bi-eye]="!isSecretVisible(provider.id, field.key)" [class.bi-eye-slash]="isSecretVisible(provider.id, field.key)"></i>
+                        </button>
+                      </div>
+                      <ng-template #plainInput>
+                        <input
+                          [id]="provider.id + '_' + field.key"
+                          [type]="field.type || 'text'"
+                          class="form-control"
+                          [formControlName]="provider.id + '_' + field.key"
+                          [placeholder]="field.placeholder"
+                          autocomplete="off"
+                        >
+                      </ng-template>
+                      <span class="field-hint" *ngIf="field.hint">{{ field.hint }}</span>
+                    </div>
+                  </div>
+                  <div class="gateway-footer">
+                    <a [href]="provider.docsUrl" target="_blank" rel="noopener noreferrer" class="gateway-docs-link">
+                      <i class="bi bi-box-arrow-up-right"></i> API Documentation
+                    </a>
+                    <button type="button" class="btn-test-connection" (click)="testConnection(provider.id)">
+                      <i class="bi bi-lightning-charge"></i> Test Connection
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Default POS Device -->
+          <div class="setting-section default-pos-section">
+            <div class="section-header">
+              <span class="section-icon">🖥️</span>
+              <h4 class="section-title">Default POS Provider</h4>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="default_pos_provider" class="form-label">Primary POS / Gateway</label>
+                <select id="default_pos_provider" class="form-control" formControlName="default_pos_provider">
+                  <option value="">— Select provider —</option>
+                  <option *ngFor="let provider of paymentProviders" [value]="provider.id" [disabled]="!paymentForm.get(provider.id + '_enabled')?.value">
+                    {{ provider.name }}
+                  </option>
+                </select>
+                <span class="field-hint">Used as the default when processing card / UPI payments at POS.</span>
+              </div>
+              <div class="form-group">
+                <label for="pos_terminal_id" class="form-label">Terminal / Device ID</label>
+                <input id="pos_terminal_id" type="text" class="form-control" formControlName="pos_terminal_id" placeholder="e.g. TERM-001">
+              </div>
+            </div>
+          </div>
+
+          <div class="save-button-container">
+            <button type="submit" class="btn-save-setting" [disabled]="paymentSaving">
+              <i class="bi bi-save"></i>
+              {{ paymentSaving ? 'Saving...' : 'Save Payment Settings' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Invoice Template Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'loyalty'">
+      <div class="tab-header">
+        <h3 class="tab-title">Loyalty & Gift Cards</h3>
+        <p class="tab-description">Configure loyalty rewards, gift card programs, and manage customer balances</p>
+      </div>
+      <div class="tab-body">
+        <app-loyalty-gift-cards></app-loyalty-gift-cards>
+      </div>
+    </div>
+
+    <!-- Marketplace Sync Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'marketplace'">
+      <div class="tab-header">
+        <h3 class="tab-title">Marketplace Sync</h3>
+        <p class="tab-description">Connect Noon and Amazon.ae — reconcile all marketplace orders into one unified ledger</p>
+      </div>
+      <div class="tab-body">
+        <app-marketplace-sync></app-marketplace-sync>
       </div>
     </div>
 

@@ -1,0 +1,120 @@
+.create-company-page {
+  min-height: 100vh;
+  background: #f8f8fb;
+  padding: 2rem 0 3rem;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.06);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  background: #41299b;
+  color: #fff;
+
+  h4,
+  p {
+    color: #fff;
+  }
+
+  p {
+    opacity: 0.85;
+  }
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #edf0f5;
+
+  h5 {
+    color: #41299b;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.btn-primary {
+  background-color: #41299b;
+  border-color: #41299b;
+}
+
+.searchable-select {
+  position: relative;
+
+  .clear-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 20;
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(65, 41, 155, 0.12);
+
+    .dropdown-item {
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: transparent;
+
+      &.active,
+      &:hover {
+        background: rgba(65, 41, 155, 0.08);
+        color: #41299b;
+      }
+    }
+  }
+}
+
+.form-control:focus {
+  border-color: #41299b;
+  box-shadow: 0 0 0 0.15rem rgba(65, 41, 155, 0.15);
+}
+
+@media (max-width: 768px) {
+  .create-company-page {
+    padding: 1rem 0 2rem;
+  }
+
+  .page-header {
+    padding: 1rem 1.25rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}

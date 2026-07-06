@@ -1,0 +1,347 @@
+<div class="marketplace-sync">
+  <div class="marketplace-sub-tabs">
+    <button type="button" class="sub-tab" [class.active]="activeSubTab === 'settings'" (click)="switchSubTab('settings')">
+      <i class="bi bi-plug"></i> Connection & Ledger
+    </button>
+    <button type="button" class="sub-tab" [class.active]="activeSubTab === 'orders'" (click)="switchSubTab('orders')">
+      <i class="bi bi-arrow-repeat"></i> Orders Reconciliation
+    </button>
+  </div>
+
+  <!-- Settings sub-tab -->
+  <div class="sub-tab-pane" *ngIf="activeSubTab === 'settings'">
+    <form [formGroup]="settingsForm" class="setting-form-compact" (ngSubmit)="saveSettings()">
+
+      <div class="setting-section sync-program-section">
+        <div class="section-header">
+          <span class="section-icon">⚙️</span>
+          <h4 class="section-title">Sync Program</h4>
+          <label class="section-toggle">
+            <input type="checkbox" formControlName="enabled">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Enabled</span>
+          </label>
+        </div>
+        <p class="section-hint">Noon and Amazon.ae orders flow into one unified ledger for simplified reconciliation.</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Unified Target Ledger <span class="required">*</span></label>
+            <div class="ledger-search-select">
+              <input
+                #unifiedLedgerInput
+                type="text"
+                class="form-control"
+                placeholder="Search ledger..."
+                [(ngModel)]="unifiedLedgerSearch"
+                [ngModelOptions]="{standalone: true}"
+                (input)="onUnifiedLedgerInput()"
+                (focus)="onUnifiedLedgerFocus()"
+                (keydown)="onLedgerKeydown($event, 'unified')"
+                autocomplete="off"
+              >
+              <button type="button" class="clear-btn" *ngIf="selectedUnifiedLedger" (click)="clearUnifiedLedger()">×</button>
+              <div class="ledger-dropdown" *ngIf="showUnifiedLedgerDropdown">
+                <div class="ledger-dropdown-loading" *ngIf="ledgerLoading">Loading ledgers...</div>
+                <div
+                  *ngFor="let ledger of filteredLedgers; let i = index"
+                  class="ledger-dropdown-item"
+                  [class.active]="i === activeUnifiedLedgerIndex"
+                  (click)="unifiedLedgerContext = 'unified'; selectLedger(ledger)"
+                >{{ ledger.name }}</div>
+                <div class="ledger-dropdown-empty" *ngIf="!ledgerLoading && !filteredLedgers.length">No ledgers found</div>
+              </div>
+            </div>
+            <span class="field-hint">All marketplace orders reconcile into this ledger</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Fee Deduction Ledger</label>
+            <div class="ledger-search-select">
+              <input
+                #feeLedgerInput
+                type="text"
+                class="form-control"
+                placeholder="Search ledger for commissions..."
+                [(ngModel)]="feeLedgerSearch"
+                [ngModelOptions]="{standalone: true}"
+                (input)="onFeeLedgerInput()"
+                (focus)="onFeeLedgerFocus()"
+                (keydown)="onLedgerKeydown($event, 'fee')"
+                autocomplete="off"
+              >
+              <button type="button" class="clear-btn" *ngIf="selectedFeeLedger" (click)="clearFeeLedger()">×</button>
+              <div class="ledger-dropdown" *ngIf="showFeeLedgerDropdown">
+                <div class="ledger-dropdown-loading" *ngIf="ledgerLoading">Loading ledgers...</div>
+                <div
+                  *ngFor="let ledger of filteredLedgers; let i = index"
+                  class="ledger-dropdown-item"
+                  [class.active]="i === activeFeeLedgerIndex"
+                  (click)="unifiedLedgerContext = 'fee'; selectLedger(ledger)"
+                >{{ ledger.name }}</div>
+                <div class="ledger-dropdown-empty" *ngIf="!ledgerLoading && !filteredLedgers.length">No ledgers found</div>
+              </div>
+            </div>
+            <span class="field-hint">Optional — for marketplace commission fees</span>
+          </div>
+        </div>
+
+        <div class="form-row three-columns">
+          <div class="form-group">
+            <label class="form-label">Auto-Sync Interval</label>
+            <select class="form-control" formControlName="auto_sync_interval">
+              <option value="manual">Manual only</option>
+              <option value="hourly">Every hour</option>
+              <option value="daily">Daily</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-check mt-4">
+              <input type="checkbox" class="form-check-input" formControlName="create_invoice_on_reconcile" id="create_invoice">
+              <label class="form-check-label" for="create_invoice">Create sales invoice on reconcile</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setting-section marketplace-cards-section">
+        <div class="section-header">
+          <span class="section-icon">🛒</span>
+          <h4 class="section-title">Marketplace Connections</h4>
+        </div>
+        <p class="section-hint">Connect Noon and Amazon.ae seller accounts. Expand a card to enter API credentials.</p>
+
+        <div class="gateway-grid">
+          <div
+            *ngFor="let mp of marketplaces"
+            class="gateway-card"
+            [class.enabled]="settingsForm.get(mp.id + '_enabled')?.value"
+            [class.expanded]="expandedMarketplace === mp.id"
+          >
+            <div class="gateway-card-header" (click)="toggleMarketplaceExpand(mp.id)">
+              <div class="gateway-brand">
+                <div class="gateway-logo" [style.background]="mp.color">
+                  <i [class]="mp.icon"></i>
+                </div>
+                <div class="gateway-info">
+                  <span class="gateway-name">{{ mp.name }}</span>
+                  <span class="gateway-type">{{ mp.label }}</span>
+                </div>
+              </div>
+              <div class="gateway-header-actions" (click)="$event.stopPropagation()">
+                <span
+                  class="gateway-status-badge"
+                  [class.connected]="isMarketplaceConfigured(mp.id)"
+                  [class.disconnected]="!isMarketplaceConfigured(mp.id)"
+                >
+                  <i class="bi" [class.bi-check-circle-fill]="isMarketplaceConfigured(mp.id)" [class.bi-circle]="!isMarketplaceConfigured(mp.id)"></i>
+                  {{ isMarketplaceConfigured(mp.id) ? 'Configured' : 'Not set' }}
+                </span>
+                <label class="gateway-toggle">
+                  <input type="checkbox" [formControlName]="mp.id + '_enabled'" (change)="onMarketplaceToggle(mp.id)">
+                  <span class="toggle-slider"></span>
+                </label>
+                <button type="button" class="gateway-expand-btn" [class.rotated]="expandedMarketplace === mp.id">
+                  <i class="bi bi-chevron-down"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="gateway-card-body" *ngIf="expandedMarketplace === mp.id">
+              <p class="partner-description">{{ mp.description }}</p>
+              <div class="gateway-fields" *ngIf="settingsForm.get(mp.id + '_enabled')?.value">
+                <div class="form-group" *ngFor="let field of mp.fields">
+                  <label [for]="mp.id + '_' + field.key" class="form-label">
+                    {{ field.label }}
+                    <span class="required" *ngIf="field.required">*</span>
+                  </label>
+                  <div class="secret-input-wrap" *ngIf="field.secret; else plainField">
+                    <input
+                      [id]="mp.id + '_' + field.key"
+                      [type]="isSecretVisible(mp.id, field.key) ? 'text' : 'password'"
+                      class="form-control"
+                      [formControlName]="mp.id + '_' + field.key"
+                      [placeholder]="field.placeholder"
+                      autocomplete="off"
+                    >
+                    <button type="button" class="secret-toggle-btn" (click)="toggleSecretVisibility(mp.id, field.key)">
+                      <i class="bi" [class.bi-eye]="!isSecretVisible(mp.id, field.key)" [class.bi-eye-slash]="isSecretVisible(mp.id, field.key)"></i>
+                    </button>
+                  </div>
+                  <ng-template #plainField>
+                    <input
+                      [id]="mp.id + '_' + field.key"
+                      type="text"
+                      class="form-control"
+                      [formControlName]="mp.id + '_' + field.key"
+                      [placeholder]="field.placeholder"
+                      autocomplete="off"
+                    >
+                  </ng-template>
+                  <span class="field-hint" *ngIf="field.hint">{{ field.hint }}</span>
+                </div>
+                <div class="partner-toggles">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" [id]="mp.id + '_auto_reconcile'" [formControlName]="mp.id + '_auto_reconcile'">
+                    <label class="form-check-label" [for]="mp.id + '_auto_reconcile'">Auto-reconcile on sync</label>
+                  </div>
+                </div>
+              </div>
+              <div class="gateway-footer">
+                <a [href]="mp.docsUrl" target="_blank" rel="noopener noreferrer" class="gateway-docs-link">
+                  <i class="bi bi-box-arrow-up-right"></i> Seller Portal
+                </a>
+                <button type="button" class="btn-test-connection" (click)="testConnection(mp.id)">
+                  <i class="bi bi-lightning-charge"></i> Test Connection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="save-button-container">
+        <button type="submit" class="btn-save-setting" [disabled]="settingsSaving">
+          <i class="bi bi-save"></i>
+          {{ settingsSaving ? 'Saving...' : 'Save Marketplace Settings' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Orders sub-tab -->
+  <div class="sub-tab-pane" *ngIf="activeSubTab === 'orders'">
+    <div class="manager-toolbar">
+      <div class="toolbar-left">
+        <div class="search-wrap">
+          <i class="bi bi-search"></i>
+          <input type="text" class="toolbar-search" placeholder="Search order ID, SKU, customer..." [(ngModel)]="orderSearch" (ngModelChange)="onOrderSearchChange()">
+        </div>
+        <select class="toolbar-filter" [(ngModel)]="sourceFilter" (ngModelChange)="onSourceFilterChange()">
+          <option value="all">All Sources</option>
+          <option value="noon">Noon</option>
+          <option value="amazon">Amazon.ae</option>
+        </select>
+        <select class="toolbar-filter" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="synced">Synced</option>
+          <option value="reconciled">Reconciled</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+      <div class="toolbar-actions">
+        <button type="button" class="btn-action-secondary" (click)="reconcileSelected()" [disabled]="!selectedOrderCount">
+          <i class="bi bi-check2-all"></i> Reconcile Selected ({{ selectedOrderCount }})
+        </button>
+        <button type="button" class="btn-action-secondary" (click)="reconcileAllPending()">
+          <i class="bi bi-check2-square"></i> Reconcile All Pending
+        </button>
+        <button type="button" class="btn-action-primary" (click)="syncNow()" [disabled]="syncing">
+          <i class="bi bi-arrow-repeat"></i> {{ syncing ? 'Syncing...' : 'Sync Now' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="compact-table-wrap">
+      <table class="compact-table" *ngIf="filteredOrders.length; else noOrders">
+        <thead>
+          <tr>
+            <th class="col-check">
+              <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()">
+            </th>
+            <th>Source</th>
+            <th>Order ID</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Fees</th>
+            <th>Net</th>
+            <th>Status</th>
+            <th>Ledger</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of filteredOrders">
+            <td class="col-check">
+              <input type="checkbox" [checked]="order.selected" (change)="toggleOrderSelect(order)" [disabled]="order.status === 'reconciled'">
+            </td>
+            <td>
+              <span class="source-badge" [class]="'source-badge--' + order.source">{{ sourceLabel(order.source) }}</span>
+            </td>
+            <td><code class="order-id">{{ order.orderId }}</code></td>
+            <td>{{ order.orderDate | date:'mediumDate' }}</td>
+            <td class="cell-primary">{{ order.customerName || '—' }}</td>
+            <td class="cell-amount">AED {{ order.amount | number:'1.2-2' }}</td>
+            <td class="cell-fees">AED {{ order.fees | number:'1.2-2' }}</td>
+            <td class="cell-net">AED {{ order.net | number:'1.2-2' }}</td>
+            <td>
+              <span class="status-badge" [class]="'status-badge--' + order.status">{{ statusLabel(order.status) }}</span>
+            </td>
+            <td>
+              <span *ngIf="order.ledgerRef" class="ledger-ref">{{ order.ledgerRef }}</span>
+              <span *ngIf="!order.ledgerRef && order.ledgerName" class="ledger-name">{{ order.ledgerName }}</span>
+              <span *ngIf="!order.ledgerRef && !order.ledgerName">—</span>
+            </td>
+            <td class="cell-actions">
+              <button type="button" class="btn-icon" title="View" (click)="openOrderDetail(order)"><i class="bi bi-eye"></i></button>
+              <button type="button" class="btn-icon btn-icon-success" title="Reconcile" (click)="reconcileOrder(order)" [disabled]="order.status === 'reconciled'"><i class="bi bi-check-lg"></i></button>
+              <button type="button" class="btn-icon btn-icon-danger" title="Mark failed" (click)="markFailed(order)" [disabled]="order.status === 'reconciled'"><i class="bi bi-x-lg"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noOrders>
+        <div class="empty-state">
+          <i class="bi bi-cart"></i>
+          <p>No marketplace orders yet. Enable a marketplace and click Sync Now.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>
+
+<!-- Order Detail Modal -->
+<ng-template #orderDetailModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="source-badge" [class]="'source-badge--' + selectedOrder?.source">{{ sourceLabel(selectedOrder!.source) }}</span>
+      Order {{ selectedOrder?.orderId }}
+    </h5>
+    <button type="button" class="btn-close" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body" *ngIf="selectedOrder">
+    <div class="detail-grid">
+      <div class="detail-row"><span class="detail-label">Customer</span><span>{{ selectedOrder.customerName || '—' }}</span></div>
+      <div class="detail-row"><span class="detail-label">Date</span><span>{{ selectedOrder.orderDate | date:'medium' }}</span></div>
+      <div class="detail-row"><span class="detail-label">Amount</span><span>AED {{ selectedOrder.amount | number:'1.2-2' }}</span></div>
+      <div class="detail-row"><span class="detail-label">Marketplace Fees</span><span class="text-danger">AED {{ selectedOrder.fees | number:'1.2-2' }}</span></div>
+      <div class="detail-row"><span class="detail-label">Net Payout</span><span class="detail-highlight">AED {{ selectedOrder.net | number:'1.2-2' }}</span></div>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="status-badge" [class]="'status-badge--' + selectedOrder.status">{{ statusLabel(selectedOrder.status) }}</span></div>
+      <div class="detail-row" *ngIf="selectedOrder.ledgerRef"><span class="detail-label">Ledger Ref</span><code>{{ selectedOrder.ledgerRef }}</code></div>
+      <div class="detail-row" *ngIf="selectedOrder.reconciledAt"><span class="detail-label">Reconciled</span><span>{{ selectedOrder.reconciledAt | date:'medium' }}</span></div>
+    </div>
+
+    <h6 class="items-title">Line Items</h6>
+    <table class="compact-table items-table">
+      <thead>
+        <tr><th>SKU</th><th>Product</th><th>Qty</th><th>Price</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of selectedOrder.items">
+          <td><code>{{ item.sku }}</code></td>
+          <td>{{ item.name }}</td>
+          <td>{{ item.qty }}</td>
+          <td>AED {{ item.price | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">Close</button>
+    <button type="button" class="btn btn-primary btn-sm" (click)="reconcileOrder(selectedOrder!); closeModal()" *ngIf="selectedOrder?.status !== 'reconciled'">
+      <i class="bi bi-check-lg"></i> Reconcile
+    </button>
+  </div>
+</ng-template>

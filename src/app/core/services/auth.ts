@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, timer } from 'rxjs';
 import { Api } from './api';
 import { ToastService } from './toast.service';
+import { CompanyService } from './company.service';
 import { HttpClient } from '@angular/common/http';
 
 
@@ -23,11 +24,15 @@ export class Auth {
     private api: Api,
     private router: Router,
     private http:HttpClient,
-    private toast: ToastService
+    private toast: ToastService,
+    private companyService: CompanyService
   ) {
     // Start token refresh timer if user is authenticated
     if (this.hasValidToken()) {
       this.startTokenRefresh();
+      if (!this.companyService.hasActiveCompany()) {
+        this.companyService.handlePostLoginNavigation();
+      }
     }
   }
 
@@ -40,9 +45,7 @@ export class Auth {
           localStorage.setItem('user', JSON.stringify(response.user));
           this.isAuthenticatedSubject.next(true);
           this.startTokenRefresh();
-          console.log('login successful1');
-          this.router.navigate(['/dashboard']);
-          console.log('login successful2');
+          this.companyService.handlePostLoginNavigation();
         }else{
           this.toast.show('Error', response.data, 'danger');
           this.clearAuthData();
@@ -94,6 +97,7 @@ export class Auth {
   private clearAuthData(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    this.companyService.clearCompanyData();
     this.isAuthenticatedSubject.next(false);
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval);
