@@ -87,7 +87,7 @@ export class LoanRepayment implements OnDestroy {
     return new Date().toISOString().substring(0, 10);
   } 
   loadBankList(): void {
-    this.api.get('/money/list-bank/1/').subscribe(
+    this.api.get('/money/list-bank/'+this.api.getUserCompany()+'/').subscribe(
       (response: any) => {
         if (response.status === 200) {
           this.bankList = response.data || [];

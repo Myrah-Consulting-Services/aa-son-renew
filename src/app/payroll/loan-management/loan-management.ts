@@ -212,7 +212,7 @@ currentPage: number=0;
 
   loadLoans(): void {
     // /attendance/loan/list/
-    this.api.get('/attendance/list-loan/').subscribe((response: any) => {
+    this.api.get('/attendance/list-loan/?'+"company_id="+this.api.getCompanyId()).subscribe((response: any) => {
       if (response.status == 200) {
         this.loans = response.data;
         this.paginatedLoans=response.pagination_data

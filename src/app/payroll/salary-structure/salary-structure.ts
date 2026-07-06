@@ -38,6 +38,7 @@ export class SalaryStructure implements OnInit {
   // Salary structures list
   salaryStructures: any[] = [];
   
+  
   // Available components for selection
   availableComponents = [
     { id: '1', name: 'Basic Salary' },
@@ -48,6 +49,7 @@ export class SalaryStructure implements OnInit {
 
   constructor(private fb: FormBuilder, private api: Api) {
     this.salaryStructureForm = this.fb.group({
+      company_id: [this.api.getCompanyId()],
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: ['', Validators.required],
       active: [true],
@@ -390,7 +392,7 @@ export class SalaryStructure implements OnInit {
 
   // Load salary structures from API
   loadSalaryStructures() {
-    this.api.get('/employee/list_salary_component_maps/?'+'company='+this.api.getCompanyId()).subscribe({
+    this.api.get('/employee/list_salary_component_maps/?'+"company_id="+this.api.getCompanyId()).subscribe({
       next: (res: any) => {
         if(res.status === 200){
           this.salaryStructures = res.data;

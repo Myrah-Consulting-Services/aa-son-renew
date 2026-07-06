@@ -110,7 +110,8 @@ employeIdOutput: any;
     private apiService: Api,
     private toast: ToastService,
     private modal: NgbModal,
-    private datePipe: DatePipe
+    private datePipe: DatePipe,
+    private api: Api
   ) {
   }
   settingsTabs = [
@@ -312,7 +313,7 @@ employeIdOutput: any;
   }
   // /attendance/list-shifts/
   listShift() {
-    this.apiService.post('/attendance/list-shifts/', { company: this.apiService.getCompanyId() }).subscribe((res: any) => {
+    this.apiService.post('/attendance/list-shifts/', { company: this.api.getCompanyId() }).subscribe((res: any) => {
       if (res.status == 200) {
         this.shiftTypes = res.data;
       }
@@ -322,7 +323,7 @@ employeIdOutput: any;
     });
   }
   loadShifts(shiftType: any) {
-    this.apiService.post('/attendance/list-subshifts/', { shift: shiftType }).subscribe((res: any) => {
+    this.apiService.post('/attendance/list-subshifts/', { shift: shiftType,  company: this.api.getCompanyId() }).subscribe((res: any) => {
       if (res.status == 200) {
         this.shifts = res.data;
       }

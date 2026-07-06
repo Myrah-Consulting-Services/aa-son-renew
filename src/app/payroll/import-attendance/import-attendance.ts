@@ -28,7 +28,8 @@ export class ImportAttendance {
     private http: HttpClient, private api: Api
   ) {
     this.attendanceForm = this.fb.group({
-      file: [null]
+      file: [null],
+      company_id:[]
     });   
   }
   ngOnInit() {

@@ -85,7 +85,8 @@ export class LeaveManagement implements OnInit {
     private modal: NgbModal,
     private apiService: Api,
     private toast: ToastService,
-    private activeModal: NgbActiveModal
+    private activeModal: NgbActiveModal,
+    private api: Api,
   ) {
     this.leaveForm = this.fb.group({
       employee: [number, Validators.required],
@@ -129,10 +130,7 @@ export class LeaveManagement implements OnInit {
     })
   }
   initializeData() {
-    const companyId = this.apiService.getCompanyId();
-    this.apiService.get(
-      `/attendance/list-leave-requests/?page=${this.currentPage + 1}&limit=${this.pageSize}&company_id=${companyId}`
-    ).subscribe((res: any) => {      
+    this.apiService.get('/attendance/list-leave-requests/?'+"page="+this.currentPage+1+'&'+"limit="+this.pageSize+'&'+"company_id="+this.api.getCompanyId()).subscribe((res: any) => {      
       if(res.status == 200){
         this.filteredLeaveRequests = res.data;
         this.pagination_data=res.pagination_data    

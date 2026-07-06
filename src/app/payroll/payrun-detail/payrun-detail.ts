@@ -316,7 +316,7 @@ export class PayrunDetail implements OnInit {
   }
 
   loadBankList(): void {
-    this.api.get('/money/list-bank/1/').subscribe((response: any) => {
+    this.api.get('/money/list-bank/'+this.api.getUserCompany()+'/').subscribe((response: any) => {
       if (response.status === 200) {
         this.bankList = response.data || [];
         console.log('Bank list loaded:', this.bankList);

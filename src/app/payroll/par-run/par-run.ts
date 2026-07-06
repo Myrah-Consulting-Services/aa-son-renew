@@ -57,11 +57,19 @@ export class ParRun implements OnInit {
     this.loadSettings();
     this.applyRevisedSalary();
   }
+  kpiSummary: any;
+  pendingRuns: any[] = [];
 
   getPayrol(): void {
-    this.api.get('/employee/current_month_payroll_run/').subscribe((response: any) => {
+    this.api.get('/employee/current_month_payroll_run/?'+"company_id="+this.api.getCompanyId()).subscribe((response: any) => {
       if(response.status == 200){
-        this.runPayrollData = response.data.payroll_runs;
+        const data = response.data;
+        this.runPayrollData = response.data.payroll_runs?? [];
+        // Prefer backend-curated pending list
+        this.pendingRuns = data.pending_payroll_runs ?? this.runPayrollData.filter(
+          (r: any) => r.is_pending || r.status === '4'
+        );
+        this.kpiSummary = data.kpi_summary ?? {};
       }
     });
   }
@@ -154,16 +162,18 @@ export class ParRun implements OnInit {
   }
 
   getTotalPendingCount(): number {
-    const regularCount = this.runPayrollData?.length || 0;
-    const bulkCount = this.bulkSettlementBatches?.length || 0;
-    return regularCount + bulkCount;
+    return this.kpiSummary?.total_pending ?? this.pendingRuns.length;
   }
 
   getRegularPayrollCount(): number {
-    return this.runPayrollData?.length || 0;
+    return this.kpiSummary?.regular_payroll ?? this.pendingRuns.filter(
+    (r: any) => r.type === 'regular'
+    ).length;
   }
 
   getBulkTerminationCount(): number {
-    return this.bulkSettlementBatches?.length || 0;
+    return this.kpiSummary?.bulk_termination ?? this.pendingRuns.filter(
+    (r: any) => r.type === 'bulk'
+  ).length;
   }
 }
