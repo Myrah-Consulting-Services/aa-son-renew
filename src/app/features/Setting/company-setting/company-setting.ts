@@ -135,7 +135,7 @@ export class CompanySetting implements OnInit {
       is_default_currency: [false],
        // Changed to array for multiple selection
       id:[],
-      company:[1]
+      company:[this.api.getCompanyId()]
     });
 
     this.companyForm = this.fb.group({
@@ -271,7 +271,7 @@ export class CompanySetting implements OnInit {
  
 
   getCompanySetting() {
-    this.api.get('/invoice/get-invoice-setting/1/').subscribe((res: any) => {
+    this.api.get('/invoice/get-invoice-setting/'+this.api.getUserCompany()+'/').subscribe((res: any) => {
       if (res && res.status === 200 && res.data) {
         // Handle default_currency field - convert to array if it's a single value
         

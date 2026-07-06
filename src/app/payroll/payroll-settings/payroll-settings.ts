@@ -312,7 +312,7 @@ employeIdOutput: any;
   }
   // /attendance/list-shifts/
   listShift() {
-    this.apiService.post('/attendance/list-shifts/', { company: 1 }).subscribe((res: any) => {
+    this.apiService.post('/attendance/list-shifts/', { company: this.apiService.getCompanyId() }).subscribe((res: any) => {
       if (res.status == 200) {
         this.shiftTypes = res.data;
       }

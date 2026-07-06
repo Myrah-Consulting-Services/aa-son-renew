@@ -60,7 +60,7 @@ export class LocationList implements OnInit {
   }
 
   loadWarehouses() {
-    this.svc.get('/warehouses/list-warehouse/').subscribe({
+    this.svc.listWarehouses().subscribe({
       next: (res: any) => {
         if (res.status === 200) {
           this.warehouses = res.data || [];
@@ -77,7 +77,7 @@ export class LocationList implements OnInit {
     this.currentPage = page;
 
     const payload: any = {
-      company: this.svc.getCompanyId() ?? 1,
+      company: this.svc.getCompanyId(),
       warehouse: this.selectedWarehouse ? Number(this.selectedWarehouse) : null,
       search: this.searchText.trim() || null,
       page_number: this.currentPage,

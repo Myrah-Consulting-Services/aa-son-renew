@@ -77,7 +77,12 @@ export class SalaryStructure implements OnInit {
   }
 
   getPayrollheads(){
-    this.api.get('/employee/grouped_payroll_heads/').subscribe({
+    const companyId = this.api.getCompanyId();
+    if (!companyId) {
+      this.showToastMessage('Company is required. Please log in again.', 'error');
+      return;
+    }
+    this.api.get('/employee/grouped_payroll_heads/?'+'company='+companyId).subscribe({
       next: (res: any) => {
         console.log('API Response:', res);
         
@@ -147,6 +152,7 @@ export class SalaryStructure implements OnInit {
   addEarningsRow() {
     const newRow = this.fb.group({
       id: [''],
+      head_id: [''],
       head_name: ['', Validators.required],
       head_type: [''],
       calculation_type: [1], // Default to Fixed
@@ -221,7 +227,38 @@ export class SalaryStructure implements OnInit {
   onSubmit() {
     console.log(this.salaryStructureForm.value);
     if (this.salaryStructureForm.valid) {
-      const formData = this.salaryStructureForm.value;
+      const raw = this.salaryStructureForm.value;
+      const activeIds = new Set(this.earning.map((h: any) => Number(h.id)));
+      const skipped: string[] = [];
+      const earnings = (raw.earnings || [])
+        .map((e: any) => {
+          let headId = e.id != null && e.id !== '' ? Number(e.id) : null;
+          if (headId == null || !activeIds.has(headId)) {
+            const byName = this.earning.find(
+              (h: any) =>
+                (h.head_name || '').toLowerCase() === (e.head_name || '').toLowerCase()
+            );
+            headId = byName ? Number(byName.id) : null;
+          }
+          if (headId == null || !activeIds.has(headId)) {
+            skipped.push(e.head_name || 'Unknown');
+            return null;
+          }
+          return { ...e, id: headId, head_id: headId };
+        })
+        .filter((e: any) => e != null);
+      if (skipped.length) {
+        this.showToastMessage(
+          `Removed inactive payroll heads: ${skipped.join(', ')}`,
+          'warning'
+        );
+      }
+      const companyId = this.api.getCompanyId();
+      if (!companyId) {
+        this.showToastMessage('Company is required. Please log in again.', 'error');
+        return;
+      }
+      const formData = { ...raw, earnings, company: companyId };
       
       console.log('Salary Structure Payload:', formData);
       
@@ -327,6 +364,7 @@ export class SalaryStructure implements OnInit {
     
     const updateData = {
       id: earning.id,
+      head_id: earning.id,
       head_name: earning.head_name,
       head_type: earning.head_type,
       calculation_type: earning.calculation_type,
@@ -352,7 +390,7 @@ export class SalaryStructure implements OnInit {
 
   // Load salary structures from API
   loadSalaryStructures() {
-    this.api.get('/employee/list_salary_component_maps/').subscribe({
+    this.api.get('/employee/list_salary_component_maps/?'+'company='+this.api.getCompanyId()).subscribe({
       next: (res: any) => {
         if(res.status === 200){
           this.salaryStructures = res.data;
@@ -420,12 +458,30 @@ export class SalaryStructure implements OnInit {
 
   // Populate FormArrays with structure data
   populateFormArrays(structure: any) {
+    const activeIds = new Set(this.earning.map((h: any) => Number(h.id)));
     // Populate Earnings
     if (structure.earnings && Array.isArray(structure.earnings)) {
       structure.earnings.forEach((earning: any) => {
+        let headId = earning.head_id ?? earning.id ?? null;
+        headId = headId != null ? Number(headId) : null;
+        if (headId == null || !activeIds.has(headId)) {
+          const byName = this.earning.find(
+            (h: any) =>
+              (h.head_name || '').toLowerCase() === (earning.head_name || '').toLowerCase()
+          );
+          headId = byName ? Number(byName.id) : null;
+        }
+        if (headId == null || !activeIds.has(headId)) {
+          this.showToastMessage(
+            `Skipped "${earning.head_name || 'Unknown'}": payroll head is deleted or unavailable.`,
+            'warning'
+          );
+          return;
+        }
         const newIndex = this.earningsArray.length;
         this.earningsArray.push(this.fb.group({
-          id: [earning.id || null],
+          id: [headId],
+          head_id: [headId],
           head_name: [earning.head_name || ''],
           calculation_value: [earning.calculation_value || '0'],
           calculation_type: [earning.calculation_type || 1],

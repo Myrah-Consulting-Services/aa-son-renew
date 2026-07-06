@@ -52,7 +52,7 @@ export class ChartOfAccounts implements OnInit {
   loadAccounts() {
     this.isLoading = true;
     const payload: any = {
-      company:     this.api.getCompanyId() ?? 1,
+      company:     this.api.getCompanyId(),
       page_number: this.currentPage,
       page_size:   this.pageSize,
     };

@@ -123,13 +123,12 @@ export class AddItem implements OnInit {
     this.items   = [];
 
     const payload: any = {
-      company:   this.api.getUserCompany(),
       page:      this.currentPage,
       page_size: this.pageSize,
     };
     if (this.selectedTypeId !== null) payload['type'] = this.selectedTypeId;
 
-    this.api.post('/items/list-item/s=' + searchTerm + '/', payload).subscribe({
+    this.api.listItems(searchTerm, payload).subscribe({
       next: (response: any) => {
         if (response && response.status === 200) {
           const raw = response.data;
@@ -152,7 +151,6 @@ export class AddItem implements OnInit {
     if (reset) this.items = [];
 
     const payload: any = {
-      company:   this.api.getUserCompany(),
       warehouse: this.warehouse_value,
       page:      this.currentPage,
       page_size: this.pageSize,
@@ -161,7 +159,7 @@ export class AddItem implements OnInit {
       payload['type'] = this.selectedTypeId;
     }
 
-    this.api.post('/items/list-item/s=/', payload).subscribe({
+    this.api.listItems('', payload).subscribe({
       next: (response: any) => {
         if (response && response.status === 200) {
           const raw  = response.data;

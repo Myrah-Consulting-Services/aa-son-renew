@@ -73,7 +73,7 @@ export class WarehouseList implements OnInit {
       params['is_active'] = this.selectedStatus;   // 'true' or 'false'
     }
 
-    this.svc.get('/warehouses/list-warehouse/', params).subscribe({
+    this.svc.listWarehouses(params).subscribe({
       next: (res: any) => {
         this.loading = false;
         if (res.status === 200 || res.data) {

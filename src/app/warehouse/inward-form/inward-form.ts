@@ -112,7 +112,7 @@ export class InwardForm implements OnInit {
       locationId: [''],
       items: this.fb.array([this.createItem()]),
       totalAmount: [0, [Validators.required, Validators.min(0)]],
-      company: [1, Validators.required],
+      company: [this.api.getCompanyId(), Validators.required],
       
       // Essential warehouse functionality fields
       placementOption: ['1', Validators.required],
@@ -625,7 +625,7 @@ getcurrencysecond(){
   }
 
   loadParties(): void {
-    this.api.post('/party/list-party/s=/', { company: 1, partyType: 2 }).subscribe({
+    this.api.post('/party/list-party/s=/', { company: this.api.getCompanyId(), partyType: 2 }).subscribe({
       next: (res: any) => {
         if (res.status === 200) {
           this.parties = res.data || [];
@@ -649,7 +649,7 @@ getcurrencysecond(){
   }
 
   loadWarehouses(): void {
-    this.api.get('/warehouses/list-warehouse/', { company: 1 }).subscribe({
+    this.api.listWarehouses().subscribe({
       next: (res: any) => {
         if (res.status == 200) {
           this.warehouses = res.data || [];
@@ -659,7 +659,7 @@ getcurrencysecond(){
   }
 
   loadLocations(): void {
-    this.api.post('/warehouses/list-location/', { warehouse:null, company: 1 }).subscribe({
+    this.api.post('/warehouses/list-location/', { warehouse:null, company: this.api.getCompanyId() }).subscribe({
       next: (res: any) => {
         if (res.status == 200) {
           this.locations = res.data || [];
@@ -671,7 +671,7 @@ getcurrencysecond(){
 
   loadItems(b:any): void {
     let a=b
-    this.api.post('/items/list-item/s='+b+'/', { company: 1 }).subscribe({
+    this.api.listItems(b).subscribe({
       next: (res: any) => {
         if (res.status == 200) {
           this.availableItems = res.data || [];
@@ -683,7 +683,7 @@ getcurrencysecond(){
   // Load employees for "Received By" field
   loadEmployees(): void {
     // Try to load from payroll/employee module first
-    this.api.get('/payroll/employees/', { company: 1 }).subscribe({
+    this.api.get('/payroll/employees/', { company: this.api.getCompanyId() }).subscribe({
       next: (res: any) => {
         if (res.status === 200 && res.data && res.data.length > 0) {
           this.employees = res.data.map((emp: any) => ({
@@ -1300,7 +1300,7 @@ getcurrencysecond(){
   }
 
   loadWarehouseWorkers(): void {
-    this.api.get('/warehouse/workers/', { company: 1 }).subscribe({
+    this.api.get('/warehouse/workers/', { company: this.api.getCompanyId() }).subscribe({
       next: (res: any) => {
         if (res.status === 200) {
           this.warehouseWorkers = res.data || [];

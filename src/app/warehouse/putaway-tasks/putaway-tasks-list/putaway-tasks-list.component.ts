@@ -83,7 +83,7 @@ export class PutawayTasksListComponent implements OnInit {
   }
 
   getEmployees(): void {
-    this.apiService.post('/employee/list_employees/',{company:1}).subscribe((res: any) => {
+    this.apiService.post('/employee/list_employees/',{company: this.apiService.getCompanyId()}).subscribe((res: any) => {
       if (res.status === 200) {
         this.employees = res || [];
       }
@@ -101,7 +101,7 @@ export class PutawayTasksListComponent implements OnInit {
   getTasks(page: number = this.currentPage): void {
     this.currentPage = page;
     const payload: any = {
-      company: 1,
+      company: this.apiService.getCompanyId(),
       page_number: this.currentPage,
       page_size: this.pageSize,
       start_date: this.startDate,
@@ -136,7 +136,7 @@ export class PutawayTasksListComponent implements OnInit {
     const apiParams: any = {
       status: filters.status || null,
       priority: filters.priority || null,
-      company: 1
+      company: this.apiService.getCompanyId()
     };
 
     let url = '/invoice/putaway-tasks-list/s=/';
@@ -168,7 +168,7 @@ export class PutawayTasksListComponent implements OnInit {
   }
 
   getWorkers(): void {
-    this.apiService.post('/employee/list_employees/',{company:1}).subscribe((res: any) => {
+    this.apiService.post('/employee/list_employees/',{company: this.apiService.getCompanyId()}).subscribe((res: any) => {
       if (res.status === 200) {
         this.workers = res.data;
       }

@@ -76,6 +76,7 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
   branchList: any;
   designationList: any;
   locationPayList: any;
+  shiftList: any[] = [];
   
   // Salary Structure properties
   salaryStructures: any[] = [];
@@ -144,6 +145,7 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
   modalRef: any;
   note: any = null;
   salaryData: any;
+  private pendingSalaryStructure: any = null;
   benefitsModalRef: any;
   benefitsData: any;
   missingData: any;
@@ -172,12 +174,13 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
         location: ['', Validators.required],
         designation: ['', Validators.required],
         branch: ['', Validators.required],
+        shift: [''],
         job_title: ['', Validators.maxLength(100)],
         portal_access_enabled: [false],
         is_gcc_national: [false],
         origin_country: [''],
         is_first_time_employed: [false],
-        company: [1],
+        company: [this.api.getCompanyId()],
         // iban: ['', [Validators.required, Validators.maxLength(50), Validators.pattern(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}$/)]],
         // custom_fields: this.fb.group({
         //   emergency_contact: [''],
@@ -202,12 +205,12 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
         permanent_state: [''],
         permanent_country: [''],
         permanent_pin_code: [''],
-        company: [1],
+        company: [this.api.getCompanyId()],
         employee: [this.employeeId],
         id: [''],
       }),
       salaryDetails: this.fb.group({
-        company: [1],
+        company: [this.api.getCompanyId()],
         employee: [this.employeeId],
         salaryStructure: [null],
         salaryStructureName:[],
@@ -227,7 +230,7 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
         id: [''],
       }),
       paymentDetails: this.fb.group({
-        company: [1],
+        company: [this.api.getCompanyId()],
         employee: [this.employeeId],
         payment_mode: ['1'],
         account_holder_name: [''],
@@ -246,7 +249,7 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
         valid_from: [''],
         expires_on: [''],
         is_primary: [true],
-        company: [1],
+        company: [this.api.getCompanyId()],
         employee: [],
         id: [''],
       })
@@ -316,6 +319,7 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
     this.getBranchList();
     this.getDesignationList();
     this.getLocationPayList();
+    this.getShiftList();
     this.getSalaryStructures();
     this.getPayrollheads();
     this.getSalaryheads()
@@ -394,25 +398,35 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
   getSalaryheads() {
-    this.api.get('/employee/grouped_payroll_heads/').subscribe((res: any) => {
+    const companyId = this.api.getCompanyId();
+    if (!companyId) {
+      return;
+    }
+    this.api.get('/employee/grouped_payroll_heads/?company=' + companyId).subscribe((res: any) => {
       if (res.status == 200) {
         this.salaryData = res.data;
-        this.buildEarningsForm()
+        if (!this.employeeToEdit && !this.selectedSalaryStructure) {
+          this.buildEarningsForm();
+        }
+        if (this.pendingSalaryStructure) {
+          const structure = this.pendingSalaryStructure;
+          this.pendingSalaryStructure = null;
+          this.populateFormArraysFromStructure(structure);
+        }
       }
-    }); 
+    });
   } 
     get earningsArray(): FormArray {
     return this.employeeForm.get('salaryDetails.earnings') as FormArray;
   }
  buildEarningsForm() {
 this.salaryData.forEach((cat:any,index:number) => {
-  // If category has heads → add a dropdown row
-  // add recalculation also because as per calculation type it will be calculated
   if (cat.heads && cat.heads.length > 0) {
     console.log(cat.heads[0], 'cat.heads[0]');
     
     this.earnings.push(this.createEarningItemFromStructure({
       head_id: cat.heads[0].id,
+      head: cat.heads[0].id,
       head_name: cat.heads[0].head_name,
       calculation_value: cat.heads[0].calculation_value || 0,
       calculation_type: cat.heads[0].calculation_type || 1,
@@ -420,21 +434,10 @@ this.salaryData.forEach((cat:any,index:number) => {
       annual_value: cat.heads[0].annual_value || 0,
       category_name: cat.category_name,
       calculation_type_name: cat.heads[0].calculation_type_name || 'Fixed'
-    }, true));   // ✅ only one dropdown row
-  } else {
-    // If no heads → add static row
-    this.earnings.push(this.createEarningItemFromStructure({
-      head_id: cat.category_id,
-      head_name: cat.category_name,
-      calculation_value: cat.calculation_value || 0,
-      calculation_type:cat.calculation_type || 1,
-      monthly_value: cat.monthly_value || 0,
-      annual_value: cat.annual_value || 0,
-      category_name: cat.category_name,
-      calculation_type_name: cat.calculation_type_name || 'Fixed'
-    }, false));
+    }, true));
+    this.onCalculationValueChange(this.earnings.length - 1);
   }
-  this.onCalculationValueChange(index)
+  // Skip categories with no active payroll heads — never use category_id as head_id
 });
 
 
@@ -447,6 +450,7 @@ selectEarning(index: number, earning: any) {
     const row = this.earnings.at(index);
     row.patchValue({
       head_id: earning.id,
+      head: earning.id,
       head_name: earning.head_name,
       calculation_value: Number(earning.calculation_value) || 0,
       calculation_type: earning.calculation_type || 1,
@@ -475,6 +479,7 @@ console.log(selectedHead, 'selected head details');
     earningGroup.patchValue({
       head_name: selectedHead.head_name,
       head_id: selectedHead.id || null,
+      head: selectedHead.id || null,
       calculation_type: selectedHead.calculation_type || 1,
       calculation_value: this.safeNumber(selectedHead.calculation_value || 0),
       calculation_type_name: this.getCalculationTypeName(selectedHead.calculation_type || 1),
@@ -561,6 +566,7 @@ getTotalAnnual() {
           designation: res.data.designation,
           location: res.data.location,
           branch: res.data.branch,
+          shift: res.data.shift,
           contract_type: res.data.contract_type,
           contract_start_date: res.data.contract_start_date,
           contract_end_date: res.data.contract_end_date,
@@ -584,6 +590,9 @@ getTotalAnnual() {
         this.onOriginCountryChange({ target: { value: res.data.origin_country } });
         // Mark steps as completed based on existing data
         this.basicCompleted = true;
+        this.employeeForm.get('salaryDetails')?.patchValue({
+          employee: res.data.id,
+        });
         if(res.data.salary_components?.length>0){
         this.salaryStructureSearchTerm = res.data.salary_components[0]?.salaryStructureName;
         this.selectedSalaryStructure = res.data.salary_components[0];
@@ -627,18 +636,18 @@ getTotalAnnual() {
           company: this.api.getCompanyId()
         });
         this.personalCompleted = !!res.data.personal_info?.id;
+        const paymentDetail = this.resolvePaymentDetail(res.data.payment_details);
         this.employeeForm.get('paymentDetails')?.patchValue({
-          account_holder_name: res.data.payment_details?.[0]?.account_holder_name,
-          bank_name: res.data.payment_details?.[0]?.bank_name,
-          iban: res.data.payment_details?.[0]?.iban,
-          swift_code: res.data.payment_details?.[0]?.swift_code,
-          payment_mode: res.data.payment_details?.[0]?.payment_mode,
-          id: res.data.payment_details?.[0]?.id,
+          account_holder_name: paymentDetail?.account_holder_name,
+          bank_name: paymentDetail?.bank_name,
+          iban: paymentDetail?.iban,
+          swift_code: paymentDetail?.swift_code,
+          payment_mode: paymentDetail?.payment_mode != null ? String(paymentDetail.payment_mode) : '1',
+          id: paymentDetail?.id,
           employee: res.data.id,
-          company: res.data.payment_details?.[0]?.company,
-          
+          company: paymentDetail?.company ?? this.api.getCompanyId(),
         });
-        this.paymentCompleted = !!res.data.payment_details?.[0]?.id;
+        this.paymentCompleted = !!paymentDetail?.id;
         this.employeeForm.get('documents')?.patchValue({
          
         });
@@ -646,13 +655,32 @@ getTotalAnnual() {
     });
   }
   
+  private resolvePaymentDetail(paymentDetails: any[] | undefined): any {
+    if (!paymentDetails?.length) {
+      return null;
+    }
+    return paymentDetails.reduce((latest: any, item: any) => {
+      if (!latest || (item?.id && item.id > latest.id)) {
+        return item;
+      }
+      return latest;
+    }, null);
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     const employee = changes['employeeToEdit']?.currentValue;
-    // Check for a real employee object, which will have a basicInfo property
-    if (employee && employee.basicInfo) {
+    if (employee && typeof employee === 'object' && employee.basicInfo) {
       this.employeeId = this.employeeToEdit;
-    
-    } else if (changes['employeeToEdit']) {
+      return;
+    }
+    if (employee && (typeof employee === 'number' || typeof employee === 'string')) {
+      this.employeeId = employee;
+      if (!changes['employeeToEdit'].firstChange) {
+        this.patchData();
+      }
+      return;
+    }
+    if (employee === null || employee === undefined) {
       // It's a new employee form, so reset carefully
       
       // Set default phone country code to UAE (+971) after reset
@@ -1225,21 +1253,23 @@ onOriginCountryChange(event: any) {
       return;
     }
    
-    const payload = {
-      ...group.value,
-      grossMonthlyEarnings: this.grossMonthlyEarnings,
-      grossAnnualEarnings: this.grossAnnualEarnings,
-      employee: this.employeeId,
-      annualCTC: group.value.annualCTC || 0,
-      total_earning: this.calculateTotalEarnings(),
-      total_deduction: this.calculateTotalDeductions(),
-      total_benefit: this.calculateTotalBenefits(),
-      active: true
-    };
+    const { payload, skippedHeads } = this.buildSalarySubmitPayload(group as FormGroup);
+    if (skippedHeads.length) {
+      this.toast.show(
+        `Removed inactive payroll heads: ${skippedHeads.join(', ')}`,
+        'warning'
+      );
+    }
+    const earnings = payload['earnings'] as unknown[];
+    if (!earnings?.length && (group.get('earnings') as FormArray)?.length) {
+      this.toast.show('No valid payroll heads to save. Add active earning components.', 'error');
+      return;
+    }
     console.log(payload, 'payload');
-    
-    if (this.employeeToEdit && (this.employeeForm.get('salaryDetails')?.get('id')?.value!=null || this.employeeForm.get('salaryDetails')?.get('id')?.value!=undefined)) {
-      this.api.put('/employee/update_employee_salary_component/' + this.employeeForm.get('salaryDetails')?.get('employee')?.value + "/", payload).subscribe({
+
+    const salaryComponentId = group.get('id')?.value;
+    if (this.employeeToEdit && salaryComponentId) {
+      this.api.put('/employee/update_employee_salary_component/' + salaryComponentId + '/', payload).subscribe({
         next: (res: any) => {
           if (res.status == 200) {
             this.toast.show('Employee salary component Updated successfully', 'success');
@@ -1257,6 +1287,9 @@ onOriginCountryChange(event: any) {
       this.api.post('/employee/create_employee_salary_component/', payload).subscribe({
         next: (res: any) => {
           if (res.status == 200) {
+            if (res.id) {
+              group.patchValue({ id: res.id }, { emitEvent: false });
+            }
             this.toast.show('Employee salary component saved successfully', 'success');
             this.salaryCompleted = true;
             const next = this.getNextTab('salaryDetails');
@@ -1604,6 +1637,13 @@ onOriginCountryChange(event: any) {
       }
     });
   }
+  getShiftList(): void {
+    this.api.post('/attendance/list-shifts/', { company: this.api.getUserCompany() || 1 }).subscribe((res: any) => {
+      if (res.status == 200 || res.status === 200) {
+        this.shiftList = res.data || [];
+      }
+    });
+  }
   closeLocationPayModal(): void {
     this.showLocationPayModal = false;
     this.getLocationPayList();
@@ -1611,7 +1651,7 @@ onOriginCountryChange(event: any) {
 
   // Salary Structure methods
   getSalaryStructures() {
-    this.api.get('/employee/list_salary_component_maps/').subscribe({
+    this.api.get('/employee/list_salary_component_maps/?'+'company='+this.api.getCompanyId()).subscribe({
       next: (res: any) => {
         if (res.status === 200) {
           this.salaryStructures = res.data;
@@ -1626,7 +1666,11 @@ onOriginCountryChange(event: any) {
   }
 
   getPayrollheads() {
-    this.api.get('/employee/distributed_payroll_list/').subscribe({
+    const companyId = this.api.getCompanyId();
+    if (!companyId) {
+      return;
+    }
+    this.api.get('/employee/distributed_payroll_list/?company=' + companyId).subscribe({
       next: (res: any) => {
         if (res.status === 200 && res.data) {
           this.earning = res.data.Earning || [];
@@ -1700,6 +1744,11 @@ onOriginCountryChange(event: any) {
       });
     }
     
+    if (!this.salaryData) {
+      this.pendingSalaryStructure = structure;
+      return;
+    }
+
     // Populate form arrays with structure data
     this.populateFormArraysFromStructure(structure);
   }
@@ -1728,66 +1777,23 @@ onOriginCountryChange(event: any) {
     if (structure.earnings && Array.isArray(structure.earnings)) {
       // console.log('Populating earnings:', structure.earnings.length, 'items');
       
-      structure.earnings.forEach((earning: any, index: number) => {
-        // console.log(`Earning ${index}:`, earning);
-        // console.log(`Earning ${index} properties:`, {
-        //   head_id: earning.id,
-        //   head_name: earning.head_name,
-        //   calculation_value: earning.calculation_value,
-        //   calculation_type: earning.calculation_type,
-        //   monthly_value: earning.monthly_value,
-        //   annual_value: earning.annual_value,
-        //   has_monthly_value: 'monthly_value' in earning,
-        //   has_annual_value: 'annual_value' in earning
-        // });
-        
-        const newIndex = this.earnings.length;
-        
-         const earningFormGroup = this.createEarningItemFromStructure(earning);
-        // console.log('=== EARNING FORM GROUP DEBUG ===');
-        // console.log('earningFormGroup object:', earningFormGroup);
-        // console.log('earningFormGroup value:', earningFormGroup.value);
-        // console.log('earningFormGroup controls:', earningFormGroup.controls);
-        
-        // // Debug each individual control
-        // console.log('=== INDIVIDUAL FORM CONTROLS ===');
-        // console.log('head_name control:', {
-        //   value: earningFormGroup.get('head_name')?.value,
-        //   type: typeof earningFormGroup.get('head_name')?.value
-        // });
-        // console.log('calculation_value control:', {
-        //   value: earningFormGroup.get('calculation_value')?.value,
-        //   type: typeof earningFormGroup.get('calculation_value')?.value
-        // });
-        // console.log('calculation_type control:', {
-        //   value: earningFormGroup.get('calculation_type')?.value,
-        //   type: typeof earningFormGroup.get('calculation_type')?.value
-        // });
-        // console.log('monthly_value control:', {
-        //   value: earningFormGroup.get('monthly_value')?.value,
-        //   type: typeof earningFormGroup.get('monthly_value')?.value,
-        //   disabled: earningFormGroup.get('monthly_value')?.disabled,
-        //   valid: earningFormGroup.get('monthly_value')?.valid
-        // });
-        // console.log('annual_value control:', {
-        //   value: earningFormGroup.get('annual_value')?.value,
-        //   type: typeof earningFormGroup.get('annual_value')?.value,
-        //   disabled: earningFormGroup.get('annual_value')?.disabled,
-        //   valid: earningFormGroup.get('annual_value')?.valid
-        // });
+      structure.earnings.forEach((earning: any) => {
+        const resolvedId = this.resolveActivePayrollHeadId(earning);
+        if (resolvedId == null) {
+          const label = earning.head_name || earning.categoryName || 'Unknown';
+          this.toast.show(
+            `Skipped "${label}": payroll head is deleted or not available.`,
+            'warning'
+          );
+          return;
+        }
 
-        // const a=this.fb.group({
-        //    id: [earningFormGroup.get('id')?.value || null],
-        //   head_name: [earningFormGroup.get('head_name')?.value, Validators.required],
-        //   calculation_value: [earningFormGroup.get('calculation_value')?.value, Validators.required],
-        //   calculation_type: [earningFormGroup.get('calculation_type')?.value, Validators.required],
-        //   monthly_value: [earningFormGroup.get('monthly_value')?.value, Validators.required],
-        //   annual_value: [earningFormGroup.get('annual_value')?.value, Validators.required]
-        // })
-        // console.log(a, 'abc');
-        // console.log(this.earnings, 'this.earnings 2410');
-        
-        
+        const newIndex = this.earnings.length;
+        const earningFormGroup = this.createEarningItemFromStructure({
+          ...earning,
+          head_id: resolvedId,
+          head: resolvedId,
+        });
          this.earnings.push(earningFormGroup);
         
         // console.log('=== AFTER PUSH DEBUG ===');
@@ -1917,8 +1923,110 @@ onOriginCountryChange(event: any) {
       disabled: control?.disabled
     });
   }
-createEarningItemFromStructure(earning: any, isDropdown = false): FormGroup {
+  /**
+   * Returns PayrollHead id for API payloads.
+   * Saved employee earnings use `head` (PayrollHead pk); `id` is EmployeeEarning row id.
+   */
+  private resolvePayrollHeadId(item: any): number | null {
+    if (item == null) return null;
+    if (item.head != null && item.head !== '') return Number(item.head);
+    const headId = item.head_id != null && item.head_id !== '' ? Number(item.head_id) : null;
+    const rowId = item.id != null && item.id !== '' ? Number(item.id) : null;
+    const isEmployeeEarningRow = item.employee != null;
+    if (headId != null && !(isEmployeeEarningRow && rowId != null && headId === rowId)) {
+      return headId;
+    }
+    if (!isEmployeeEarningRow && rowId != null) return rowId;
+    return null;
+  }
+
+  /** Active PayrollHead ids from grouped_payroll_heads (excludes deleted). */
+  private getActivePayrollHeadIdSet(): Set<number> {
+    const ids = new Set<number>();
+    if (!this.salaryData || !Array.isArray(this.salaryData)) return ids;
+    for (const cat of this.salaryData) {
+      for (const h of cat.heads || []) {
+        if (h?.id != null) ids.add(Number(h.id));
+      }
+    }
+    return ids;
+  }
+
+  private findActivePayrollHeadByName(name: string): any | null {
+    if (!name || !this.salaryData || !Array.isArray(this.salaryData)) return null;
+    const normalized = name.trim().toLowerCase();
+    for (const cat of this.salaryData) {
+      for (const h of cat.heads || []) {
+        const headName = (h.head_name || '').trim().toLowerCase();
+        const payslipName = (h.payslip_name || '').trim().toLowerCase();
+        if (headName === normalized || payslipName === normalized) return h;
+      }
+    }
+    return null;
+  }
+
+  /** Resolve to an active PayrollHead id; null if deleted/unknown. */
+  private resolveActivePayrollHeadId(item: any): number | null {
+    const activeIds = this.getActivePayrollHeadIdSet();
+    let id = this.resolvePayrollHeadId(item);
+    if (id != null && activeIds.has(id)) return id;
+    const byName = this.findActivePayrollHeadByName(
+      item?.head_name || item?.categoryName || item?.category_name || ''
+    );
+    if (byName?.id != null) return Number(byName.id);
+    return null;
+  }
+
+  private buildSalarySubmitPayload(group: FormGroup): {
+    payload: Record<string, unknown>;
+    skippedHeads: string[];
+  } {
+    const skippedHeads: string[] = [];
+    const mapLineItem = (item: any): Record<string, unknown> | null => {
+      const headId = item.head != null && item.head !== '' && this.getActivePayrollHeadIdSet().has(Number(item.head))
+        ? Number(item.head)
+        : this.resolveActivePayrollHeadId(item);
+      if (headId == null) {
+        const label = item.head_name || item.categoryName || 'Unknown';
+        if (!skippedHeads.includes(label)) skippedHeads.push(label);
+        return null;
+      }
+      const { head, ...rest } = item;
+      return { ...rest, head_id: headId };
+    };
+    const dropNull = (rows: (Record<string, unknown> | null)[]) =>
+      rows.filter((row): row is Record<string, unknown> => row != null);
+    const earnings = dropNull(
+      ((group.get('earnings') as FormArray)?.value || []).map(mapLineItem)
+    );
+    const deductions = dropNull(
+      ((group.get('deductions') as FormArray)?.value || []).map(mapLineItem)
+    );
+    const benefits = dropNull(
+      ((group.get('benefits') as FormArray)?.value || []).map(mapLineItem)
+    );
+    return {
+      payload: {
+        ...group.value,
+        earnings,
+        deductions,
+        benefits,
+        grossMonthlyEarnings: this.grossMonthlyEarnings,
+        grossAnnualEarnings: this.grossAnnualEarnings,
+        employee: this.employeeId,
+        annualCTC: group.value.annualCTC || 0,
+        total_earning: this.calculateTotalEarnings(),
+        total_deduction: this.calculateTotalDeductions(),
+        total_benefit: this.calculateTotalBenefits(),
+        active: true,
+      },
+      skippedHeads,
+    };
+  }
+
+  private createEarningItemFromStructure(earning: any, isDropdown = false): FormGroup {
   console.log('Creating earning item from structure:', earning, 'isDropdown:', isDropdown);
+  const resolvedHeadId = this.resolveActivePayrollHeadId(earning);
   const hasHeads = this.salaryData.some((cat: { heads: any[]; }) =>
     cat.heads && cat.heads.some((h: any) => h.head_name === earning.head_name)
   );
@@ -1930,7 +2038,8 @@ createEarningItemFromStructure(earning: any, isDropdown = false): FormGroup {
   console.log(isDropdown, 'isDropdown');
   
   return this.fb.group({
-    head_id: [earning.head_id || earning.id],
+    head_id: [resolvedHeadId],
+    head: [resolvedHeadId ?? earning.head ?? null],
     head_name: [earning.head_name || ''],
     calculation_value: [this.safeNumber(earning.calculation_value)],
     calculation_type: [earning.calculation_type || 1],

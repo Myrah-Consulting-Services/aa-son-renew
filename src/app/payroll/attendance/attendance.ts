@@ -160,7 +160,7 @@ export class Attendance implements OnInit {
       // "start_date": this.start_date,
       // "end_date": this.end_date,
       "pagination": true,
-      "company_id": 1,
+      "company_id": this.api.getCompanyId(),
       "month": Number(this.selectedMonth?.split('-')[1]),
       "year": Number(this.selectedMonth?.split('-')[0]),
       "page_number":this.pageNumber,

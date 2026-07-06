@@ -29,7 +29,7 @@ export class Department implements OnInit {
     this.departmentForm = this.fb.group({
       department_name: ['', Validators.required],
       description: [''],
-      company: [1],
+      company: [this.api.getCompanyId()],
       active: [true]
     });
   }

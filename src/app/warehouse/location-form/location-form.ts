@@ -35,6 +35,7 @@ export class LocationForm implements OnInit {
       description: [''],
       capacity: [null, [Validators.min(0)]],
       is_active: [true],
+      company: [this.svc.getUserCompany(), Validators.required],
       id: [null]
     });
   }
@@ -62,7 +63,7 @@ export class LocationForm implements OnInit {
   }
 
   loadWarehouses() {
-    this.svc.get('/warehouses/list-warehouse/').subscribe((res: any) => {
+    this.svc.listWarehouses().subscribe((res: any) => {
       if(res.status == 200){
         this.warehouses = res.data;
       }
@@ -73,7 +74,10 @@ export class LocationForm implements OnInit {
     if (this.id) {
       this.svc.get('/warehouses/get-location/' + this.id).subscribe((res: any) => {
         if(res.status == 200){
-          this.form.patchValue(res.data);
+          this.form.patchValue({
+            ...res.data,
+            company: res.data.company ?? this.svc.getUserCompany(),
+          });
         }
       });
     }
@@ -81,9 +85,17 @@ export class LocationForm implements OnInit {
 
   save() {
     if (this.form.valid) {
-      this.form.value.id = this.id;
-      const formData = this.form.value;
+      const raw = this.form.value;
+      const formData: any = {
+        name: raw.name,
+        warehouse: raw.warehouse,
+        description: raw.description,
+        capacity: raw.capacity,
+        is_active: raw.is_active,
+        company: raw.company ?? this.svc.getUserCompany(),
+      };
       if (this.isEditMode && this.id) {
+        formData.id = this.id;
         this.svc.put('/warehouses/update-location/', formData).subscribe((res: any) => {
           if(res.status == 200){
             this.toast.show('Location Updated', 'Location has been updated successfully.', 'success');
@@ -91,8 +103,7 @@ export class LocationForm implements OnInit {
           }
         });
       } else {
-        const newLocation = { id: Date.now(), ...formData };
-        this.svc.post('/warehouses/create-location/', newLocation).subscribe((res: any) => {
+        this.svc.post('/warehouses/create-location/', formData).subscribe((res: any) => {
           if(res.status == 200){
             this.toast.show('Location Created', 'Location has been created successfully.', 'success');
             this.handleSuccess();

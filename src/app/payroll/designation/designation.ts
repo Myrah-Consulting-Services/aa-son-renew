@@ -30,7 +30,7 @@ export class Designation implements OnInit {
       designation_name: ['', Validators.required],
       description: [''],
       department: [1, Validators.required],
-      company: [1, Validators.required]
+      company: [this.api.getCompanyId(), Validators.required]
     });
   }
 
@@ -99,7 +99,7 @@ export class Designation implements OnInit {
   }
 
   private resetForm(): void {
-    this.designationForm.reset({ department: 1, company: 1, designation_name: '', description: '' });
+    this.designationForm.reset({ department: 1, company: this.api.getCompanyId(), designation_name: '', description: '' });
     this.isEditing = false;
     this.editingIndex = null;
   }

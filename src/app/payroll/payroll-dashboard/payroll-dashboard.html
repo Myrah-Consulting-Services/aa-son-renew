@@ -11,7 +11,7 @@
 
   <!-- Header Section -->
   <section class="header-section">
-    <div class="payroll-header">
+    <div class="payroll-header d-flex justify-content-between align-items-center w-100">
       <div class="d-flex align-items-center gap-2">
         <span class="payroll-logo">
           <i class="bi bi-wallet2"></i>
@@ -21,21 +21,32 @@
           <p class="header-subtitle">All your payroll essentials in one place</p>
         </div>
       </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="loadDashboard()" [disabled]="loading">
+        <i class="bi bi-arrow-clockwise me-1"></i>{{ loading ? 'Loading...' : 'Refresh' }}
+      </button>
     </div>
   </section>
 
   <!-- KPI Section -->
   <section class="kpi-section">
     <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Key Performance Indicators</h2>
-    <div class="stats-grid">
+
+    <div class="loading-state" *ngIf="loading">
+      <i class="bi bi-hourglass-split"></i>
+      <p>Loading payroll dashboard...</p>
+    </div>
+
+    <div class="stats-grid" *ngIf="!loading && kpis">
       <div class="stat-card">
         <div class="stat-icon">
           <i class="bi bi-people"></i>
         </div>
         <div class="stat-content">
           <h3>Total Employees</h3>
-          <p class="stat-number">156</p>
-          <p class="stat-change positive">+12 this month</p>
+          <p class="stat-number">{{ kpis.total_employees }}</p>
+          <p class="stat-change" [ngClass]="getChangeClass(kpis.total_employees_change_label)">
+            {{ kpis.total_employees_change_label }}
+          </p>
         </div>
       </div>
 
@@ -45,8 +56,11 @@
         </div>
         <div class="stat-content">
           <h3>Total Payroll</h3>
-          <p class="stat-number">{{ getcurrency() }} 2.4M</p>
-          <p class="stat-change positive">+8.5% vs last month</p>
+          <p class="stat-number">{{ kpis.total_payroll_formatted }}</p>
+          <p class="stat-change" [ngClass]="getChangeClass(kpis.total_payroll_change_label)">
+            {{ kpis.total_payroll_change_label }}
+            <span *ngIf="kpis.total_payroll_is_estimated" class="text-muted"> (estimated)</span>
+          </p>
         </div>
       </div>
 
@@ -56,8 +70,10 @@
         </div>
         <div class="stat-content">
           <h3>Attendance Rate</h3>
-          <p class="stat-number">94.2%</p>
-          <p class="stat-change positive">+2.1% vs last month</p>
+          <p class="stat-number">{{ kpis.attendance_rate }}%</p>
+          <p class="stat-change" [ngClass]="getChangeClass(kpis.attendance_rate_change_label)">
+            {{ kpis.attendance_rate_change_label }}
+          </p>
         </div>
       </div>
 
@@ -67,15 +83,60 @@
         </div>
         <div class="stat-content">
           <h3>Pending Approvals</h3>
-          <p class="stat-number">23</p>
-          <p class="stat-change negative">+5 new requests</p>
+          <p class="stat-number">{{ kpis.pending_approvals }}</p>
+          <p class="stat-change" [ngClass]="getChangeClass(kpis.pending_approvals_change_label)">
+            {{ kpis.pending_approvals_change_label }}
+          </p>
+          <p class="stat-subtext" *ngIf="kpis.pending_approvals_breakdown">
+            Leave: {{ kpis.pending_approvals_breakdown.leave }} · Loans: {{ kpis.pending_approvals_breakdown.loans }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave Request KPIs (current FY) -->
+    <div class="stats-grid leave-request-kpis" *ngIf="!loading && leaveRequestStats">
+      <div class="stat-card">
+        <div class="stat-icon leave-pending-icon"><i class="bi bi-clock"></i></div>
+        <div class="stat-content">
+          <h3>Pending Leaves</h3>
+          <p class="stat-number">{{ leaveRequestStats.pending }}</p>
+          <p class="stat-subtext">Current financial year</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon leave-approved-icon"><i class="bi bi-check-circle"></i></div>
+        <div class="stat-content">
+          <h3>Approved Leaves</h3>
+          <p class="stat-number">{{ leaveRequestStats.approved }}</p>
+          <p class="stat-subtext" *ngIf="kpis?.leave_requests">
+            All time: {{ kpis.leave_requests.all_time_approved }}
+          </p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon leave-rejected-icon"><i class="bi bi-x-circle"></i></div>
+        <div class="stat-content">
+          <h3>Rejected Leaves</h3>
+          <p class="stat-number">{{ leaveRequestStats.rejected }}</p>
+          <p class="stat-subtext">Current financial year</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon leave-total-icon"><i class="bi bi-calendar-check"></i></div>
+        <div class="stat-content">
+          <h3>Total Leave Requests</h3>
+          <p class="stat-number">{{ leaveRequestStats.total }}</p>
+          <p class="stat-subtext" *ngIf="kpis?.leave_requests">
+            All time: {{ kpis.leave_requests.all_time_total }}
+          </p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Main Content Section -->
-  <section class="main-content-section">
+  <section class="main-content-section" *ngIf="!loading">
 
     <!-- Charts Section -->
     <div class="charts-section">
@@ -87,15 +148,18 @@
             <span class="chart-subtitle">Last 6 months</span>
           </div>
           <div class="chart-body">
-            <div class="bar-chart">
+            <div class="bar-chart" *ngIf="payrollTrend.length; else noPayrollTrend">
               <div class="bar-item" *ngFor="let item of payrollTrend">
                 <div class="bar-wrapper">
                   <div class="bar" [style.height.%]="getBarHeight(item.amount, maxPayrollAmount)"></div>
                 </div>
                 <span class="bar-label">{{ item.month }}</span>
-                <span class="bar-value">{{ getcurrency() }} {{ item.amount }}M</span>
+                <span class="bar-value">{{ item.amount_formatted || formatCurrency(item.amount) }}</span>
               </div>
             </div>
+            <ng-template #noPayrollTrend>
+              <div class="empty-chart">No payroll trend data available.</div>
+            </ng-template>
           </div>
         </div>
 
@@ -106,7 +170,7 @@
             <span class="chart-subtitle">Last 7 days</span>
           </div>
           <div class="chart-body">
-            <div class="bar-chart">
+            <div class="bar-chart" *ngIf="attendanceData.length; else noAttendance">
               <div class="bar-item" *ngFor="let item of attendanceData">
                 <div class="bar-wrapper">
                   <div class="bar attendance-bar" [style.height.%]="getBarHeight(item.rate, maxAttendanceRate)"></div>
@@ -115,14 +179,27 @@
                 <span class="bar-value">{{ item.rate }}%</span>
               </div>
             </div>
+            <ng-template #noAttendance>
+              <div class="empty-chart">No attendance data available.</div>
+            </ng-template>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Leave Balance Section -->
-    <div class="leave-balance-section">
+    <div class="leave-balance-section" *ngIf="leaveSummary.length">
       <h2 class="section-title"><i class="bi bi-calendar-event me-2"></i>Leave Balance Summary</h2>
+      <p class="section-hint" *ngIf="leaveRequestStats?.period_start">
+        Financial year {{ leaveRequestStats.period_start }} to {{ leaveRequestStats.period_end }} ·
+        Paid approved days by category
+      </p>
+      <div class="leave-category-stats" *ngIf="leaveCategoryStats.length">
+        <div class="leave-category-chip" *ngFor="let cat of leaveCategoryStats">
+          <span class="chip-name">{{ cat.name }}</span>
+          <span class="chip-meta">{{ cat.request_count }} requests · {{ cat.days }} days</span>
+        </div>
+      </div>
       <div class="leave-grid">
         <div class="leave-card" *ngFor="let leave of leaveSummary">
           <div class="leave-header">
@@ -130,10 +207,14 @@
             <span class="leave-count">{{ leave.used }}/{{ leave.total }}</span>
           </div>
           <div class="progress-wrapper">
-            <div class="progress-bar-custom" [style.width.%]="(leave.used / leave.total) * 100" [style.background-color]="leave.color"></div>
+            <div
+              class="progress-bar-custom"
+              [style.width.%]="getLeaveUsedPercent(leave)"
+              [style.background-color]="leave.color">
+            </div>
           </div>
           <div class="leave-footer">
-            <span class="leave-remaining">{{ leave.total - leave.used }} days remaining</span>
+            <span class="leave-remaining">{{ leave.label || (leave.remaining + ' days remaining') }}</span>
           </div>
         </div>
       </div>
@@ -149,7 +230,7 @@
             <a routerLink="/payroll/par-run" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
           </div>
           <div class="table-body">
-            <table class="compact-table">
+            <table class="compact-table" *ngIf="recentPayRuns.length; else noPayRuns">
               <thead>
                 <tr>
                   <th>Pay Run ID</th>
@@ -169,6 +250,9 @@
                 </tr>
               </tbody>
             </table>
+            <ng-template #noPayRuns>
+              <div class="empty-chart">No recent pay runs found.</div>
+            </ng-template>
           </div>
         </div>
 
@@ -179,7 +263,7 @@
             <a routerLink="/payroll/pay-schedule" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
           </div>
           <div class="table-body">
-            <table class="compact-table">
+            <table class="compact-table" *ngIf="upcomingSchedules.length; else noSchedules">
               <thead>
                 <tr>
                   <th>Schedule</th>
@@ -195,6 +279,9 @@
                 </tr>
               </tbody>
             </table>
+            <ng-template #noSchedules>
+              <div class="empty-chart">No upcoming schedules found.</div>
+            </ng-template>
           </div>
         </div>
       </div>
@@ -209,18 +296,20 @@
             <h3 class="chart-title"><i class="bi bi-building me-2"></i>Department Breakdown</h3>
           </div>
           <div class="chart-body">
-            <div class="department-list">
+            <div class="department-list" *ngIf="departmentBreakdown.length; else noDepartments">
               <div class="department-item" *ngFor="let dept of departmentBreakdown">
                 <div class="dept-info">
                   <span class="dept-name">{{ dept.dept }}</span>
                   <span class="dept-employees">{{ dept.employees }} employees</span>
                 </div>
-                <div class="dept-amount">{{ dept.payroll }}</div>
                 <div class="progress-wrapper">
                   <div class="progress-bar-custom" [style.width.%]="dept.percentage" style="background-color: #41299b;"></div>
                 </div>
               </div>
             </div>
+            <ng-template #noDepartments>
+              <div class="empty-chart">No department data available.</div>
+            </ng-template>
           </div>
         </div>
 
@@ -231,7 +320,7 @@
             <a routerLink="/payroll/loan-management" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
           </div>
           <div class="table-body">
-            <table class="compact-table">
+            <table class="compact-table" *ngIf="activeLoans.length; else noLoans">
               <thead>
                 <tr>
                   <th>Employee</th>
@@ -243,12 +332,15 @@
               <tbody>
                 <tr *ngFor="let loan of activeLoans">
                   <td>{{ loan.employee }}</td>
-                  <td class="amount-cell">{{ loan.amount }}</td>
-                  <td class="amount-cell">{{ loan.remaining }}</td>
+                  <td class="amount-cell">{{ formatCurrency(loan.amount) }}</td>
+                  <td class="amount-cell">{{ formatCurrency(loan.remaining) }}</td>
                   <td>{{ loan.installments }}</td>
                 </tr>
               </tbody>
             </table>
+            <ng-template #noLoans>
+              <div class="empty-chart">No active loans found.</div>
+            </ng-template>
           </div>
         </div>
       </div>

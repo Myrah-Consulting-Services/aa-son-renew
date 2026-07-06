@@ -150,7 +150,7 @@ export class WarehouseDashboard implements OnInit {
     this.dashboardLoading = true;
 
     const payload = {
-      company: this.svc.getCompanyId() ?? 1,
+      company: this.svc.getCompanyId(),
       warehouse: null,
       start_date: this.filterStartDate,
       end_date: this.filterEndDate
@@ -291,7 +291,7 @@ export class WarehouseDashboard implements OnInit {
   }
 
   loadWarehouses() {
-    this.svc.get('/warehouses/list-warehouse/', { company: 1 }).subscribe((res: any) => {
+    this.svc.listWarehouses().subscribe((res: any) => {
       if(res.status == 200){
         this.warehouses = res.data;
       }
@@ -307,7 +307,7 @@ export class WarehouseDashboard implements OnInit {
   }
 
   loadStock() {
-    this.svc.post('/items/list-item/s=/', { company: 1, warehouse: 1 }).subscribe((res: any) => {
+    this.svc.listItems('', { warehouse: 1 }).subscribe((res: any) => {
       if (res.status == 200) {
         this.stock = res.data;
         // processFlow[2] count is owned by loadDashboardData — do not overwrite here
@@ -316,18 +316,18 @@ export class WarehouseDashboard implements OnInit {
   }
 
   loadOutward() {
-    this.svc.get('/outward/list-outward/s=/', { company: 1 }).subscribe((res: any) => {
+    this.svc.get('/outward/list-outward/s=/', { company: this.svc.getCompanyId() }).subscribe((res: any) => {
       this.outwardTransactions = res.data;
       // processFlow[5] count is owned by loadDashboardData — do not overwrite here
     });
   }
 
   loadDamages() {
-    this.svc.get('/damages/list-damage/s=/', { company: 1 }).subscribe((res:any) => this.damages = res.data);
+    this.svc.get('/damages/list-damage/s=/', { company: this.svc.getCompanyId() }).subscribe((res:any) => this.damages = res.data);
   }
 
   loadRequisitions() {
-    this.svc.get('/requisitions/list-requisition/', { company: 1 }).subscribe((res:any) => this.requisitions = res.data);
+    this.svc.get('/requisitions/list-requisition/', { company: this.svc.getCompanyId() }).subscribe((res:any) => this.requisitions = res.data);
   }
 
   getTotalStockValue(): number {

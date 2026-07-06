@@ -48,12 +48,11 @@ export class ItemMaster {
     this.currentPage = page;
     
     const params = {
-      company:  this.api.getUserCompany(),
       page: this.currentPage,
       page_size: this.pageSize
     };
 
-    this.api.post('/items/list-item/s=/', params).subscribe({
+    this.api.listItems('', params).subscribe({
       next: (response: any) => {
         if (response && response.status === 200) {
           this.items = response.data || [];
@@ -86,12 +85,11 @@ export class ItemMaster {
     this.loading = true;
     
     const params = {
-      company:  this.api.getUserCompany(),
       page: this.currentPage,
       page_size: this.pageSize
     };
 
-    this.api.post('/items/list-item/s='+this.searchText+'/', params).subscribe({
+    this.api.listItems(this.searchText, params).subscribe({
       next: (response: any) => {
         if (response && response.status === 200) {
           this.items = response.data || [];

@@ -120,7 +120,7 @@ export class RequisitionForm implements OnInit, OnDestroy {
     // private inventoryService: InventoryService
   ) {
     this.requisitionForm = this.fb.group({
-      company: [1, Validators.required],
+      company: [this.api.getCompanyId(), Validators.required],
       invoiceNo: ['', Validators.required],
       date: ['', Validators.required],
       inwardType: [4, Validators.required],
@@ -274,7 +274,7 @@ export class RequisitionForm implements OnInit, OnDestroy {
     }
   }
   getWorkers(): void {
-    this.api.post('/employee/list_employees/',{company:1}).subscribe((res: any) => {
+    this.api.post('/employee/list_employees/',{company: this.api.getCompanyId()}).subscribe((res: any) => {
       if (res.status === 200) {
         this.workers = res.data;
       }
@@ -282,7 +282,7 @@ export class RequisitionForm implements OnInit, OnDestroy {
   }
 
   loadWarehouses(): void {
-    this.api.get('/warehouses/list-warehouse/').subscribe((res: any) => {
+    this.api.listWarehouses().subscribe((res: any) => {
       if (res.status === 200) {
         this.warehouses = (res.data || []).map((w: any) => ({ id: w.id, name: w.name }));
       }
@@ -301,10 +301,7 @@ export class RequisitionForm implements OnInit, OnDestroy {
         const term = (searchTerm || '').trim();
         this.searchingItems = true;
         // Empty term → fetch all items (show on focus after clearing)
-        return this.api.post('/items/list-item/s=' + (term ? encodeURIComponent(term) : '') + '/', {
-          company: this.api.getCompanyId() ?? 1,
-          warehouse: 1
-        });
+        return this.api.listItems(term, { warehouse: 1 });
       }),
       takeUntil(this.destroy$)
     ).subscribe({
@@ -341,10 +338,7 @@ export class RequisitionForm implements OnInit, OnDestroy {
     }
     // No results yet — load all items so dropdown is populated on first focus
     this.searchingItems = true;
-    this.api.post('/items/list-item/s=/', {
-      company: this.api.getCompanyId() ?? 1,
-      warehouse: 1
-    }).subscribe({
+    this.api.listItems('', { warehouse: 1 }).subscribe({
       next: (res: any) => {
         this.searchingItems = false;
         if (res?.status === 200) {
@@ -463,6 +457,7 @@ export class RequisitionForm implements OnInit, OnDestroy {
       date: raw.date,
       supplierId: raw.supplierId ?? 1,
       warehouseId: raw.warehouseId,
+      to_warehouse: raw.to_warehouse,
       remarks: raw.remarks || '',
       pick_start_time: raw.pick_start_time,
       pick_completed_time: raw.pick_completed_time || '',

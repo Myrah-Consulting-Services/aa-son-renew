@@ -198,7 +198,12 @@
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Authorized By</label>
-                  <input type="text" class="form-control form-control-sm" formControlName="authorized_by" placeholder="Name">
+                  <select class="form-select form-select-sm" formControlName="authorized_by_id">
+                    <option value="">Select employee</option>
+                    <option *ngFor="let emp of employees" [value]="emp.id">
+                      {{ emp.first_name }} {{ emp.last_name }}
+                    </option>
+                  </select>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Authorization Date</label>

@@ -89,7 +89,7 @@ export class LeaveManagement implements OnInit {
   ) {
     this.leaveForm = this.fb.group({
       employee: [number, Validators.required],
-      company: [1, Validators.required],
+      company: [this.apiService.getCompanyId(), Validators.required],
       attendance_type: ['', Validators.required],
       start_date: ['', Validators.required],
       end_date: ['', Validators.required],
@@ -129,14 +129,23 @@ export class LeaveManagement implements OnInit {
     })
   }
   initializeData() {
-    this.apiService.get('/attendance/list-leave-requests/?'+"page="+this.currentPage+1+'&'+"limit="+this.pageSize).subscribe((res: any) => {      
+    const companyId = this.apiService.getCompanyId();
+    this.apiService.get(
+      `/attendance/list-leave-requests/?page=${this.currentPage + 1}&limit=${this.pageSize}&company_id=${companyId}`
+    ).subscribe((res: any) => {      
       if(res.status == 200){
         this.filteredLeaveRequests = res.data;
         this.pagination_data=res.pagination_data    
         this.totalData = this.pagination_data.total_data;
 
-
-        this.calculateStatistics();
+        if (res.stats) {
+          this.totalPending = res.stats.pending ?? 0;
+          this.totalApproved = res.stats.approved ?? 0;
+          this.totalRejected = res.stats.rejected ?? 0;
+          this.totalRequests = res.stats.total ?? 0;
+        } else {
+          this.calculateStatistics();
+        }
 
       }
       else{
@@ -216,33 +225,54 @@ export class LeaveManagement implements OnInit {
     this.notifications = this.notifications.filter(n => n.id !== id);
   }
 
+  private buildLeavePayload(): Record<string, unknown> {
+    const formValue = this.leaveForm.getRawValue();
+    return {
+      employee: Number(formValue.employee),
+      company: this.apiService.getCompanyId() ?? Number(formValue.company),
+      attendance_type: Number(formValue.attendance_type),
+      start_date: formValue.start_date,
+      end_date: formValue.end_date,
+      total_days: Number(formValue.total_days) || 0,
+      reason: formValue.reason || '',
+      is_lop: !!formValue.is_lop,
+      status: Number(formValue.status) || 1,
+      action_by: formValue.action_by ? Number(formValue.action_by) : null,
+      approval_remarks: formValue.approval_remarks || '',
+      id: formValue.id || null,
+    };
+  }
+
   addLeaveRequest(){
-    console.log(this.leaveForm.value);
+    const payload = this.buildLeavePayload();
+    console.log(payload);
     if(this.leaveForm.value.id){
-      this.apiService.put('/attendance/put-leave-requests/'+this.leaveForm.value.id+"/",this.leaveForm.value).subscribe((response: any) => {
+      this.apiService.put('/attendance/put-leave-requests/'+this.leaveForm.value.id+"/", payload).subscribe((response: any) => {
         console.log(response);
         if(response.status == 200){
           this.modalRef.dismiss()
           this.addNotification('✅ Leave request updated successfully', 'success');
           this.initializeData();
-          this.calculateStatistics();
         }else{
           this.addNotification(response.error, 'error');
         }
       })
     }
     else{
-    this.apiService.post('/attendance/create-leave-requests/',this.leaveForm.value).subscribe((response: any) => {
-      console.log(response);
-      if(response.status == 200){
-        this.initializeData();
-        this.calculateStatistics();
-        this.activeModal.dismiss()
-        this.addNotification('✅ Leave request added successfully', 'success');
-      }
-      else{
-        this.addNotification(response.error, 'error');
-      }
+    this.apiService.post('/attendance/create-leave-requests/', payload).subscribe({
+      next: (response: any) => {
+        if (response.status == 200) {
+          this.initializeData();
+          this.activeModal.dismiss();
+          this.addNotification('✅ Leave request added successfully', 'success');
+        } else {
+          this.addNotification(response.error || 'Failed to create leave request', 'error');
+        }
+      },
+      error: (err) => {
+        const message = err?.error?.error || err?.message || 'Failed to create leave request';
+        this.addNotification(message, 'error');
+      },
     })
     }
   }
@@ -274,15 +304,24 @@ export class LeaveManagement implements OnInit {
   approveLeave(leave: any) {
     if(confirm("Are you sure you want to approve this leave?")){
     this.apiService.post('/attendance/change-leave-status/'+leave+"/",{
-      status:this.leaveForm.value.status,
-      action_by:this.leaveForm.value.action_by,
-      approval_remarks:this.leaveForm.value.approval_remarks}
-    ).subscribe((response: any) => {
-        if (response.status == 200) {
-          this.initializeData(); // Reload data
-          this.calculateStatistics();
-          this.addNotification('✅ Leave request approved successfully', 'success');
-        }
+      status_id: 2,
+      approved_by: this.leaveForm.value.action_by ? Number(this.leaveForm.value.action_by) : null,
+      remarks: this.leaveForm.value.approval_remarks || ''
+    }
+    ).subscribe({
+        next: (response: any) => {
+          if (response.status == 200) {
+            this.initializeData();
+            this.calculateStatistics();
+            this.addNotification('✅ Leave request approved successfully', 'success');
+          } else {
+            this.addNotification(response.error || 'Failed to approve leave request', 'error');
+          }
+        },
+        error: (err) => {
+          const message = err?.error?.error || err?.message || 'Failed to approve leave request';
+          this.addNotification(message, 'error');
+        },
       })
     }      
   }
@@ -344,7 +383,6 @@ export class LeaveManagement implements OnInit {
       this.currentPage = event.pageIndex;
       this.pageSize = event.pageSize;
       this.initializeData();
-      this.calculateStatistics();
   }
 
 
@@ -357,7 +395,6 @@ export class LeaveManagement implements OnInit {
 
   refreshData() {
     this.initializeData();
-    this.calculateStatistics();
     this.addNotification('Data refreshed successfully', 'success');
   }
 

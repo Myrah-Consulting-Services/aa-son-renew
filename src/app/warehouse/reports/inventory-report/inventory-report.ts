@@ -43,7 +43,7 @@ export class InventoryReport implements OnInit {
         this.filteredStock = [...res.data];
       }
     });
-    this.svc.get('/warehouses/list-warehouse/').subscribe((res: any) => {
+    this.svc.listWarehouses().subscribe((res: any) => {
       if(res.status == 200){
         this.warehouses = res.data;
       }

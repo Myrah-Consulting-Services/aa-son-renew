@@ -56,7 +56,7 @@ export class PayrunDrawer implements OnChanges {
   //   });
   // }
   getSalaryDetails(): void {
-    this.api.get('employee/distributed_payroll_list/').subscribe((response: any) => {
+    this.api.get('/employee/distributed_payroll_list/').subscribe((response: any) => {
       if(response.status==200){
       this.salaryDetails = response.data
       this.earnings = this.salaryDetails.earnings; 

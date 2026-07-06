@@ -43,10 +43,9 @@ export class ItemList implements OnInit {
   }
   
   loadItems() {
-    this.api.post('/items/list-item/s=/', {
-      company:   this.api.getUserCompany(),
-      type:      1,
-      page:      1,
+    this.api.listItems('', {
+      type: 1,
+      page: 1,
       page_size: 9
     }).subscribe({
       next: (response: any) => {

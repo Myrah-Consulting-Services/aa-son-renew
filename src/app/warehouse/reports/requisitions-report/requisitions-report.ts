@@ -41,7 +41,7 @@ export class RequisitionsReport implements OnInit {
   loadData() {
     this.loading = true;
     this.svc.post('/invoice/notifications/',{ 
-      "company": 1,
+      "company": this.svc.getCompanyId(),
       "start_date": "2024-01-01",
       "end_date": "2025-12-31",
       "inward_type": 4,
@@ -55,10 +55,7 @@ export class RequisitionsReport implements OnInit {
       this.loading = false;
     });
     
-    this.svc.post('/items/list-item/s=/',{ 
-      "company": 1,
-      "warehouse": 1
-    }).subscribe((res: any) => {
+    this.svc.listItems('', { warehouse: 1 }).subscribe((res: any) => {
       if(res.status == 200){
         this.items = res.data;
       }

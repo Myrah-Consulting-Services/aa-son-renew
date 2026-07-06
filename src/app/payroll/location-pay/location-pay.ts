@@ -52,7 +52,7 @@ export class LocationPay implements OnInit, OnDestroy {
   constructor(private fb: FormBuilder, private api: Api) {
     this.locationForm = this.fb.group({
       Location_name: ['', Validators.required],
-      company: [1, Validators.required],
+      company: [this.api.getCompanyId(), Validators.required],
       id: [],
       branch: [''],
       department: [''],
@@ -130,7 +130,7 @@ export class LocationPay implements OnInit, OnDestroy {
 
   private resetForm(): void {
     this.locationForm.reset({ 
-      company: 1, 
+      company: this.api.getCompanyId(), 
       Location_name: '',
       branch: '',
       department: '',

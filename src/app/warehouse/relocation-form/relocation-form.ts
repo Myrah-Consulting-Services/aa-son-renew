@@ -38,7 +38,7 @@ export class RelocationForm implements OnInit {
       date: ['', Validators.required],
       reason: [''],
       items: this.fb.array([]),
-      company:[1],
+      company:[this.svc.getCompanyId()],
       created_by_user:[]
     });
   }
@@ -121,7 +121,7 @@ export class RelocationForm implements OnInit {
     return loc ? Number(loc.id ?? loc.location_id) : null;
   }
     getwarehouse(){
-      this.svc.get('/warehouses/list-warehouse/').subscribe((res: any) => {
+      this.svc.listWarehouses().subscribe((res: any) => {
         if(res.status == 200){
           this.warehouses = res.data;
         }
@@ -136,7 +136,7 @@ getlocation(){
   });
 }
   laoditems(){
-    this.svc.post('/items/list-item/s=/', { company: 1, warehouse: 1 }).subscribe((res: any) => {
+    this.svc.listItems('', { warehouse: 1 }).subscribe((res: any) => {
       if (res.status == 200) {
         this.items = res.data;
         this.tryLoadRelocationForEdit();
@@ -346,7 +346,7 @@ getlocation(){
 
   // Load items from API
   loadItems(searchTerm: string = ''): void {
-    this.svc.post('/items/list-item/s=' + encodeURIComponent(searchTerm) + '/', { company: 1, warehouse: 1 }).subscribe({
+    this.svc.listItems(searchTerm, { warehouse: 1 }).subscribe({
       next: (res: any) => {
         if (res.status == 200 && Array.isArray(res.data)) {
           this.availableItems = res.data;

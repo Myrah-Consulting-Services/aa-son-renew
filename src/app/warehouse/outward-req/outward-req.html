@@ -57,6 +57,13 @@
                 <label class="form-label fw-bold small">Vehicle No</label>
                 <input type="text" class="form-control form-control-sm" formControlName="vehicleNo">
               </div>
+              <div class="col-md-4" *ngIf="outwardType === 'REQ' && isInternalTransfer">
+                <label class="form-label fw-bold small">Default To Location</label>
+                <select class="form-select form-select-sm" formControlName="to_location">
+                  <option [ngValue]="null">Select showroom location</option>
+                  <option [ngValue]="loc.id" *ngFor="let loc of toLocations">{{ loc.name }}</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -75,6 +82,8 @@
                     <th>Item Name</th>
                     <th>Item Code</th>
                     <th>Barcode</th>
+                    <th *ngIf="outwardType === 'REQ'">From Location</th>
+                    <th *ngIf="outwardType === 'REQ' && isInternalTransfer">To Location</th>
                     <th>Quantity</th>
                     <th>Unit</th>
                     <th>Action</th>
@@ -90,6 +99,18 @@
                     </td>
                     <td>
                       <input type="text" class="form-control form-control-sm" formControlName="barcode" placeholder="Barcode">
+                    </td>
+                    <td *ngIf="outwardType === 'REQ'">
+                      <select class="form-select form-select-sm" formControlName="from_location">
+                        <option [ngValue]="null">Select</option>
+                        <option [ngValue]="loc.id" *ngFor="let loc of fromLocations">{{ loc.name }}</option>
+                      </select>
+                    </td>
+                    <td *ngIf="outwardType === 'REQ' && isInternalTransfer">
+                      <select class="form-select form-select-sm" formControlName="to_location">
+                        <option [ngValue]="null">Select</option>
+                        <option [ngValue]="loc.id" *ngFor="let loc of toLocations">{{ loc.name }}</option>
+                      </select>
                     </td>
                     <td>
                       <input type="number" class="form-control form-control-sm" formControlName="quantity" min="1">

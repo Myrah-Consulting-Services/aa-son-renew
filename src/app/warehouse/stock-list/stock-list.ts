@@ -39,12 +39,11 @@ export class StockList implements OnInit {
     this.loading = true;
     this.currentPage = page;
     const payload: any = {
-      company: 1,
       warehouse: this.selectedWarehouseId,
       page: this.currentPage,
       page_size: this.pageSize,
     };
-    this.svc.post('/items/list-item/s=/', payload).subscribe((res: any) => {
+    this.svc.listItems('', payload).subscribe((res: any) => {
       this.loading = false;
       if(res.status == 200){
         this.total_count = res.total_count;

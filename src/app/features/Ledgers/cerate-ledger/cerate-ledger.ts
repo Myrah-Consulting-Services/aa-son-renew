@@ -56,7 +56,7 @@ underledger:any[]=[]
   }
 
   getunderledger(){
-    this.api.post('/ledger/ledger-under/',{company:1}).subscribe({
+    this.api.post('/ledger/ledger-under/',{company: this.api.getCompanyId()}).subscribe({
       next: (response: any) => {
         if(response.status === 200){
           this.underledger=response.data;

@@ -260,6 +260,30 @@ $warm-dark: #1f2937;
         color: #dc2626;
       }
     }
+
+    .stat-subtext {
+      font-size: 0.7rem;
+      color: $warm-gray;
+      margin: 0.25rem 0 0;
+    }
+  }
+}
+
+.loading-state,
+.empty-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 120px;
+  color: $warm-gray;
+  font-size: 0.875rem;
+  text-align: center;
+
+  i {
+    font-size: 1.5rem;
+    color: $warm-orange;
   }
 }
 
@@ -429,6 +453,15 @@ $warm-dark: #1f2937;
   font-weight: 600;
 }
 
+.leave-request-kpis {
+  margin-top: 0.75rem;
+
+  .leave-pending-icon { color: #f59e0b; }
+  .leave-approved-icon { color: #059669; }
+  .leave-rejected-icon { color: #dc2626; }
+  .leave-total-icon { color: #41299b; }
+}
+
 // Leave Balance Section
 .leave-balance-section {
   margin-bottom: 1.5rem;
@@ -440,6 +473,40 @@ $warm-dark: #1f2937;
     margin: 0 0 0.75rem 0;
     display: flex;
     align-items: center;
+  }
+
+  .section-hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: -0.5rem 0 0.75rem 0;
+  }
+}
+
+.leave-category-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.leave-category-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background: #f8fafc;
+
+  .chip-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $warm-dark;
+  }
+
+  .chip-meta {
+    font-size: 0.7rem;
+    color: #6b7280;
   }
 }
 

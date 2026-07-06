@@ -7,7 +7,8 @@ import { Auth } from './auth';
   providedIn: 'root'
 })
 export class Api {
-  private baseUrl = 'https://aasonsapi.esarwa.com';
+  // private baseUrl = 'https://aasonsapi.esarwa.com';
+  private baseUrl = 'http://192.168.1.21:8000';
 
   constructor(
     private http: HttpClient
@@ -27,12 +28,48 @@ export class Api {
     return headers;
   }
   getUserCompany(){
+    return this.getCompanyId();
+  }
+
+  getCompanyId(){
     const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      return user[0]?.company[0]?.company;
+    if (!userData) {
+      return null;
+    }
+    const user = JSON.parse(userData);
+    const row = Array.isArray(user) ? user[0] : user;
+    if (!row) {
+      return null;
+    }
+    if (row.active_company_id != null && row.active_company_id !== '') {
+      return row.active_company_id;
+    }
+    if (row.company?.[0]?.company != null && row.company[0].company !== '') {
+      return row.company[0].company;
+    }
+    if (row.companies?.[0]?.id != null && row.companies[0].id !== '') {
+      return row.companies[0].id;
     }
     return null;
+  }
+
+  /** Merge tenant company into query/body params for multi-company APIs. */
+  withCompanyParams(params: Record<string, any> = {}): Record<string, any> {
+    const companyId = this.getCompanyId();
+    if (companyId != null && companyId !== '') {
+      return { ...params, company: companyId };
+    }
+    return params;
+  }
+
+  listItems(search: string = '', params: Record<string, any> = {}): Observable<any> {
+    const term = (search || '').trim();
+    const path = `/items/list-item/s=${term ? encodeURIComponent(term) : ''}/`;
+    return this.post(path, this.withCompanyParams(params));
+  }
+
+  listWarehouses(params: Record<string, any> = {}): Observable<any> {
+    return this.get('/warehouses/list-warehouse/', this.withCompanyParams(params));
   }
 
   get<T>(path: string, params: any = {}): Observable<T> {
@@ -59,6 +96,35 @@ export class Api {
     const headers = this.getHeaders();
     return this.http.post<T>(`${this.baseUrl}${path}`, body, { headers });
   }
+  postBlob(path: string, body: any = {}): Observable<Blob> {
+    const headers = this.getHeaders();
+    return this.http.post(`${this.baseUrl}${path}`, body, {
+      headers,
+      responseType: 'blob',
+    });
+  }
+  downloadFile(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+  handleBlobExport(blob: Blob, filename: string, onError: (message: string) => void): void {
+    if (blob.type.includes('json') || blob.type.includes('text')) {
+      blob.text().then((text) => {
+        try {
+          const err = JSON.parse(text);
+          onError(err.error || 'Export failed');
+        } catch {
+          onError('Export failed');
+        }
+      });
+      return;
+    }
+    this.downloadFile(blob, filename);
+  }
   post2<T>(path: string, body: any = {}): Observable<T> {
     const headers = this.fileHeader2();
     return this.http.post<T>(`${this.baseUrl}${path}`, body );
@@ -75,14 +141,7 @@ export class Api {
     const headers = this.getHeaders();
     return this.http.delete<T>(`${this.baseUrl}${path}`, { headers });
   }
-  getCompanyId(){
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      return user[0]?.company[0]?.company;
-    }
-    return null;
-  }
+
   uplaoadImg(url: string,data: any){
     return this.http.post(this.baseUrl + url, data,this.fileHeader2())
   }

@@ -19,6 +19,8 @@ export class OutwardReq implements OnInit {
   units: any[] = [];
   loadingbayAreas: any;
   hide: any;
+  fromLocations: any[] = [];
+  toLocations: any[] = [];
 
 
 
@@ -28,7 +30,7 @@ export class OutwardReq implements OnInit {
     this.outwardForm = this.fb.group({
       // approved_by: [null],
       // assignedWorker: [null],
-      company: [1],
+      company: [this.api.getCompanyId()],
       date: [''],
       id: [],
       invoiceNo: [null,Validators.required],
@@ -60,7 +62,8 @@ export class OutwardReq implements OnInit {
       updated_at: [null],
       vehicleNo: [null],
       warehouseId: [],
-      warehouseIdName: ['']
+      warehouseIdName: [''],
+      to_location: [null],
     });
 
   }
@@ -76,14 +79,67 @@ export class OutwardReq implements OnInit {
     this.loadbay();
 
     // Disable all except the allowed fields
-    const allowed = ['date', 'invoiceNo', 'loadingBayArea', 'vehicleNo', 'remarks'];
+    const allowed = ['date', 'invoiceNo', 'loadingBayArea', 'vehicleNo', 'remarks', 'to_location'];
     Object.keys(this.outwardForm.controls).forEach(key => {
       if (!allowed.includes(key)) {
         this.outwardForm.get(key)?.disable();
       }
     });
+  }
 
+  get isInternalTransfer(): boolean {
+    const fromWh = this.outwardForm.get('warehouseId')?.value;
+    const toWh = this.outwardForm.get('to_warehouse')?.value;
+    return !!fromWh && !!toWh && Number(fromWh) !== Number(toWh);
+  }
 
+  loadStockLocations(warehouseId: number | null, target: 'from' | 'to'): void {
+    if (!warehouseId) {
+      if (target === 'from') {
+        this.fromLocations = [];
+      } else {
+        this.toLocations = [];
+      }
+      return;
+    }
+    this.api.post('/warehouses/list-location/', {
+      warehouse: warehouseId,
+      company: this.outwardForm.get('company')?.value || this.api.getUserCompany(),
+    }).subscribe((res: any) => {
+      const list = res?.data || [];
+      if (target === 'from') {
+        this.fromLocations = list;
+      } else {
+        this.toLocations = list;
+      }
+    });
+  }
+
+  private enableItemLocationFields(): void {
+    if (this.outwardType !== 'REQ') {
+      return;
+    }
+    const itemsArray = this.outwardForm.get('items') as FormArray;
+    itemsArray.controls.forEach((itemGroup) => {
+      const group = itemGroup as FormGroup;
+      group.get('from_location')?.enable({ emitEvent: false });
+      if (this.isInternalTransfer) {
+        group.get('to_location')?.enable({ emitEvent: false });
+      }
+    });
+  }
+
+  private buildItemGroup(item: any = {}): FormGroup {
+    return this.fb.group({
+      itemId: [item.itemId || '', Validators.required],
+      itemName: [item.item_name || item.itemName || '', Validators.required],
+      item_code: [item.item_code || item.item_info?.item_code || ''],
+      barcode: [item.barcode || item.item_info?.barcode1 || ''],
+      quantity: [item.quantity || item.qty || 1],
+      unit: [item.unit || (item.units && item.units[0]?.id) || 1],
+      from_location: [item.from_location || item.locationId || null, Validators.required],
+      to_location: [item.to_location || item.toLocationId || null],
+    });
   }
   loadbay() {
     this.api.get('/invoice/list-placement-category/').subscribe((res: any) => {
@@ -170,14 +226,7 @@ export class OutwardReq implements OnInit {
 
         if (Array.isArray(items)) {
           items.forEach((item: any, idx: number) => {
-            itemsArray.push(this.fb.group({
-              itemId: [item.itemId || '', Validators.required],
-              itemName: [item.item_name || '', Validators.required],
-              item_code: [item.item_code || item.item_info?.item_code || ''],
-              barcode: [item.barcode || item.item_info?.barcode1 || ''],
-              quantity: [item.quantity || 1],
-              unit: [item.unit || (item.units && item.units[0]?.id) || 1]
-            }));
+            itemsArray.push(this.buildItemGroup(item));
             this.itemUnits[idx] = item.units || item.item_info?.units || [];
           });
         }
@@ -187,6 +236,12 @@ export class OutwardReq implements OnInit {
             group.get(controlName)?.disable();
           });
         });
+        this.loadStockLocations(rest.warehouseId, 'from');
+        this.loadStockLocations(rest.to_warehouse, 'to');
+        if (rest.to_location) {
+          this.outwardForm.patchValue({ to_location: rest.to_location });
+        }
+        this.enableItemLocationFields();
       }
     })
   }
@@ -197,15 +252,8 @@ export class OutwardReq implements OnInit {
 
   // Add a new item to the items FormArray
   addItem(): void {
-    const itemGroup = this.fb.group({
-      itemId: ['', Validators.required],
-      itemName: ['', Validators.required],
-      item_code: [],
-      barcode: ['', Validators.required],
-      quantity: [1, [Validators.required, Validators.min(1)]],
-      unit: ['', Validators.required],
-    });
-    this.items.push(itemGroup);
+    this.items.push(this.buildItemGroup());
+    this.enableItemLocationFields();
   }
 
   // Remove an item by index
@@ -227,16 +275,34 @@ export class OutwardReq implements OnInit {
   }
 
   submit() {
-    console.log(this.outwardForm.value);
+    const payload = this.outwardForm.getRawValue();
+    const headerToLocation = payload.to_location;
+    if (this.outwardType === 'REQ' && Array.isArray(payload.items)) {
+      payload.items = payload.items.map((item: any) => ({
+        ...item,
+        to_location: item.to_location || headerToLocation || null,
+      }));
+      if (this.isInternalTransfer) {
+        const missingDest = payload.items.some((item: any) => !item.to_location);
+        if (missingDest) {
+          this.toast.show('Warning', 'Select destination location for showroom transfer', 'warning');
+          return;
+        }
+      }
+    }
+
     if (this.outwardForm.valid) {
       if(this.outwardType=='REQ'){
       if (confirm('Are you sure to dispatch?')) {
-        this.api.post('/invoice/update-outward/', this.outwardForm.getRawValue()).subscribe((res: any) => {
+        this.api.post('/invoice/update-outward/', payload).subscribe((res: any) => {
           console.log(res);
           if (res.status == 200) {
             this.activeModal.close();
-
+          } else {
+            this.toast.show('Error', res.error || 'Dispatch failed', 'danger');
           }
+        }, () => {
+          this.toast.show('Error', 'Dispatch failed', 'danger');
         })
       } else {
         this.activeModal.close();

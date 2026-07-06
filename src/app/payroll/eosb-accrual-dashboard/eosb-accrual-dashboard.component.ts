@@ -111,25 +111,27 @@ export class EosbAccrualDashboardComponent implements OnInit {
 
   // ── Main API call ─────────────────────────────────────────────────────────
 
-  loadAccrualData(): void {
-    this.isLoading = true;
+  private buildAccrualPayload(page = this.currentPage, pageSize = this.pageSize): Record<string, unknown> {
     const f = this.filterForm.value;
-
-    const payload: any = {
-      company_id:       this.api.getCompanyId() ?? 1,
+    const payload: Record<string, unknown> = {
+      company_id: this.api.getCompanyId(),
       calculation_date: f.calculationDate,
-      page:             this.currentPage,
-      page_size:        this.pageSize,
+      page,
+      page_size: pageSize,
+      service_years: f.service_years && f.service_years !== 'all' ? f.service_years : 'all',
     };
 
-    if (f.search?.trim())        payload['search']         = f.search.trim();
-    if (f.department_id)         payload['department_id']  = +f.department_id;
-    if (f.designation_id)        payload['designation_id'] = +f.designation_id;
-    if (f.service_years && f.service_years !== 'all')
-                                 payload['service_years']  = f.service_years;
-    else                         payload['service_years']  = 'all';
+    if (f.search?.trim()) payload['search'] = f.search.trim();
+    if (f.department_id) payload['department_id'] = +f.department_id;
+    if (f.designation_id) payload['designation_id'] = +f.designation_id;
 
-    this.api.post('/attendance/gratuity-accrual-report/', payload).subscribe({
+    return payload;
+  }
+
+  loadAccrualData(): void {
+    this.isLoading = true;
+
+    this.api.post('/attendance/gratuity-accrual-report/', this.buildAccrualPayload()).subscribe({
       next: (res: any) => {
         this.isLoading = false;
         if (res.status === '200' || res.status === 200) {
@@ -197,32 +199,40 @@ export class EosbAccrualDashboardComponent implements OnInit {
 
   generateAccrualReport(): void {
     this.isGeneratingReport = true;
-    const reportData = {
-      company_id:               this.api.getCompanyId(),
-      calculation_date:         this.filterForm.get('calculationDate')?.value,
-      filters:                  this.filterForm.value,
-      total_employees:          this.totalEmployees,
-      eligible_employees:       this.eligibleEmployees,
-      total_accrued_gratuity:   this.totalAccruedGratuity,
-      average_accrued_gratuity: this.averageAccruedGratuity,
-      employee_data:            this.filteredEmployees
+    const allEmployees: any[] = [];
+
+    const fetchPage = (page: number): void => {
+      this.api.post('/attendance/gratuity-accrual-report/', this.buildAccrualPayload(page, 100)).subscribe({
+        next: (res: any) => {
+          if (res.status === '200' || res.status === 200) {
+            allEmployees.push(...(res.data || []));
+            const totalPages = res.pagination?.total_pages ?? 1;
+            if (page < totalPages) {
+              fetchPage(page + 1);
+              return;
+            }
+            this.downloadAccrualReport(allEmployees);
+          } else {
+            alert('Error generating accrual report.');
+          }
+          this.isGeneratingReport = false;
+        },
+        error: () => {
+          alert('Error generating accrual report. Please try again.');
+          this.isGeneratingReport = false;
+        },
+      });
     };
-    this.api.post('/payroll/generate-accrual-report/', reportData).subscribe({
-      next: (res: any) => {
-        if (res.status === 200) { alert('Accrual report generated successfully!'); this.downloadAccrualReport(); }
-        else { alert('Error generating accrual report.'); }
-      },
-      error: () => { alert('Error generating accrual report. Please try again.'); },
-      complete: () => { this.isGeneratingReport = false; }
-    });
+
+    fetchPage(1);
   }
 
-  downloadAccrualReport(): void {
-    const csvContent = this.generateCSV();
+  downloadAccrualReport(employees: any[] = this.filteredEmployees): void {
+    const csvContent = this.generateCSV(employees);
     this.downloadCSV(csvContent, `eosb_accrual_report_${new Date().toISOString().split('T')[0]}.csv`);
   }
 
-  private generateCSV(): string {
+  private generateCSV(employees: any[]): string {
     const curr = this.getcurrency();
     const headers = [
       'Employee ID','Employee Name','Department','Designation','Joining Date',
@@ -230,7 +240,7 @@ export class EosbAccrualDashboardComponent implements OnInit {
       `Monthly Accrual (${curr})`,`Yearly Accrual (${curr})`,`Total Accrued (${curr})`,
       'Eligible for EOSB','Status','Calculation Date'
     ];
-    const rows = this.filteredEmployees.map((e: any) => [
+    const rows = employees.map((e: any) => [
       e.employee_id, e.employee_name, e.department || 'N/A', e.designation || 'N/A',
       e.joining_date, e.basic_salary, e.gross_salary,
       (e.service_years ?? 0).toFixed(2),

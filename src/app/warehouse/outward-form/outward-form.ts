@@ -131,7 +131,7 @@ export class OutwardForm implements OnInit {
       // status: [''],
       workflowStep: ['REQUISITION_RECEIVED'],
       
-      company: [1, Validators.required],
+      company: [this.api.getCompanyId(), Validators.required],
       // New: Store selected requisitions as array
       poNo: [[]],
       created_by_user:[]
@@ -217,7 +217,7 @@ export class OutwardForm implements OnInit {
   }
 
   loadRequisitions(): void {
-      this.api.post(`/invoice/get-requisition-list/`,{"company":1}).subscribe({
+      this.api.post(`/invoice/get-requisition-list/`,{"company": this.api.getCompanyId()}).subscribe({
         next: (res: any) => {
           if (res && Array.isArray(res.data)) {
             this.requisitions = res.data;
@@ -301,7 +301,7 @@ export class OutwardForm implements OnInit {
   }
 
   loadWarehouses(): void {
-    this.api.get('/warehouses/list-warehouse/').subscribe({
+    this.api.listWarehouses().subscribe({
       next: (res: any) => {
         if (res.status == 200 && Array.isArray(res.data)) {
           this.warehouses = res.data;
@@ -317,7 +317,7 @@ export class OutwardForm implements OnInit {
   }
 
   loadLocations(): void {
-    this.api.post('/warehouses/list-location/', { warehouse:null, company: 1 }).subscribe({
+    this.api.post('/warehouses/list-location/', { warehouse:null, company: this.api.getCompanyId() }).subscribe({
       next: (res: any) => {
         if (res.status == 200 && Array.isArray(res.data)) {
           this.locations = res.data;
@@ -336,7 +336,7 @@ export class OutwardForm implements OnInit {
   }
 
   // loadItems(): void {
-  //   this.api.post('/items/list-item/s=/', { company: 1 }).subscribe({
+  //   this.api.post('/items/list-item/s=/', { company: this.api.getCompanyId() }).subscribe({
   //     next: (res: any) => {
   //       if (res.status == 200 && Array.isArray(res.data)) {
   //         this.availableItems = res.data;
@@ -384,7 +384,7 @@ export class OutwardForm implements OnInit {
   }
 
   loadCustomers(): void {
-    this.api.post('/party/list-party/s=/', { company: 1, partyType: 1 }).subscribe({
+    this.api.post('/party/list-party/s=/', { company: this.api.getCompanyId(), partyType: 1 }).subscribe({
       next: (res: any) => {
         if (res.status === 200 && Array.isArray(res.data)) {
           this.customers = res.data;
@@ -472,7 +472,7 @@ export class OutwardForm implements OnInit {
   }
 
   loadWarehouseWorkers(): void {
-    this.api.get('/warehouse/workers/', { company: 1 }).subscribe({
+    this.api.get('/warehouse/workers/', { company: this.api.getCompanyId() }).subscribe({
       next: (res: any) => {
         if (res.status === 200) {
           this.warehouseWorkers = res.data || [];
@@ -1423,7 +1423,7 @@ export class OutwardForm implements OnInit {
   }
 
   loadItems(searchTerm: string = ''): void {
-    this.api.post('/items/list-item/s=' + encodeURIComponent(searchTerm) + '/', { company: 1 }).subscribe({
+    this.api.listItems(searchTerm).subscribe({
       next: (res: any) => {
         if (res.status == 200 && Array.isArray(res.data)) {
           this.availableItems = res.data;

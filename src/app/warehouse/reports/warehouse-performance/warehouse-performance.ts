@@ -38,7 +38,7 @@ export class WarehousePerformance implements OnInit {
   }
 
   loadData() {
-    this.svc.get('/warehouses/list-warehouse/').subscribe((res: any) => {
+    this.svc.listWarehouses().subscribe((res: any) => {
       if(res.status == 200){
         this.warehouses = res.data;
       }

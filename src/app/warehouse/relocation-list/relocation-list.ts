@@ -63,7 +63,7 @@ export class RelocationList implements OnInit {
     this.loading = true;
     this.currentPage = page;
     const payload: any = {
-      company: 1,
+      company: this.svc.getCompanyId(),
       transaction_type: this.relocateTransactionType,
       start_date: this.startDate,
       end_date: this.endDate,
@@ -138,7 +138,7 @@ export class RelocationList implements OnInit {
   }
 
   loadWarehouses() {
-    this.svc.get('/warehouses/list-warehouse/').subscribe({
+    this.svc.listWarehouses().subscribe({
       next: (res: any) => {
         if(res.status == 200){
           this.warehouses = res.data;

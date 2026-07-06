@@ -36,7 +36,7 @@ export class Branch implements OnInit {
   @Output() closeModal = new EventEmitter<any>();
   constructor(private fb: FormBuilder,private api:Api) {
     this.branchForm = this.fb.group({
-      company: [1, Validators.required],
+      company: [this.api.getCompanyId(), Validators.required],
       branchName: ['', Validators.required],
       address: [''],
       city: [''],
@@ -107,7 +107,7 @@ export class Branch implements OnInit {
   }
 
   private resetForm(): void {
-    this.branchForm.reset({ company: 1 });
+    this.branchForm.reset({ company: this.api.getCompanyId() });
     this.isEditing = false;
     this.editingIndex = null;
   }

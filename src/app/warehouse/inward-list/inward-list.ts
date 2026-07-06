@@ -109,7 +109,7 @@ export class InwardList implements OnInit {
 
   loadMasterData() {
     // Load suppliers
-    this.svc.post('/party/list-party/s=/', { company: 1, partyType: 2 }).subscribe({
+    this.svc.post('/party/list-party/s=/', { company: this.svc.getCompanyId(), partyType: 2 }).subscribe({
       next: (res: any) => {
         if (res.status === 200) {
           this.suppliers = res.data;
@@ -126,7 +126,7 @@ export class InwardList implements OnInit {
     this.loading = true;
     this.currentPage = page;
     const payload: any = {
-      company: this.svc.getCompanyId() ?? 1,
+      company: this.svc.getCompanyId(),
       start_date: this.fromDate,
       end_date: this.toDate,
       page_number: this.currentPage,
@@ -329,7 +329,7 @@ export class InwardList implements OnInit {
   }
 
   exportData() {
-    const company  = this.svc.getCompanyId() ?? 1;
+    const company  = this.svc.getCompanyId();
     const start    = this.fromDate;
     const end      = this.toDate;
 

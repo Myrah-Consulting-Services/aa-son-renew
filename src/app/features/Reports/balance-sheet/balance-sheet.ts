@@ -33,7 +33,7 @@ export class BalanceSheet implements OnInit {
   generateReport() {
     this.isLoading = true;
     const payload = {
-      company: this.api.getCompanyId() ?? 1,
+      company: this.api.getCompanyId(),
       as_of_date: this.reportDate
     };
     this.api.post('/reports/balance-sheet/', payload).subscribe({

@@ -83,7 +83,7 @@ export class RequisitionList implements OnInit {
     this.currentPage = page;
     const formVals = filters || this.filterForm?.value || {};
     const payload: any = {
-      company: 1,
+      company: this.svc.getCompanyId(),
       inward_type: 4,
       status: formVals.selectedStatus ? +formVals.selectedStatus : 0,
       start_date: formVals.startDate,

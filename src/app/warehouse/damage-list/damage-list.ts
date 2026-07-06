@@ -27,7 +27,7 @@ export class DamageList implements OnInit {
   }
 
   loadData() {
-    this.svc.post('/warehouses/list-damage-report/', { company: 1 }).subscribe((res: any) => {
+    this.svc.post('/warehouses/list-damage-report/', { company: this.svc.getCompanyId() }).subscribe((res: any) => {
       if(res.status == 200){
         this.damages = res.data;
       }

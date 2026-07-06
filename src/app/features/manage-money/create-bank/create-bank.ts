@@ -45,7 +45,7 @@ export class CreateBank {
       opening_balance: [0, [Validators.required, this.amountValidator]],
       as_on: ['', [Validators.required]],
       id: [''],
-      company: [1],
+      company: [this.api.getCompanyId()],
       bank_type: [1, Validators.required],
     });
     // this.ibanValidator()

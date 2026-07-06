@@ -67,7 +67,7 @@ export class PutawayTasksDashboardComponent implements OnInit {
     this.dashboardLoading = true;
 
     const payload: any = {
-      company:    this.api.getCompanyId() ?? 1,
+      company:    this.api.getCompanyId(),
       warehouse:  null,
       start_date: this.filterStartDate,
       end_date:   this.filterEndDate,

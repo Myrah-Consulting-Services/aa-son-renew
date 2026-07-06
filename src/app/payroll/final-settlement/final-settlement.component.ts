@@ -118,7 +118,7 @@ export class FinalSettlementComponent implements OnInit {
       net_settlement_amount: [0, [Validators.min(0)]],
       
       // Authorization
-      authorized_by: ['', Validators.required],
+      authorized_by_id: ['', Validators.required],
       authorization_date: [new Date().toISOString().split('T')[0], Validators.required],
       remarks: ['']
     });
@@ -408,6 +408,51 @@ export class FinalSettlementComponent implements OnInit {
     return daysDiff / 365.25;
   }
 
+  private buildSettlementPayload(): Record<string, unknown> {
+    const form = this.settlementForm.getRawValue();
+    const joiningDate = new Date(form.joining_date);
+    const lastWorkingDate = new Date(form.last_working_date);
+    const gratuityCalc = this.settlementCalculations[0]?.gratuityCalculation;
+
+    const serviceYears = gratuityCalc?.serviceYears
+      ?? this.calculateServiceYears(joiningDate, lastWorkingDate);
+    const adjustedServiceYears = gratuityCalc?.adjustedServiceYears
+      ?? (serviceYears - (form.unpaid_leave_days || 0) / 365.25);
+
+    return {
+      company_id: this.api.getCompanyId(),
+      employee_id: +this.employeeForm.get('employeeId')?.value,
+      calculation_date: this.datePipe.transform(
+        this.employeeForm.get('calculation_date')?.value || new Date(),
+        'yyyy-MM-dd'
+      ),
+      joining_date: this.datePipe.transform(form.joining_date, 'yyyy-MM-dd'),
+      last_working_date: this.datePipe.transform(form.last_working_date, 'yyyy-MM-dd'),
+      reason_for_leaving: form.reason_for_leaving ? +form.reason_for_leaving : undefined,
+      basic_salary: +form.basic_salary,
+      gross_salary: +form.gross_salary,
+      notice_period_days: +form.notice_period_days,
+      notice_served_days: +form.notice_period_served,
+      notice_period_pay: +form.notice_period_pay,
+      pending_leave_days: +form.pending_leave_days,
+      leave_encashment: +form.leave_encashment_amount,
+      airfare_allowance: +form.airfare_allowance,
+      other_allowances: +form.other_allowances,
+      outstanding_loans: +form.outstanding_loans,
+      other_deductions: +form.other_deductions,
+      unpaid_leave_days: +form.unpaid_leave_days,
+      service_years: +serviceYears.toFixed(2),
+      adjusted_service_years: +adjustedServiceYears.toFixed(2),
+      gratuity_amount: +(form.gratuity_amount || gratuityCalc?.gratuityAmount || 0),
+      total_earnings: +form.total_earnings,
+      total_deductions: +form.total_deductions,
+      net_settlement_amount: +form.net_settlement_amount,
+      authorized_by_id: +form.authorized_by_id,
+      authorization_date: this.datePipe.transform(form.authorization_date, 'yyyy-MM-dd'),
+      remarks: form.remarks || '',
+    };
+  }
+
   processFinalSettlement(): void {
     if (this.settlementForm.invalid) {
       alert('Please fill all required fields.');
@@ -415,25 +460,23 @@ export class FinalSettlementComponent implements OnInit {
     }
 
     this.isProcessing = true;
-    
-    const settlementData = {
-      company_id: this.api.getCompanyId(),
-      employee_id: this.employeeForm.get('employeeId')?.value,
-      calculation_date: this.datePipe.transform(new Date(), 'yyyy-MM-dd') || '',
-      service_years: this.calculateServiceYears(new Date(this.settlementForm.get('joining_date')?.value), new Date(this.settlementForm.get('last_working_date')?.value)).toFixed(2),
-      ...this.settlementForm.value
-    };
+    const settlementData = this.buildSettlementPayload();
+
     this.api.post('/attendance/create-employee-settlement/', settlementData).subscribe({
       next: (response: any) => {
-        if (response.status == 200) {
+        this.isProcessing = false;
+        if (response.status === 200 || response.status === 201) {
           this.toast.show('Success', 'Final settlement processed successfully!', 'success');
           this.resetForms();
         } else {
-          this.toast.show('Error', 'Error processing final settlement.', 'danger');
+          this.toast.show('Error', response.error || 'Error processing final settlement.', 'danger');
         }
-      }
+      },
+      error: (err: any) => {
+        this.isProcessing = false;
+        this.toast.show('Error', err?.error?.error || 'Error processing final settlement.', 'danger');
+      },
     });
-    console.log(settlementData);
   }
 
   exportSettlementReport(): void {
@@ -486,7 +529,7 @@ export class FinalSettlementComponent implements OnInit {
       calculation.totalDeductions.toFixed(2),
       calculation.netSettlement.toFixed(2),
       this.settlementForm.get('reason_for_leaving')?.value,
-      this.settlementForm.get('authorized_by')?.value,
+      this.getAuthorizerName(),
       calculation.calculation_date
     ];
 
@@ -519,6 +562,15 @@ export class FinalSettlementComponent implements OnInit {
     this.settlementForm.patchValue({
       authorization_date: new Date().toISOString().split('T')[0]
     });
+  }
+
+  getAuthorizerName(): string {
+    const authorizerId = this.settlementForm.get('authorized_by_id')?.value;
+    const authorizer = this.employees.find((emp: any) => emp.id == authorizerId);
+    if (!authorizer) {
+      return '';
+    }
+    return `${authorizer.first_name || ''} ${authorizer.last_name || ''}`.trim();
   }
 
   getCurrencyFormat(amount: number): string {

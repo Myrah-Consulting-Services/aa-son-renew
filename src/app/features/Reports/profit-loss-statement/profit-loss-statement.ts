@@ -35,7 +35,7 @@ export class ProfitLossStatement implements OnInit {
   generateReport() {
     this.isLoading = true;
     const payload = {
-      company: this.api.getCompanyId() ?? 1,
+      company: this.api.getCompanyId(),
       from_date: this.dateFrom,
       to_date:   this.dateTo
     };

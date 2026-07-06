@@ -66,7 +66,7 @@ export class OutwardList implements OnInit {
     this.loading = true;
     this.currentPage = page;
     const payload: any = {
-      company: 1,
+      company: this.api.getCompanyId(),
       page_number: this.currentPage,
       page_size: this.pageSize,
       status: this.selectedStatus || '',

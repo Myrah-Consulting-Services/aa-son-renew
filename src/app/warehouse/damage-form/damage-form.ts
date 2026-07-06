@@ -51,7 +51,7 @@ export class DamageForm implements OnInit {
   }
 
   loadInitialData() {
-    this.svc.get('/warehouses/list-warehouse/').subscribe((res: any) => {
+    this.svc.listWarehouses().subscribe((res: any) => {
       if(res.status == 200){
         this.warehouses = res.data;
       }
@@ -61,7 +61,7 @@ export class DamageForm implements OnInit {
         this.locations = res.data;
       }
     });
-    this.svc.post('/items/list-item/s=/', { company: 1 }).subscribe((res: any) => {
+    this.svc.listItems('').subscribe((res: any) => {
       if(res.status == 200){
         this.items = res.data;
       }

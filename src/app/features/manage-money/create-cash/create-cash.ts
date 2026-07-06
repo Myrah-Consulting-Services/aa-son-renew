@@ -35,7 +35,7 @@ export class CreateCash {
       opening_balance: ['', Validators.required],
       as_on: ['', Validators.required],
       id: [''],
-      company: [1],
+      company: [this.api.getCompanyId()],
       cash_type: [1, Validators.required],
     });
   }

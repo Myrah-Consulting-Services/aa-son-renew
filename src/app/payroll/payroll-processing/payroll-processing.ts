@@ -75,7 +75,7 @@ export class PayrollProcessingComponent implements OnInit {
   }
 
   loadEmployees(): void {
-    this.apiService.get('/employee/list_employees/', { company: 1 }).subscribe({
+    this.apiService.get('/employee/list_employees/', { company: this.apiService.getCompanyId() }).subscribe({
       next: (response: any) => {
         if (response.status === 200 && response.data) {
           this.employees = response.data.map((emp: any) => ({
