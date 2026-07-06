@@ -5,11 +5,13 @@ import { CommonModule } from '@angular/common';
 import { ToastService } from '../../../core/services/toast.service';
 import { NgbModal, NgbModalRef, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { InvoiceSetting } from '../invoice-setting/invoice-setting';
+import { LoyaltyGiftCards } from '../loyalty-gift-cards/loyalty-gift-cards';
+import { MarketplaceSync } from '../marketplace-sync/marketplace-sync';
 
 @Component({
   selector: 'app-company-setting',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, CommonModule],
+  imports: [ReactiveFormsModule, FormsModule, CommonModule, LoyaltyGiftCards, MarketplaceSync],
   templateUrl: './company-setting.html',
   styleUrl: './company-setting.scss'
 })
@@ -24,6 +26,74 @@ export class CompanySetting implements OnInit {
   // Tab functionality
   activeTab: string = 'company';
   companyForm!: FormGroup;
+  paymentForm!: FormGroup;
+  paymentSaving = false;
+  expandedProvider: string | null = 'razorpay';
+  enabledPaymentMethods: string[] = ['cash', 'card', 'upi'];
+  visibleSecrets: Record<string, boolean> = {};
+
+  paymentMethods = [
+    { id: 'cash', label: 'Cash', icon: 'bi bi-cash-stack' },
+    { id: 'card', label: 'Card', icon: 'bi bi-credit-card-2-front' },
+    { id: 'upi', label: 'UPI', icon: 'bi bi-phone' },
+    { id: 'netbanking', label: 'Net Banking', icon: 'bi bi-bank' },
+    { id: 'wallet', label: 'Wallet', icon: 'bi bi-wallet2' },
+    { id: 'cheque', label: 'Cheque', icon: 'bi bi-journal-check' },
+  ];
+
+  paymentProviders = [
+    {
+      id: 'razorpay',
+      name: 'Razorpay',
+      type: 'Payment Gateway',
+      icon: 'bi bi-lightning-fill',
+      color: 'linear-gradient(135deg, #3395ff 0%, #072654 100%)',
+      docsUrl: 'https://razorpay.com/docs/api/',
+      fields: [
+        { key: 'api_key', label: 'Key ID', placeholder: 'rzp_live_xxxxxxxx', required: true, secret: false },
+        { key: 'api_secret', label: 'Key Secret', placeholder: 'Enter secret key', required: true, secret: true },
+        { key: 'webhook_secret', label: 'Webhook Secret', placeholder: 'Optional webhook secret', secret: true, hint: 'For payment status callbacks' },
+      ],
+    },
+    {
+      id: 'pinelabs',
+      name: 'Pine Labs',
+      type: 'POS Terminal',
+      icon: 'bi bi-cpu',
+      color: 'linear-gradient(135deg, #00a651 0%, #006837 100%)',
+      docsUrl: 'https://developer.pinelabs.com/',
+      fields: [
+        { key: 'merchant_id', label: 'Merchant ID', placeholder: 'Merchant ID from Pine Labs', required: true, secret: false },
+        { key: 'api_key', label: 'Security Token / API Key', placeholder: 'Enter security token', required: true, secret: true },
+        { key: 'client_id', label: 'Client ID', placeholder: 'POS client identifier', secret: false },
+        { key: 'store_id', label: 'Store ID', placeholder: 'Store / outlet ID', secret: false, hint: 'Maps to your physical outlet' },
+      ],
+    },
+    {
+      id: 'paytm',
+      name: 'Paytm',
+      type: 'Payment Gateway',
+      icon: 'bi bi-currency-rupee',
+      color: 'linear-gradient(135deg, #00baf2 0%, #002970 100%)',
+      docsUrl: 'https://business.paytm.com/docs',
+      fields: [
+        { key: 'merchant_id', label: 'Merchant ID', placeholder: 'Paytm merchant ID', required: true, secret: false },
+        { key: 'api_key', label: 'Merchant Key', placeholder: 'Enter merchant key', required: true, secret: true },
+      ],
+    },
+    {
+      id: 'stripe',
+      name: 'Stripe',
+      type: 'Payment Gateway',
+      icon: 'bi bi-stripe',
+      color: 'linear-gradient(135deg, #635bff 0%, #0a2540 100%)',
+      docsUrl: 'https://stripe.com/docs/api',
+      fields: [
+        { key: 'api_key', label: 'Publishable Key', placeholder: 'pk_live_xxxxxxxx', required: true, secret: false },
+        { key: 'api_secret', label: 'Secret Key', placeholder: 'sk_live_xxxxxxxx', required: true, secret: true },
+      ],
+    },
+  ];
   
   // Logo management
   companyLogo: string | null = null;
@@ -161,6 +231,19 @@ export class CompanySetting implements OnInit {
       corporate_tax_trn: [''],
       vat_registered: [false]
     });
+
+    const paymentControls: Record<string, any> = {
+      default_pos_provider: [''],
+      pos_terminal_id: [''],
+      enabled_methods: [[]],
+    };
+    this.paymentProviders.forEach(provider => {
+      paymentControls[`${provider.id}_enabled`] = [false];
+      provider.fields.forEach(field => {
+        paymentControls[`${provider.id}_${field.key}`] = [''];
+      });
+    });
+    this.paymentForm = this.fb.group(paymentControls);
   }
 
   ngOnInit() {
@@ -168,6 +251,7 @@ export class CompanySetting implements OnInit {
     this.filteredCurrencies = [...this.currencies];
     this.filteredConversionCurrencies = [...this.currencies];
     this.getcompany();
+    this.getPaymentSettings();
     this.showDropdown = false;
     this.showConversionDropdown = false;
   }
@@ -380,6 +464,154 @@ export class CompanySetting implements OnInit {
 
   switchTab(tabName: string) {
     this.activeTab = tabName;
+  }
+
+  // Payment settings methods
+  getPaymentSettings() {
+    const companyId = this.api.getUserCompany();
+    this.api.get('/company/get-payment-setting/' + companyId + '/').subscribe({
+      next: (res: any) => {
+        if (res?.status === 200 && res.data) {
+          this.patchPaymentForm(res.data);
+        }
+      },
+      error: () => {
+        const stored = localStorage.getItem(`payment_settings_${companyId}`);
+        if (stored) {
+          try {
+            this.patchPaymentForm(JSON.parse(stored));
+          } catch { /* ignore */ }
+        }
+      },
+    });
+  }
+
+  patchPaymentForm(data: any) {
+    const patch: Record<string, any> = {
+      default_pos_provider: data.default_pos_provider || '',
+      pos_terminal_id: data.pos_terminal_id || '',
+    };
+    this.enabledPaymentMethods = data.enabled_methods?.length
+      ? [...data.enabled_methods]
+      : ['cash', 'card', 'upi'];
+
+    this.paymentProviders.forEach(provider => {
+      const providerData = data.providers?.[provider.id] || data[provider.id] || {};
+      patch[`${provider.id}_enabled`] = providerData.enabled ?? false;
+      provider.fields.forEach(field => {
+        patch[`${provider.id}_${field.key}`] = providerData[field.key] || '';
+      });
+    });
+
+    this.paymentForm.patchValue(patch);
+    if (data.default_expanded) {
+      this.expandedProvider = data.default_expanded;
+    }
+  }
+
+  isPaymentMethodEnabled(methodId: string): boolean {
+    return this.enabledPaymentMethods.includes(methodId);
+  }
+
+  togglePaymentMethod(methodId: string) {
+    const idx = this.enabledPaymentMethods.indexOf(methodId);
+    if (idx >= 0) {
+      this.enabledPaymentMethods = this.enabledPaymentMethods.filter(m => m !== methodId);
+    } else {
+      this.enabledPaymentMethods = [...this.enabledPaymentMethods, methodId];
+    }
+  }
+
+  toggleProviderExpand(providerId: string) {
+    this.expandedProvider = this.expandedProvider === providerId ? null : providerId;
+  }
+
+  onProviderToggle(providerId: string) {
+    const enabled = this.paymentForm.get(`${providerId}_enabled`)?.value;
+    if (enabled) {
+      this.expandedProvider = providerId;
+    } else if (this.paymentForm.get('default_pos_provider')?.value === providerId) {
+      this.paymentForm.patchValue({ default_pos_provider: '' });
+    }
+  }
+
+  isProviderConfigured(providerId: string): boolean {
+    if (!this.paymentForm.get(`${providerId}_enabled`)?.value) return false;
+    const provider = this.paymentProviders.find(p => p.id === providerId);
+    if (!provider) return false;
+    return provider.fields
+      .filter(f => f.required)
+      .every(f => !!this.paymentForm.get(`${providerId}_${f.key}`)?.value?.trim());
+  }
+
+  secretKey(providerId: string, fieldKey: string): string {
+    return `${providerId}_${fieldKey}`;
+  }
+
+  isSecretVisible(providerId: string, fieldKey: string): boolean {
+    return !!this.visibleSecrets[this.secretKey(providerId, fieldKey)];
+  }
+
+  toggleSecretVisibility(providerId: string, fieldKey: string) {
+    const key = this.secretKey(providerId, fieldKey);
+    this.visibleSecrets[key] = !this.visibleSecrets[key];
+  }
+
+  testConnection(providerId: string) {
+    const provider = this.paymentProviders.find(p => p.id === providerId);
+    if (!provider) return;
+
+    const missing = provider.fields
+      .filter(f => f.required && !this.paymentForm.get(`${providerId}_${f.key}`)?.value?.trim());
+    if (missing.length) {
+      this.toastr.show('Validation', `Please fill in ${missing.map(f => f.label).join(', ')}`, 'warning');
+      return;
+    }
+
+    this.toastr.show('Connection Test', `${provider.name} credentials saved locally. Backend verification pending.`, 'success');
+  }
+
+  buildPaymentPayload() {
+    const providers: Record<string, any> = {};
+    this.paymentProviders.forEach(provider => {
+      const entry: Record<string, any> = {
+        enabled: this.paymentForm.get(`${provider.id}_enabled`)?.value ?? false,
+      };
+      provider.fields.forEach(field => {
+        entry[field.key] = this.paymentForm.get(`${provider.id}_${field.key}`)?.value || '';
+      });
+      providers[provider.id] = entry;
+    });
+
+    return {
+      default_pos_provider: this.paymentForm.get('default_pos_provider')?.value || '',
+      pos_terminal_id: this.paymentForm.get('pos_terminal_id')?.value || '',
+      enabled_methods: this.enabledPaymentMethods,
+      providers,
+    };
+  }
+
+  savePaymentSettings() {
+    const payload = this.buildPaymentPayload();
+    const companyId = this.api.getUserCompany();
+    this.paymentSaving = true;
+
+    this.api.put('/company/update-payment-setting/' + companyId + '/', payload).subscribe({
+      next: (res: any) => {
+        this.paymentSaving = false;
+        if (res?.status === 200) {
+          this.toastr.show('Success', 'Payment settings saved successfully', 'success');
+        } else {
+          localStorage.setItem(`payment_settings_${companyId}`, JSON.stringify(payload));
+          this.toastr.show('Saved', 'Payment settings saved locally', 'success');
+        }
+      },
+      error: () => {
+        localStorage.setItem(`payment_settings_${companyId}`, JSON.stringify(payload));
+        this.paymentSaving = false;
+        this.toastr.show('Saved', 'Payment settings saved locally (API unavailable)', 'success');
+      },
+    });
   }
 
   // Logo management methods

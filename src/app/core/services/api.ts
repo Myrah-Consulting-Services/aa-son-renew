@@ -32,6 +32,11 @@ export class Api {
   }
 
   getCompanyId(){
+    const activeCompanyId = localStorage.getItem('active_company_id');
+    if (activeCompanyId) {
+      return Number(activeCompanyId);
+    }
+
     const userData = localStorage.getItem('user');
     if (!userData) {
       return null;
@@ -55,7 +60,7 @@ export class Api {
 
   /** Merge tenant company into query/body params for multi-company APIs. */
   withCompanyParams(params: Record<string, any> = {}): Record<string, any> {
-    const companyId = this.getCompanyId();
+    const companyId = this.getUserCompany();
     if (companyId != null && companyId !== '') {
       return { ...params, company: companyId };
     }
@@ -141,7 +146,9 @@ export class Api {
     const headers = this.getHeaders();
     return this.http.delete<T>(`${this.baseUrl}${path}`, { headers });
   }
-
+  getCompanyId2(){
+    return this.getUserCompany();
+  }
   uplaoadImg(url: string,data: any){
     return this.http.post(this.baseUrl + url, data,this.fileHeader2())
   }

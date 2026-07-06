@@ -3,7 +3,7 @@
   background: #fff;
   color: #41299b;
   box-shadow: 0 2px 12px 0 rgba(44, 62, 80, 0.10) !important;
-  border-bottom: none !important;
+  // border-bottom: none !important;
   .navbar-brand {
     color: #41299b !important;
   }
@@ -65,4 +65,19 @@
 }
 .logout-btn:hover{
     background: #ee9b20 !important;
+}
+
+.company-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 220px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(65, 41, 155, 0.08);
+  color: #41299b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

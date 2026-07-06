@@ -5,6 +5,9 @@ import { Api } from './api';
   providedIn: 'root'
 })
 export class TitleService {
+  private readonly ACTIVE_COMPANY_KEY = 'active_company_id';
+  private readonly COMPANIES_CACHE_KEY = 'my_companies';
+
   constructor(
     private api: Api
   ) {}
@@ -13,7 +16,12 @@ export class TitleService {
    * Set the document title with company name
    */
   setCompanyTitle() {
-    // First try to get from localStorage
+    const activeCompanyName = this.getActiveCompanyNameFromStorage();
+    if (activeCompanyName) {
+      document.title = `ESARWA | ${activeCompanyName}`;
+      return;
+    }
+
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
@@ -88,6 +96,26 @@ export class TitleService {
   setPageTitle(pageTitle: string) {
     if (pageTitle && pageTitle.trim()) {
       document.title = `ESARWA | ${pageTitle.trim()}`;
+    }
+  }
+
+  private getActiveCompanyNameFromStorage(): string {
+    const activeId = localStorage.getItem(this.ACTIVE_COMPANY_KEY);
+    if (!activeId) {
+      return '';
+    }
+
+    const companiesRaw = localStorage.getItem(this.COMPANIES_CACHE_KEY);
+    if (!companiesRaw) {
+      return '';
+    }
+
+    try {
+      const companies = JSON.parse(companiesRaw) as Array<{ id: number; business_name: string }>;
+      const company = companies.find((item) => item.id === Number(activeId));
+      return company?.business_name ?? '';
+    } catch {
+      return '';
     }
   }
 }
