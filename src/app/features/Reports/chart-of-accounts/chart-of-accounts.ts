@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Api } from '../../../core/services/api';
+import { ToastService } from '../../../core/services/toast.service';
 
 interface Account {
   code: string;
@@ -43,7 +44,9 @@ export class ChartOfAccounts implements OnInit {
   pageSize     = 10;
   totalCount   = 0;
 
-  constructor(private api: Api) {}
+  isExporting = false;
+
+  constructor(private api: Api, private toast: ToastService) {}
 
   ngOnInit() {
     this.loadAccounts();
@@ -99,6 +102,35 @@ export class ChartOfAccounts implements OnInit {
 
   onCategoryChange() { this.filterAccounts(); }
   onSearchChange()   { this.filterAccounts(); }
+
+  exportAccounts(format: 'xlsx' | 'csv' = 'xlsx'): void {
+    if (this.isExporting) return;
+    this.isExporting = true;
+
+    const payload: any = {
+      company:    this.api.getCompanyId(),
+      format,
+      export_all: true,
+    };
+    if (this.searchTerm.trim()) payload['search'] = this.searchTerm.trim();
+    if (this.selectedCategory && this.selectedCategory !== 'All') payload['category'] = this.selectedCategory;
+
+    this.api.postBlob('/ledger/export-chart-of-accounts/', payload).subscribe({
+      next: (blob: Blob) => {
+        this.isExporting = false;
+        const ext = format === 'csv' ? 'csv' : 'xlsx';
+        this.api.handleBlobExport(
+          blob,
+          `Chart_of_Accounts.${ext}`,
+          (message) => this.toast.show('Export failed', message, 'danger')
+        );
+      },
+      error: () => {
+        this.isExporting = false;
+        this.toast.show('Export failed', 'Unable to export chart of accounts', 'danger');
+      }
+    });
+  }
 
   getAccountTypeClass(type: string): string {
     switch (type) {
