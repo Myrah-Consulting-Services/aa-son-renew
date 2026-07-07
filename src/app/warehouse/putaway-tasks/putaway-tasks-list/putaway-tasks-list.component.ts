@@ -18,10 +18,10 @@ export class PutawayTasksListComponent implements OnInit {
   selectedTasks: string[] = [];
   
   stats = {
-    pendingTasks: 18,
-    assignedTasks: 12,
-    inProgressTasks: 8,
-    completedToday: 25
+    pendingTasks: 0,
+    assignedTasks: 0,
+    inProgressTasks: 0,
+    completedToday: 0
   };
 
   tasks :any= [];
@@ -112,6 +112,14 @@ export class PutawayTasksListComponent implements OnInit {
       if(res.status == 200){
         this.tasks = res.data;
         this.filteredTasks = [...this.tasks];
+        if (res.summary?.by_putaway_status) {
+          const byStatus: any[] = res.summary.by_putaway_status;
+          this.stats.pendingTasks    = byStatus.find((s: any) => s.putaway_status_id === 1)?.count ?? 0;
+          this.stats.assignedTasks   = byStatus.find((s: any) => s.putaway_status_id === 2)?.count ?? 0;
+          this.stats.inProgressTasks = byStatus.find((s: any) => s.putaway_status_id === 3)?.count ?? 0;
+          this.stats.completedToday  = res.summary.completed_today
+            ?? byStatus.find((s: any) => s.putaway_status_id === 4)?.count ?? 0;
+        }
         if (res.paginated_data) {
           this.currentPage = res.paginated_data.current_page;
           this.totalPages = res.paginated_data.total_pages;
