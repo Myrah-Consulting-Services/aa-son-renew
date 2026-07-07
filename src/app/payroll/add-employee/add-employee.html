@@ -334,9 +334,14 @@
 
               <div class="col-md-3">
                 <label class="form-label">Shift</label>
-                <select class="form-select form-select-sm" formControlName="shift">
+                <select
+                  class="form-select form-select-sm"
+                  formControlName="shift"
+                  (focus)="onShiftDropdownFocus()">
                   <option value="" selected>Select Shift</option>
-                  <option *ngFor="let shift of shiftList" [value]="shift.id">{{ shift.shift_head }}</option>
+                  <option *ngFor="let shift of shiftList" [value]="shift.id">
+                    {{ shift.title }} ({{ shift.time_start }} - {{ shift.time_end }})
+                  </option>
                 </select>
               </div>
 

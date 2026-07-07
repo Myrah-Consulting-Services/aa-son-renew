@@ -320,6 +320,12 @@ export class AddEmployeeComponent implements OnInit, OnDestroy, OnChanges {
     this.getDesignationList();
     this.getLocationPayList();
     this.getShiftList();
+    // Retry shift load if company context wasn't ready on first tick (e.g. modal)
+    setTimeout(() => {
+      if (!this.shiftList?.length) {
+        this.getShiftList();
+      }
+    }, 400);
     this.getSalaryStructures();
     this.getPayrollheads();
     this.getSalaryheads()
@@ -553,6 +559,7 @@ getTotalAnnual() {
       if (res.status == 200) {
         this.employeeId=res.data.id
         this.loadDocuments(this.employeeId)
+        const shiftId = res.data.shift;
         // this.documents=res.data.documents
         // this.getRequiredDocuments=res.data.documents
         this.employeeForm.get('basicInfo')?.patchValue({
@@ -566,7 +573,7 @@ getTotalAnnual() {
           designation: res.data.designation,
           location: res.data.location,
           branch: res.data.branch,
-          shift: res.data.shift,
+          shift: shiftId,
           contract_type: res.data.contract_type,
           contract_start_date: res.data.contract_start_date,
           contract_end_date: res.data.contract_end_date,
@@ -586,6 +593,11 @@ getTotalAnnual() {
           id: res.data.id,
           company: this.api.getCompanyId()
         });
+        if (this.shiftList.length === 0) {
+          this.getShiftList(() => {
+            this.employeeForm.get('basicInfo.shift')?.setValue(shiftId);
+          });
+        }
         this.onGccNationalChange()
         this.onOriginCountryChange({ target: { value: res.data.origin_country } });
         // Mark steps as completed based on existing data
@@ -1124,9 +1136,18 @@ onOriginCountryChange(event: any) {
   
   setActiveTab(tab: string): void {
     this.activeTab = tab;
+    if (tab === 'basicInfo' && (!this.shiftList || this.shiftList.length === 0)) {
+      this.getShiftList();
+    }
     // If switching to payment details tab, ensure form state is correct
     if (tab === 'paymentDetails') {
       this.initializePaymentFormState();
+    }
+  }
+
+  onShiftDropdownFocus(): void {
+    if (!this.shiftList?.length) {
+      this.getShiftList();
     }
   }
 
@@ -1637,10 +1658,34 @@ onOriginCountryChange(event: any) {
       }
     });
   }
-  getShiftList(): void {
-    this.api.post('/attendance/list-shifts/', { company: this.api.getUserCompany() || 1 }).subscribe((res: any) => {
-      if (res.status == 200 || res.status === 200) {
-        this.shiftList = res.data || [];
+  getShiftList(onLoaded?: () => void): void {
+    const company =
+      this.api.getUserCompany() ??
+      this.employeeForm?.get('basicInfo.company')?.value ??
+      this.api.getCompanyId();
+
+    if (company == null || company === '') {
+      this.shiftList = [];
+      return;
+    }
+
+    this.api.post('/attendance/list-subshifts/', { company: Number(company) }).subscribe({
+      next: (res: any) => {
+        if (res?.status == 200) {
+          const rows = Array.isArray(res.data) ? res.data : [];
+          this.shiftList = rows.filter((shift: any) => shift && shift.deleted !== true && shift.active !== false);
+          this.cdr.markForCheck();
+          onLoaded?.();
+        } else {
+          this.shiftList = [];
+          this.cdr.markForCheck();
+          this.toast.show('Error', res?.message || 'Failed to load shifts', 'danger');
+        }
+      },
+      error: () => {
+        this.shiftList = [];
+        this.cdr.markForCheck();
+        this.toast.show('Error', 'Failed to load shifts', 'danger');
       }
     });
   }
