@@ -128,7 +128,8 @@ export class RelocationForm implements OnInit {
       });
     }    // this.processItemLocationData();
 getlocation(){
-  this.svc.get('/warehouses/warehouse-wise-location/1/').subscribe((res: any) => {
+  const company = this.svc.getCompanyId();
+  this.svc.get(`/warehouses/company-locations/?company=${company}`).subscribe((res: any) => {
     if(res.status == 200){
       this.locations = res.data;
       this.tryLoadRelocationForEdit();
@@ -195,7 +196,7 @@ getlocation(){
   createItemForm(): FormGroup {
     return this.fb.group({
       itemId: ['', Validators.required],
-      fromLocationId: ['2', Validators.required],
+      fromLocationId: ['', Validators.required],
       toLocationId: ['', Validators.required],
       quantity: [1, [Validators.required, Validators.min(1)]]
     });
@@ -327,12 +328,16 @@ getlocation(){
 
   // Called on input change
   onItemInput(i: number, event: any) {
-    const searchTerm = event.target.value.toLowerCase();
-    this.itemSearchTerms[i] = searchTerm;
+    const raw = event.target.value;
+    this.itemSearchTerms[i] = raw;
+    const searchTerm = raw.toLowerCase();
     this.filteredItems[i] = this.availableItems.filter((item: any) =>
       (item.name || '').toLowerCase().includes(searchTerm) ||
       (item.item_code && item.item_code.toLowerCase().includes(searchTerm))
     );
+    // Clear any previously selected item id while the user retypes
+    this.itemsArray.at(i).patchValue({ itemId: '', fromLocationId: '' });
+    this.itemLocations[i] = [];
     this.showItemDropdown[i] = true;
     this.loadItems(searchTerm);
   }
@@ -365,17 +370,36 @@ getlocation(){
   selectItem(i: number, itemOption: any) {
     this.itemsArray.at(i).patchValue({
       itemId: itemOption.id,
-      // Patch more fields if needed
     });
     this.itemSearchTerms[i] = itemOption.name || '';
     this.filteredItems[i] = [];
     this.showItemDropdown[i] = false;
-    this.itemLocations[i] = itemOption.locations || [];
-    if (this.itemLocations[i].length > 0) {
-      this.itemsArray.at(i).patchValue({
-        fromLocationId: this.itemLocations[i][0].location_id
-      });
-    }
-    this.onItemChange(i);
+    this.loadFromLocations(i, itemOption.id);
+  }
+
+  // Load available "from" locations for the selected item (company-aware)
+  loadFromLocations(i: number, itemId: number) {
+    const company = this.svc.getCompanyId();
+    this.svc.get(`/items/item-wise-locations/${itemId}/?company=${company}`).subscribe({
+      next: (res: any) => {
+        if (res.status === 200 && Array.isArray(res.data)) {
+          this.itemLocations[i] = res.data.map((r: any) => ({
+            location_id: r.location,
+            location_name: r.location_name,
+            qty: r.qty
+          }));
+          if (this.itemLocations[i].length > 0) {
+            const first = this.itemLocations[i][0];
+            this.itemsArray.at(i).patchValue({
+              fromLocationId: first.location_id,
+              quantity: Math.min(first.qty, this.itemsArray.at(i).get('quantity')?.value || 1)
+            });
+          }
+        } else {
+          this.itemLocations[i] = [];
+        }
+      },
+      error: () => { this.itemLocations[i] = []; }
+    });
   }
 }

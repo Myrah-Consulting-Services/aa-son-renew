@@ -48,7 +48,7 @@
                     <input
                       type="text"
                       class="form-control form-control-sm"
-                      formControlName="itemId"
+                      [value]="itemSearchTerms[i]"
                       (focus)="onItemFocus(i)"
                       (input)="onItemInput(i, $event)"
                       (blur)="onItemBlur(i)"
