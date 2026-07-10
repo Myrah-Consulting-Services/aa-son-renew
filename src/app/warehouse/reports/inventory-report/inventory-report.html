@@ -148,17 +148,17 @@
             </thead>
             <tbody>
               <tr *ngFor="let item of filteredStock">
-                <td><strong>{{ getItemName(item.itemId) }}</strong></td>
-                <td>{{ getItemSku(item.itemId) }}</td>
-                <td>{{ getWarehouseName(item.warehouseId) }}</td>
-                <td>{{ getLocationName(item.locationId) }}</td>
+                <td><strong>{{ item.itemName || getItemName(item.itemId) }}</strong></td>
+                <td>{{ item.sku || getItemSku(item.itemId) }}</td>
+                <td>{{ item.warehouseName || getWarehouseName(item.warehouseId) }}</td>
+                <td>{{ getLocationName(item) }}</td>
                 <td class="text-end fw-bold">{{ item.quantity }}</td>
                 <td>
                   <span class="badge" 
-                    [class.bg-success]="getItemStatus(item.quantity) === 'In Stock'"
-                    [class.bg-warning]="getItemStatus(item.quantity) === 'Reorder'"
-                    [class.bg-danger]="getItemStatus(item.quantity) === 'Low Stock'">
-                    {{ getItemStatus(item.quantity) }}
+                    [class.bg-success]="getItemStatus(item) === 'In Stock'"
+                    [class.bg-warning]="getItemStatus(item) === 'Reorder'"
+                    [class.bg-danger]="getItemStatus(item) === 'Low Stock'">
+                    {{ getItemStatus(item) }}
                   </span>
                 </td>
                 <td class="text-end">

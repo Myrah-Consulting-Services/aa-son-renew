@@ -8,6 +8,7 @@ import { Auth } from './auth';
 })
 export class Api {
   private baseUrl = 'https://aasonsapi.esarwa.com';
+  // private baseUrl = 'http://192.168.1.8:8000';
 
   constructor(
     private http: HttpClient
