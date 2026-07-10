@@ -84,7 +84,7 @@ $warm-dark: #1f2937;
       }
       
       &::after {
-        content: '/';
+        // content: '/';
         color: $warm-gray;
         margin: 0 0.125rem;
         user-select: none;
