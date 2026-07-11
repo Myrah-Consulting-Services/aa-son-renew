@@ -3,16 +3,11 @@ import { Api } from './api';
 import { Observable, of } from 'rxjs';
 
 export type IntegrationPartner = 'careem';
-export type WebhookEventStatus = 'received' | 'processed' | 'failed' | 'pending';
 
 export interface IntegrationConnectionSettings {
   enabled: boolean;
-  merchant_id: string;
-  api_key: string;
-  api_secret: string;
-  webhook_url: string;
-  webhook_secret: string;
-  events: string[];
+  client_id: string;
+  client_secret: string;
 }
 
 export interface IntegrationSettings {
@@ -22,33 +17,138 @@ export interface IntegrationSettings {
   };
 }
 
-export interface WebhookEvent {
-  id: string;
-  partner: IntegrationPartner;
-  eventType: string;
-  payload: Record<string, unknown>;
-  status: WebhookEventStatus;
-  receivedAt: string;
-  processedAt: string | null;
-  message: string;
+export interface CareemOrderPrice {
+  original_total_price: number;
+  careem_discount_amount: number;
+  merchant_discount_amount: number;
+  merchant_promo_amount: number;
+  careem_promo_amount: number;
+  tax_percentage: number;
+  total_taxable_price: number;
+  delivery_fee: number;
+  free_delivery_discount_value: number;
+  service_fee: number;
+  promo_code: string;
 }
 
-const CAREEM_EVENTS = [
-  'order.created',
-  'order.updated',
-  'order.cancelled',
-  'order.delivered',
-  'payment.completed',
-];
+export interface CareemBranch {
+  id: string;
+  name: string;
+  brand_id: string;
+  state: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CareemOption {
+  id: string;
+  quantity: number;
+  total_price: number;
+  discount: number;
+  careem_discount_amount: number;
+  merchant_discount_amount: number;
+  groups?: CareemGroup[];
+}
+
+export interface CareemGroup {
+  id: string;
+  options: CareemOption[];
+}
+
+export interface CareemOrderItem {
+  id: string;
+  quantity: number;
+  item_price: number;
+  total_price: number;
+  discount: number;
+  careem_discount_amount: number;
+  merchant_discount_amount: number;
+  tags: string;
+  groups: CareemGroup[];
+  unit_price: number;
+  notes: string;
+}
+
+export interface CareemCustomerAddress {
+  name: string;
+  location: { lat: string; lng: string };
+  number: string;
+  building: string;
+  street: string;
+  area: string;
+  city: string;
+  note: string;
+}
+
+export interface CareemCustomer {
+  name: string;
+  phone_number: string;
+  address: CareemCustomerAddress;
+  payment_type: string;
+}
+
+export interface CareemCaptain {
+  name: string;
+  phone_number: string;
+  eta: string;
+}
+
+export interface CareemOrderInstruction {
+  label: string;
+  icon_url: string;
+  name_localized: { en: string; ar: string };
+}
+
+export interface CareemOrderMetadata {
+  order_instructions: {
+    merchant_notes: string;
+    merchant_instructions: CareemOrderInstruction[];
+  };
+  tags: string;
+}
+
+export interface CareemOrder {
+  id: number;
+  status: string;
+  price: CareemOrderPrice;
+  branch: CareemBranch;
+  items: CareemOrderItem[];
+  created_at: string;
+  updated_at: string;
+  merchant_pay_type: string;
+  delivery_type: string;
+  notes: string;
+  customer: CareemCustomer;
+  captain: CareemCaptain;
+  cash_in: number;
+  cancellation_reason: string;
+  is_scheduled: boolean;
+  prepare_time: string;
+  pickup_time: string;
+  metadata: CareemOrderMetadata;
+}
+
+export interface CareemOrdersMeta {
+  total: number;
+  page_size: number;
+  page_number: number;
+}
+
+export interface CareemOrdersLinks {
+  prev: string;
+  next: string;
+}
+
+export interface CareemOrdersResponse {
+  data: CareemOrder[];
+  meta: CareemOrdersMeta;
+  links: CareemOrdersLinks;
+}
 
 const DEFAULT_CAREEM: IntegrationConnectionSettings = {
   enabled: false,
-  merchant_id: '',
-  api_key: '',
-  api_secret: '',
-  webhook_url: '',
-  webhook_secret: '',
-  events: [...CAREEM_EVENTS],
+  client_id: '',
+  client_secret: '',
 };
 
 const DEFAULT_SETTINGS: IntegrationSettings = {
@@ -60,8 +160,6 @@ const DEFAULT_SETTINGS: IntegrationSettings = {
 
 @Injectable({ providedIn: 'root' })
 export class IntegrationService {
-  readonly careemEvents = CAREEM_EVENTS;
-
   constructor(private api: Api) {}
 
   private companyId(): number {
@@ -72,8 +170,8 @@ export class IntegrationService {
     return `integration_settings_${this.companyId()}`;
   }
 
-  private eventsKey(): string {
-    return `integration_webhook_events_${this.companyId()}`;
+  private ordersKey(): string {
+    return `integration_careem_orders_${this.companyId()}`;
   }
 
   getSettings(): Observable<IntegrationSettings> {
@@ -88,171 +186,22 @@ export class IntegrationService {
   isPartnerConfigured(partner: IntegrationPartner, settings: IntegrationSettings): boolean {
     const p = settings.partners[partner];
     if (!p?.enabled) return false;
-    return !!(
-      p.merchant_id?.trim() &&
-      p.api_key?.trim() &&
-      p.api_secret?.trim() &&
-      p.webhook_secret?.trim()
-    );
+    return !!(p.client_id?.trim() && p.client_secret?.trim());
   }
 
-  getDefaultWebhookUrl(partner: IntegrationPartner): string {
-    const base = typeof window !== 'undefined' ? window.location.origin : 'https://your-app.example.com';
-    return `${base}/api/webhooks/${partner}`;
+  /** Returns Careem orders list matching `/api/orders` sample response shape. */
+  getCareemOrders(): CareemOrdersResponse {
+    const stored = this.readJson<CareemOrdersResponse | null>(this.ordersKey(), null);
+    if (stored?.data?.length) return stored;
+    const sample = this.sampleCareemOrdersResponse();
+    localStorage.setItem(this.ordersKey(), JSON.stringify(sample));
+    return sample;
   }
 
-  listWebhookEvents(): WebhookEvent[] {
-    const events = this.readJson<WebhookEvent[]>(this.eventsKey(), []);
-    if (events.length) {
-      return events.sort(
-        (a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime()
-      );
-    }
-    const seed = this.seedCareemEvents();
-    localStorage.setItem(this.eventsKey(), JSON.stringify(seed));
-    return seed;
-  }
-
-  /** Simulate receiving a Careem webhook (dummy). */
-  simulateWebhook(partner: IntegrationPartner = 'careem'): WebhookEvent {
-    const event = this.buildDummyEvent(partner);
-    const events = this.listWebhookEvents();
-    events.unshift(event);
-    localStorage.setItem(this.eventsKey(), JSON.stringify(events.slice(0, 100)));
-    return event;
-  }
-
-  markEventProcessed(eventId: string): WebhookEvent | null {
-    const events = this.listWebhookEvents();
-    const idx = events.findIndex(e => e.id === eventId);
-    if (idx < 0) return null;
-    events[idx] = {
-      ...events[idx],
-      status: 'processed',
-      processedAt: new Date().toISOString(),
-      message: 'Marked as processed (local dummy)',
-    };
-    localStorage.setItem(this.eventsKey(), JSON.stringify(events));
-    return events[idx];
-  }
-
-  markEventFailed(eventId: string): WebhookEvent | null {
-    const events = this.listWebhookEvents();
-    const idx = events.findIndex(e => e.id === eventId);
-    if (idx < 0) return null;
-    events[idx] = {
-      ...events[idx],
-      status: 'failed',
-      message: 'Marked as failed (local dummy)',
-    };
-    localStorage.setItem(this.eventsKey(), JSON.stringify(events));
-    return events[idx];
-  }
-
-  private seedCareemEvents(): WebhookEvent[] {
-    const now = Date.now();
-    return [
-      this.buildDummyEvent('careem', {
-        eventType: 'order.created',
-        status: 'processed',
-        receivedAt: new Date(now - 3600_000).toISOString(),
-        processedAt: new Date(now - 3590_000).toISOString(),
-        orderId: 'CRM-100245',
-        amount: 87.5,
-        customer: 'Omar Al Farsi',
-        message: 'Order synced to sales invoice',
-      }),
-      this.buildDummyEvent('careem', {
-        eventType: 'order.updated',
-        status: 'received',
-        receivedAt: new Date(now - 1800_000).toISOString(),
-        processedAt: null,
-        orderId: 'CRM-100246',
-        amount: 42.0,
-        customer: 'Layla Hassan',
-        message: 'Awaiting processing',
-      }),
-      this.buildDummyEvent('careem', {
-        eventType: 'order.delivered',
-        status: 'processed',
-        receivedAt: new Date(now - 7200_000).toISOString(),
-        processedAt: new Date(now - 7150_000).toISOString(),
-        orderId: 'CRM-100240',
-        amount: 125.75,
-        customer: 'Priya Sharma',
-        message: 'Delivery confirmed',
-      }),
-      this.buildDummyEvent('careem', {
-        eventType: 'payment.completed',
-        status: 'failed',
-        receivedAt: new Date(now - 900_000).toISOString(),
-        processedAt: null,
-        orderId: 'CRM-100248',
-        amount: 55.0,
-        customer: 'James Wilson',
-        message: 'Signature verification failed (dummy)',
-      }),
-      this.buildDummyEvent('careem', {
-        eventType: 'order.cancelled',
-        status: 'pending',
-        receivedAt: new Date(now - 300_000).toISOString(),
-        processedAt: null,
-        orderId: 'CRM-100249',
-        amount: 33.25,
-        customer: 'Noor Abdullah',
-        message: 'Queued for cancel sync',
-      }),
-    ];
-  }
-
-  private buildDummyEvent(
-    partner: IntegrationPartner,
-    overrides?: Partial<{
-      eventType: string;
-      status: WebhookEventStatus;
-      receivedAt: string;
-      processedAt: string | null;
-      orderId: string;
-      amount: number;
-      customer: string;
-      message: string;
-    }>
-  ): WebhookEvent {
-    const orderId =
-      overrides?.orderId || `CRM-${Math.floor(100000 + Math.random() * 900000)}`;
-    const amount =
-      overrides?.amount ?? Math.round((20 + Math.random() * 150) * 100) / 100;
-    const customers = ['Omar Al Farsi', 'Layla Hassan', 'Priya Sharma', 'James Wilson', 'Noor Abdullah'];
-    const customer =
-      overrides?.customer || customers[Math.floor(Math.random() * customers.length)];
-    const eventType =
-      overrides?.eventType ||
-      CAREEM_EVENTS[Math.floor(Math.random() * CAREEM_EVENTS.length)];
-    const status = overrides?.status || 'received';
-    const receivedAt = overrides?.receivedAt || new Date().toISOString();
-
-    return {
-      id: this.generateId(),
-      partner,
-      eventType,
-      status,
-      receivedAt,
-      processedAt: overrides?.processedAt ?? null,
-      message: overrides?.message || `Dummy ${eventType} from Careem`,
-      payload: {
-        id: orderId,
-        partner: 'careem',
-        event: eventType,
-        merchant_id: 'CAREEM-DEMO-001',
-        customer: { name: customer, phone: '+9715XXXXXX' },
-        amount,
-        currency: 'AED',
-        items: [
-          { sku: 'SKU-CRM-01', name: 'Demo Product', qty: 1, price: amount },
-        ],
-        created_at: receivedAt,
-      },
-    };
+  refreshCareemOrders(): CareemOrdersResponse {
+    const sample = this.sampleCareemOrdersResponse();
+    localStorage.setItem(this.ordersKey(), JSON.stringify(sample));
+    return sample;
   }
 
   private loadSettingsFromStorage(): IntegrationSettings {
@@ -264,28 +213,259 @@ export class IntegrationService {
         /* fall through */
       }
     }
-    const defaults = structuredClone(DEFAULT_SETTINGS);
-    defaults.partners.careem.webhook_url = this.getDefaultWebhookUrl('careem');
-    return defaults;
+    return structuredClone(DEFAULT_SETTINGS);
   }
 
   private normalizeSettings(data: any): IntegrationSettings {
     const partners = data.partners || {};
-    const careem = { ...DEFAULT_CAREEM, ...(partners.careem || {}) };
-    if (!careem.webhook_url) {
-      careem.webhook_url = this.getDefaultWebhookUrl('careem');
-    }
-    if (!Array.isArray(careem.events) || !careem.events.length) {
-      careem.events = [...CAREEM_EVENTS];
-    }
+    const raw = partners.careem || {};
     return {
       enabled: data.enabled ?? false,
-      partners: { careem },
+      partners: {
+        careem: {
+          enabled: raw.enabled ?? false,
+          client_id: raw.client_id || raw.api_key || '',
+          client_secret: raw.client_secret || raw.api_secret || '',
+        },
+      },
     };
   }
 
-  private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  private sampleCareemOrdersResponse(): CareemOrdersResponse {
+    const baseItem = (notes: string): CareemOrderItem => ({
+      id: '345',
+      quantity: 2,
+      item_price: 18,
+      total_price: 22.5,
+      discount: 9.5,
+      careem_discount_amount: 4.75,
+      merchant_discount_amount: 4.75,
+      tags: 'careem-mealson',
+      groups: [
+        {
+          id: '30',
+          options: [
+            {
+              id: '129',
+              quantity: 2,
+              total_price: 2.25,
+              discount: 1.5,
+              careem_discount_amount: 0.75,
+              merchant_discount_amount: 0.75,
+              groups: [
+                {
+                  id: '31',
+                  options: [
+                    {
+                      id: '130',
+                      quantity: 1,
+                      total_price: 0,
+                      discount: 0,
+                      careem_discount_amount: 0,
+                      merchant_discount_amount: 0,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      unit_price: 9,
+      notes,
+    });
+
+    const branch: CareemBranch = {
+      id: 'a34587b290784c06',
+      name: 'KFC, JLT',
+      brand_id: '1228a02e60e34037',
+      state: 'MAPPED',
+      created_at: '2020-06-22T15:01:32.895Z',
+      updated_at: '2020-06-22T15:01:32.895Z',
+    };
+
+    const metadata: CareemOrderMetadata = {
+      order_instructions: {
+        merchant_notes: 'Please make the order less spicy',
+        merchant_instructions: [
+          {
+            label: 'INCLUDE_CUTLERY',
+            icon_url: 'test.url',
+            name_localized: {
+              en: 'Include Cutlery',
+              ar: 'أدوات المائدة متضمنة',
+            },
+          },
+        ],
+      },
+      tags: 'careem-mealson',
+    };
+
+    const orders: CareemOrder[] = [
+      {
+        id: 1001,
+        status: 'pending',
+        price: {
+          original_total_price: 22.5,
+          careem_discount_amount: 5.5,
+          merchant_discount_amount: 5.5,
+          merchant_promo_amount: 9,
+          careem_promo_amount: 0,
+          tax_percentage: 5,
+          total_taxable_price: 1557.37,
+          delivery_fee: 10,
+          free_delivery_discount_value: 0,
+          service_fee: 5,
+          promo_code: 'FREEPROMO30',
+        },
+        branch,
+        items: [baseItem('Allergic to peanuts'), baseItem('Allergic to peanuts')],
+        created_at: '2020-06-22T15:01:32.895Z',
+        updated_at: '2020-06-22T15:01:32.895Z',
+        merchant_pay_type: 'cash',
+        delivery_type: 'careem',
+        notes: 'please add extra ketchup',
+        customer: {
+          name: 'Derek Falcon',
+          phone_number: '+971500000001',
+          address: {
+            name: 'Work',
+            location: { lat: '-39.65539', lng: '-31.78606' },
+            number: 'G04',
+            building: "'204', '1A'",
+            street: '3075 Dye Street',
+            area: 'Marina',
+            city: 'Dubai',
+            note: '',
+          },
+          payment_type: 'cash',
+        },
+        captain: {
+          name: 'Ahmed Captain',
+          phone_number: '+971500000099',
+          eta: '2024-09-01T15:01:32.895Z',
+        },
+        cash_in: 41,
+        cancellation_reason: '',
+        is_scheduled: false,
+        prepare_time: '2020-06-22T15:01:32.895Z',
+        pickup_time: '2020-06-22T15:01:32.895Z',
+        metadata,
+      },
+      {
+        id: 1002,
+        status: 'accepted',
+        price: {
+          original_total_price: 45.0,
+          careem_discount_amount: 5.5,
+          merchant_discount_amount: 5.5,
+          merchant_promo_amount: 9,
+          careem_promo_amount: 0,
+          tax_percentage: 5,
+          total_taxable_price: 42.75,
+          delivery_fee: 10,
+          free_delivery_discount_value: 0,
+          service_fee: 5,
+          promo_code: 'FREEPROMO30',
+        },
+        branch: { ...branch, name: 'KFC, Marina' },
+        items: [baseItem('No onions please')],
+        created_at: '2020-06-23T12:20:00.000Z',
+        updated_at: '2020-06-23T12:25:00.000Z',
+        merchant_pay_type: 'cash',
+        delivery_type: 'careem',
+        notes: 'Ring the doorbell',
+        customer: {
+          name: 'Sara Al Maktoum',
+          phone_number: '+971500000002',
+          address: {
+            name: 'Home',
+            location: { lat: '25.0657', lng: '55.1713' },
+            number: '12',
+            building: 'Tower A',
+            street: 'Al Wasl Road',
+            area: 'Jumeirah',
+            city: 'Dubai',
+            note: 'Gate 2',
+          },
+          payment_type: 'card',
+        },
+        captain: {
+          name: 'Omar Rider',
+          phone_number: '+971500000088',
+          eta: '2024-09-01T16:00:00.000Z',
+        },
+        cash_in: 0,
+        cancellation_reason: '',
+        is_scheduled: false,
+        prepare_time: '2020-06-23T12:20:00.000Z',
+        pickup_time: '2020-06-23T12:35:00.000Z',
+        metadata,
+      },
+      {
+        id: 1003,
+        status: 'delivered',
+        price: {
+          original_total_price: 68.0,
+          careem_discount_amount: 0,
+          merchant_discount_amount: 2,
+          merchant_promo_amount: 0,
+          careem_promo_amount: 0,
+          tax_percentage: 5,
+          total_taxable_price: 66.0,
+          delivery_fee: 8,
+          free_delivery_discount_value: 0,
+          service_fee: 3,
+          promo_code: '',
+        },
+        branch: { ...branch, name: 'KFC, Business Bay' },
+        items: [baseItem('Extra spicy'), baseItem('')],
+        created_at: '2020-06-21T09:10:00.000Z',
+        updated_at: '2020-06-21T10:05:00.000Z',
+        merchant_pay_type: 'online',
+        delivery_type: 'careem',
+        notes: '',
+        customer: {
+          name: 'James Wilson',
+          phone_number: '+971500000003',
+          address: {
+            name: 'Office',
+            location: { lat: '25.1860', lng: '55.2640' },
+            number: '802',
+            building: 'Bay Square',
+            street: 'Al Abraj Street',
+            area: 'Business Bay',
+            city: 'Dubai',
+            note: '',
+          },
+          payment_type: 'card',
+        },
+        captain: {
+          name: 'Khalid Rider',
+          phone_number: '+971500000077',
+          eta: '2020-06-21T09:45:00.000Z',
+        },
+        cash_in: 0,
+        cancellation_reason: '',
+        is_scheduled: false,
+        prepare_time: '2020-06-21T09:15:00.000Z',
+        pickup_time: '2020-06-21T09:30:00.000Z',
+        metadata,
+      },
+    ];
+
+    return {
+      data: orders,
+      meta: {
+        total: 90,
+        page_size: 20,
+        page_number: 1,
+      },
+      links: {
+        prev: 'URL/api/orders?page_number=1',
+        next: 'URL/api/orders?page_number=3',
+      },
+    };
   }
 
   private readJson<T>(key: string, fallback: T): T {

@@ -12,11 +12,11 @@ import {
   IntegrationService,
   IntegrationSettings,
   IntegrationPartner,
-  WebhookEvent,
-  WebhookEventStatus,
+  CareemOrder,
+  CareemOrdersMeta,
 } from '../../../core/services/integration.service';
 
-type SubTab = 'connections' | 'webhooks';
+type SubTab = 'connections' | 'orders';
 
 interface PartnerField {
   key: string;
@@ -25,7 +25,6 @@ interface PartnerField {
   required?: boolean;
   secret?: boolean;
   hint?: string;
-  readonly?: boolean;
 }
 
 interface PartnerConfig {
@@ -47,71 +46,48 @@ interface PartnerConfig {
   styleUrl: './integration.scss',
 })
 export class Integration implements OnInit {
-  @ViewChild('eventDetailModal') eventDetailModal!: TemplateRef<any>;
+  @ViewChild('orderDetailModal') orderDetailModal!: TemplateRef<any>;
 
   activeSubTab: SubTab = 'connections';
   settingsForm!: FormGroup;
   settingsSaving = false;
   currentSettings!: IntegrationSettings;
   visibleSecrets: Record<string, boolean> = {};
-  expandedPartner: IntegrationPartner | null = 'careem';
 
   partners: PartnerConfig[] = [
     {
       id: 'careem',
       name: 'Careem',
-      label: 'Delivery & Orders',
+      label: 'Orders API',
       description:
-        'Connect Careem via webhook so order and payment events sync into your software. Configure credentials and the webhook endpoint Careem will call.',
+        'Connect Careem with Client ID and Client Secret to pull orders into your software.',
       icon: 'bi bi-bicycle',
       color: 'linear-gradient(135deg, #00e784 0%, #0a0a0a 100%)',
       docsUrl: 'https://www.careem.com/',
       fields: [
         {
-          key: 'merchant_id',
-          label: 'Merchant ID',
-          placeholder: 'Careem merchant / partner ID',
+          key: 'client_id',
+          label: 'Client ID',
+          placeholder: 'Enter Careem Client ID',
           required: true,
         },
         {
-          key: 'api_key',
-          label: 'API Key',
-          placeholder: 'Enter API key',
+          key: 'client_secret',
+          label: 'Client Secret',
+          placeholder: 'Enter Careem Client Secret',
           required: true,
           secret: true,
-        },
-        {
-          key: 'api_secret',
-          label: 'API Secret',
-          placeholder: 'Enter API secret',
-          required: true,
-          secret: true,
-        },
-        {
-          key: 'webhook_url',
-          label: 'Webhook URL',
-          placeholder: 'https://your-app/api/webhooks/careem',
-          required: true,
-          readonly: true,
-          hint: 'Provide this URL to Careem so they can push events to your software',
-        },
-        {
-          key: 'webhook_secret',
-          label: 'Webhook Secret',
-          placeholder: 'Shared secret for signature verification',
-          required: true,
-          secret: true,
-          hint: 'Used to verify incoming Careem webhook signatures',
         },
       ],
     },
   ];
 
-  events: WebhookEvent[] = [];
-  filteredEvents: WebhookEvent[] = [];
-  eventSearch = '';
-  statusFilter: 'all' | WebhookEventStatus = 'all';
-  selectedEvent: WebhookEvent | null = null;
+  orders: CareemOrder[] = [];
+  filteredOrders: CareemOrder[] = [];
+  ordersMeta: CareemOrdersMeta | null = null;
+  orderSearch = '';
+  statusFilter = 'all';
+  selectedOrder: CareemOrder | null = null;
   private modalRef?: NgbModalRef;
 
   constructor(
@@ -125,7 +101,7 @@ export class Integration implements OnInit {
 
   ngOnInit() {
     this.loadSettings();
-    this.refreshEvents();
+    this.refreshOrders();
   }
 
   private initForms() {
@@ -138,9 +114,6 @@ export class Integration implements OnInit {
       p.fields.forEach(field => {
         controls[`${p.id}_${field.key}`] = [''];
       });
-      this.integrationService.careemEvents.forEach(ev => {
-        controls[`${p.id}_event_${ev.replace(/\./g, '_')}`] = [true];
-      });
     });
 
     this.settingsForm = this.fb.group(controls);
@@ -148,7 +121,7 @@ export class Integration implements OnInit {
 
   switchSubTab(tab: SubTab) {
     this.activeSubTab = tab;
-    if (tab === 'webhooks') this.refreshEvents();
+    if (tab === 'orders') this.refreshOrders();
   }
 
   loadSettings() {
@@ -165,15 +138,7 @@ export class Integration implements OnInit {
       const data = s.partners[p.id];
       patch[`${p.id}_enabled`] = data?.enabled ?? false;
       p.fields.forEach(field => {
-        let value = (data as any)?.[field.key] || '';
-        if (field.key === 'webhook_url' && !value) {
-          value = this.integrationService.getDefaultWebhookUrl(p.id);
-        }
-        patch[`${p.id}_${field.key}`] = value;
-      });
-      this.integrationService.careemEvents.forEach(ev => {
-        const key = `${p.id}_event_${ev.replace(/\./g, '_')}`;
-        patch[key] = data?.events?.includes(ev) ?? true;
+        patch[`${p.id}_${field.key}`] = (data as any)?.[field.key] || '';
       });
     });
 
@@ -181,9 +146,8 @@ export class Integration implements OnInit {
   }
 
   private buildSettingsPayload(): IntegrationSettings {
-    const v = this.settingsForm.value;
     return {
-      enabled: v.enabled,
+      enabled: this.settingsForm.value.enabled,
       partners: {
         careem: this.buildPartnerData('careem'),
       },
@@ -194,16 +158,9 @@ export class Integration implements OnInit {
     const partner = this.partners.find(p => p.id === id)!;
     const data: any = {
       enabled: this.settingsForm.get(`${id}_enabled`)?.value ?? false,
-      events: [] as string[],
     };
     partner.fields.forEach(field => {
       data[field.key] = this.settingsForm.get(`${id}_${field.key}`)?.value || '';
-    });
-    this.integrationService.careemEvents.forEach(ev => {
-      const key = `${id}_event_${ev.replace(/\./g, '_')}`;
-      if (this.settingsForm.get(key)?.value) {
-        data.events.push(ev);
-      }
     });
     return data;
   }
@@ -216,20 +173,6 @@ export class Integration implements OnInit {
       this.settingsSaving = false;
       this.toast.show('Success', 'Integration settings saved', 'success');
     });
-  }
-
-  togglePartnerExpand(id: IntegrationPartner) {
-    this.expandedPartner = this.expandedPartner === id ? null : id;
-  }
-
-  onPartnerToggle(id: IntegrationPartner) {
-    if (this.settingsForm.get(`${id}_enabled`)?.value) {
-      this.expandedPartner = id;
-      const urlCtrl = this.settingsForm.get(`${id}_webhook_url`);
-      if (urlCtrl && !urlCtrl.value) {
-        urlCtrl.setValue(this.integrationService.getDefaultWebhookUrl(id));
-      }
-    }
   }
 
   isPartnerConfigured(id: IntegrationPartner): boolean {
@@ -249,23 +192,11 @@ export class Integration implements OnInit {
     this.visibleSecrets[key] = !this.visibleSecrets[key];
   }
 
-  copyWebhookUrl(id: IntegrationPartner) {
-    const url = this.settingsForm.get(`${id}_webhook_url`)?.value || '';
-    if (!url) {
-      this.toast.show('Info', 'No webhook URL to copy', 'info');
-      return;
-    }
-    navigator.clipboard?.writeText(url).then(
-      () => this.toast.show('Copied', 'Webhook URL copied to clipboard', 'success'),
-      () => this.toast.show('Error', 'Could not copy URL', 'danger')
-    );
-  }
-
   testConnection(id: IntegrationPartner) {
     const partner = this.partners.find(p => p.id === id);
     if (!partner) return;
     const missing = partner.fields.filter(
-      f => f.required && !f.readonly && !this.settingsForm.get(`${id}_${f.key}`)?.value?.trim()
+      f => f.required && !this.settingsForm.get(`${id}_${f.key}`)?.value?.trim()
     );
     if (missing.length) {
       this.toast.show(
@@ -277,113 +208,90 @@ export class Integration implements OnInit {
     }
     this.toast.show(
       'Connection Test',
-      `${partner.name} credentials saved locally. Webhook connect API pending.`,
+      `${partner.name} Client ID / Secret saved locally. Orders API connect pending.`,
       'success'
     );
   }
 
-  get careemEventList(): string[] {
-    return this.integrationService.careemEvents;
+  refreshOrders() {
+    const response = this.integrationService.getCareemOrders();
+    this.orders = response.data || [];
+    this.ordersMeta = response.meta || null;
+    this.applyOrderFilters();
   }
 
-  eventControlName(partnerId: string, event: string): string {
-    return `${partnerId}_event_${event.replace(/\./g, '_')}`;
-  }
-
-  // Webhook events
-  refreshEvents() {
-    this.events = this.integrationService.listWebhookEvents();
-    this.applyEventFilters();
-  }
-
-  applyEventFilters() {
-    let list = [...this.events];
-    const q = this.eventSearch.trim().toLowerCase();
-    if (q) {
-      list = list.filter(
-        e =>
-          e.eventType.toLowerCase().includes(q) ||
-          e.message.toLowerCase().includes(q) ||
-          String((e.payload as any)?.id || '').toLowerCase().includes(q) ||
-          String((e.payload as any)?.customer?.name || '').toLowerCase().includes(q)
-      );
-    }
-    if (this.statusFilter !== 'all') {
-      list = list.filter(e => e.status === this.statusFilter);
-    }
-    this.filteredEvents = list;
-  }
-
-  onEventSearchChange() {
-    this.applyEventFilters();
-  }
-
-  onStatusFilterChange() {
-    this.applyEventFilters();
-  }
-
-  simulateWebhook() {
+  reloadSampleOrders() {
     const settings = this.buildSettingsPayload();
     if (!settings.partners.careem.enabled) {
       this.toast.show('Validation', 'Enable Careem integration first', 'warning');
       return;
     }
-    this.integrationService.simulateWebhook('careem');
-    this.refreshEvents();
-    this.toast.show('Webhook', 'Simulated Careem webhook received (dummy)', 'success');
+    if (!this.isPartnerConfigured('careem')) {
+      this.toast.show('Validation', 'Enter Client ID and Client Secret first', 'warning');
+      return;
+    }
+    const response = this.integrationService.refreshCareemOrders();
+    this.orders = response.data || [];
+    this.ordersMeta = response.meta || null;
+    this.applyOrderFilters();
+    this.toast.show('Orders', `Loaded ${this.orders.length} Careem sample order(s)`, 'success');
   }
 
-  openEventDetail(event: WebhookEvent) {
-    this.selectedEvent = event;
-    this.modalRef = this.modalService.open(this.eventDetailModal, { size: 'md' });
+  applyOrderFilters() {
+    let list = [...this.orders];
+    const q = this.orderSearch.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        o =>
+          String(o.id).includes(q) ||
+          (o.customer?.name || '').toLowerCase().includes(q) ||
+          (o.branch?.name || '').toLowerCase().includes(q) ||
+          (o.status || '').toLowerCase().includes(q) ||
+          (o.notes || '').toLowerCase().includes(q)
+      );
+    }
+    if (this.statusFilter !== 'all') {
+      list = list.filter(o => o.status === this.statusFilter);
+    }
+    this.filteredOrders = list;
+  }
+
+  onOrderSearchChange() {
+    this.applyOrderFilters();
+  }
+
+  onStatusFilterChange() {
+    this.applyOrderFilters();
+  }
+
+  get uniqueStatuses(): string[] {
+    return [...new Set(this.orders.map(o => o.status).filter(Boolean))];
+  }
+
+  openOrderDetail(order: CareemOrder) {
+    this.selectedOrder = order;
+    this.modalRef = this.modalService.open(this.orderDetailModal, {
+      size: 'md',
+      centered: true,
+      windowClass: 'integration-order-modal',
+    });
   }
 
   closeModal() {
     this.modalRef?.dismiss();
   }
 
-  markProcessed(event: WebhookEvent) {
-    if (this.integrationService.markEventProcessed(event.id)) {
-      this.toast.show('Updated', 'Event marked as processed', 'success');
-      this.refreshEvents();
-    }
+  orderTotal(order: CareemOrder): number {
+    return order.price?.original_total_price ?? 0;
   }
 
-  markFailed(event: WebhookEvent) {
-    if (this.integrationService.markEventFailed(event.id)) {
-      this.toast.show('Updated', 'Event marked as failed', 'warning');
-      this.refreshEvents();
-    }
+  orderItemCount(order: CareemOrder): number {
+    return (order.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
   }
 
-  statusLabel(status: WebhookEventStatus): string {
-    const map: Record<WebhookEventStatus, string> = {
-      received: 'Received',
-      processed: 'Processed',
-      failed: 'Failed',
-      pending: 'Pending',
-    };
-    return map[status] || status;
-  }
-
-  partnerLabel(partner: IntegrationPartner): string {
-    return partner === 'careem' ? 'Careem' : partner;
-  }
-
-  payloadPreview(event: WebhookEvent): string {
-    return JSON.stringify(event.payload, null, 2);
-  }
-
-  eventOrderId(event: WebhookEvent): string {
-    return String(event.payload?.['id'] ?? '—');
-  }
-
-  eventCustomer(event: WebhookEvent): string {
-    const customer = event.payload?.['customer'] as { name?: string } | undefined;
-    return customer?.name || '—';
-  }
-
-  eventAmount(event: WebhookEvent): number {
-    return Number(event.payload?.['amount'] ?? 0);
+  customerAddress(order: CareemOrder): string {
+    const a = order.customer?.address;
+    if (!a) return '—';
+    return [a.number, a.building, a.street, a.area, a.city].filter(Boolean).join(', ');
   }
 }

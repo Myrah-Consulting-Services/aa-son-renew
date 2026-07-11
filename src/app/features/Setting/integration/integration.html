@@ -1,168 +1,104 @@
 <div class="integration">
   <div class="integration-sub-tabs">
     <button type="button" class="sub-tab" [class.active]="activeSubTab === 'connections'" (click)="switchSubTab('connections')">
-      <i class="bi bi-plug"></i> Connections
+      Connections
     </button>
-    <button type="button" class="sub-tab" [class.active]="activeSubTab === 'webhooks'" (click)="switchSubTab('webhooks')">
-      <i class="bi bi-broadcast"></i> Webhook Events
+    <button type="button" class="sub-tab" [class.active]="activeSubTab === 'orders'" (click)="switchSubTab('orders')">
+      Careem Orders
     </button>
   </div>
 
-  <!-- Connections sub-tab -->
+  <!-- Connections -->
   <div class="sub-tab-pane" *ngIf="activeSubTab === 'connections'">
-    <form [formGroup]="settingsForm" class="setting-form-compact" (ngSubmit)="saveSettings()">
-
-      <div class="setting-section program-section">
-        <div class="section-header">
-          <span class="section-icon">🔗</span>
-          <h4 class="section-title">Integrations</h4>
+    <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+      <div class="connect-panel">
+        <div class="connect-panel-top">
+          <div>
+            <h4 class="connect-title">Partner Connection</h4>
+            <p class="connect-hint">Enable Careem and enter Client ID / Client Secret.</p>
+          </div>
           <label class="section-toggle">
             <input type="checkbox" formControlName="enabled">
             <span class="toggle-slider"></span>
-            <span class="toggle-label">Enabled</span>
+            <span class="toggle-label">On</span>
           </label>
         </div>
-        <p class="section-hint">Connect external partners via webhook so order and payment events sync into your software.</p>
-      </div>
 
-      <div class="setting-section partner-cards-section">
-        <div class="section-header">
-          <span class="section-icon">🤝</span>
-          <h4 class="section-title">Partner Connections</h4>
-        </div>
-        <p class="section-hint">Enable a partner, enter API credentials, and share the webhook URL for event delivery.</p>
-
-        <div class="gateway-grid">
-          <div
-            *ngFor="let partner of partners"
-            class="gateway-card"
-            [class.enabled]="settingsForm.get(partner.id + '_enabled')?.value"
-            [class.expanded]="expandedPartner === partner.id"
-          >
-            <div class="gateway-card-header" (click)="togglePartnerExpand(partner.id)">
-              <div class="gateway-brand">
-                <div class="gateway-logo" [style.background]="partner.color">
-                  <i [class]="partner.icon"></i>
-                </div>
-                <div class="gateway-info">
-                  <span class="gateway-name">{{ partner.name }}</span>
-                  <span class="gateway-type">{{ partner.label }}</span>
-                </div>
+        <div
+          *ngFor="let partner of partners"
+          class="partner-row"
+          [class.enabled]="settingsForm.get(partner.id + '_enabled')?.value"
+        >
+          <div class="partner-row-head">
+            <div class="gateway-brand">
+              <div class="gateway-logo" [style.background]="partner.color">
+                <i [class]="partner.icon"></i>
               </div>
-              <div class="gateway-header-actions" (click)="$event.stopPropagation()">
-                <span
-                  class="gateway-status-badge"
-                  [class.connected]="isPartnerConfigured(partner.id)"
-                  [class.disconnected]="!isPartnerConfigured(partner.id)"
-                >
-                  <i class="bi" [class.bi-check-circle-fill]="isPartnerConfigured(partner.id)" [class.bi-circle]="!isPartnerConfigured(partner.id)"></i>
-                  {{ isPartnerConfigured(partner.id) ? 'Configured' : 'Not set' }}
-                </span>
-                <label class="gateway-toggle">
-                  <input type="checkbox" [formControlName]="partner.id + '_enabled'" (change)="onPartnerToggle(partner.id)">
-                  <span class="toggle-slider"></span>
-                </label>
-                <button type="button" class="gateway-expand-btn" [class.rotated]="expandedPartner === partner.id">
-                  <i class="bi bi-chevron-down"></i>
-                </button>
+              <div class="gateway-info">
+                <span class="gateway-name">{{ partner.name }}</span>
+                <span class="gateway-type">{{ partner.label }}</span>
               </div>
             </div>
+            <div class="gateway-header-actions">
+              <span
+                class="gateway-status-badge"
+                [class.connected]="isPartnerConfigured(partner.id)"
+                [class.disconnected]="!isPartnerConfigured(partner.id)"
+              >
+                {{ isPartnerConfigured(partner.id) ? 'Ready' : 'Setup' }}
+              </span>
+              <label class="gateway-toggle">
+                <input type="checkbox" [formControlName]="partner.id + '_enabled'">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
 
-            <div class="gateway-card-body" *ngIf="expandedPartner === partner.id">
-              <p class="partner-description">{{ partner.description }}</p>
-
-              <div class="gateway-fields" *ngIf="settingsForm.get(partner.id + '_enabled')?.value">
-                <div class="form-group" *ngFor="let field of partner.fields" [class.full-width]="field.key === 'webhook_url'">
-                  <label [for]="partner.id + '_' + field.key" class="form-label">
-                    {{ field.label }}
-                    <span class="required" *ngIf="field.required">*</span>
-                  </label>
-
-                  <div class="webhook-url-wrap" *ngIf="field.key === 'webhook_url'">
-                    <input
-                      [id]="partner.id + '_' + field.key"
-                      type="text"
-                      class="form-control"
-                      [formControlName]="partner.id + '_' + field.key"
-                      [placeholder]="field.placeholder"
-                      [readonly]="!!field.readonly"
-                      autocomplete="off"
-                    >
-                    <button type="button" class="btn-copy-url" (click)="copyWebhookUrl(partner.id)" title="Copy URL">
-                      <i class="bi bi-clipboard"></i>
-                    </button>
-                  </div>
-
-                  <div class="secret-input-wrap" *ngIf="field.key !== 'webhook_url' && field.secret">
-                    <input
-                      [id]="partner.id + '_' + field.key"
-                      [type]="isSecretVisible(partner.id, field.key) ? 'text' : 'password'"
-                      class="form-control"
-                      [formControlName]="partner.id + '_' + field.key"
-                      [placeholder]="field.placeholder"
-                      autocomplete="off"
-                    >
-                    <button type="button" class="secret-toggle-btn" (click)="toggleSecretVisibility(partner.id, field.key)">
-                      <i class="bi" [class.bi-eye]="!isSecretVisible(partner.id, field.key)" [class.bi-eye-slash]="isSecretVisible(partner.id, field.key)"></i>
-                    </button>
-                  </div>
-
+          <div class="partner-row-body" *ngIf="settingsForm.get(partner.id + '_enabled')?.value">
+            <div class="gateway-fields">
+              <div class="form-group" *ngFor="let field of partner.fields">
+                <label [for]="partner.id + '_' + field.key" class="form-label">
+                  {{ field.label }}
+                  <span class="required" *ngIf="field.required">*</span>
+                </label>
+                <div class="secret-input-wrap" *ngIf="field.secret">
                   <input
-                    *ngIf="field.key !== 'webhook_url' && !field.secret"
                     [id]="partner.id + '_' + field.key"
-                    type="text"
+                    [type]="isSecretVisible(partner.id, field.key) ? 'text' : 'password'"
                     class="form-control"
                     [formControlName]="partner.id + '_' + field.key"
                     [placeholder]="field.placeholder"
                     autocomplete="off"
                   >
-
-                  <span class="field-hint" *ngIf="field.hint">{{ field.hint }}</span>
+                  <button type="button" class="secret-toggle-btn" (click)="toggleSecretVisibility(partner.id, field.key)">
+                    <i class="bi" [class.bi-eye]="!isSecretVisible(partner.id, field.key)" [class.bi-eye-slash]="isSecretVisible(partner.id, field.key)"></i>
+                  </button>
                 </div>
-
-                <div class="events-block" *ngIf="partner.id === 'careem'">
-                  <label class="form-label">Webhook Events</label>
-                  <div class="events-grid">
-                    <div class="form-check" *ngFor="let ev of careemEventList">
-                      <input
-                        type="checkbox"
-                        class="form-check-input"
-                        [id]="eventControlName(partner.id, ev)"
-                        [formControlName]="eventControlName(partner.id, ev)"
-                      >
-                      <label class="form-check-label" [for]="eventControlName(partner.id, ev)">
-                        <code>{{ ev }}</code>
-                      </label>
-                    </div>
-                  </div>
-                  <span class="field-hint">Select which Careem events your software should receive</span>
-                </div>
+                <input
+                  *ngIf="!field.secret"
+                  [id]="partner.id + '_' + field.key"
+                  type="text"
+                  class="form-control"
+                  [formControlName]="partner.id + '_' + field.key"
+                  [placeholder]="field.placeholder"
+                  autocomplete="off"
+                >
               </div>
-
-              <div class="gateway-footer">
-                <a [href]="partner.docsUrl" target="_blank" rel="noopener noreferrer" class="gateway-docs-link">
-                  <i class="bi bi-box-arrow-up-right"></i> Partner Portal
-                </a>
-                <button type="button" class="btn-test-connection" (click)="testConnection(partner.id)">
-                  <i class="bi bi-lightning-charge"></i> Test Connection
-                </button>
-              </div>
+            </div>
+            <div class="partner-actions">
+              <button type="button" class="btn-test-connection" (click)="testConnection(partner.id)">Test</button>
+              <button type="submit" class="btn-save-setting" [disabled]="settingsSaving">
+                {{ settingsSaving ? 'Saving…' : 'Save' }}
+              </button>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="save-button-container">
-        <button type="submit" class="btn-save-setting" [disabled]="settingsSaving">
-          <i class="bi bi-save"></i>
-          {{ settingsSaving ? 'Saving...' : 'Save Integration Settings' }}
-        </button>
-      </div>
     </form>
   </div>
 
-  <!-- Webhook Events sub-tab -->
-  <div class="sub-tab-pane" *ngIf="activeSubTab === 'webhooks'">
+  <!-- Orders -->
+  <div class="sub-tab-pane" *ngIf="activeSubTab === 'orders'">
     <div class="manager-toolbar">
       <div class="toolbar-left">
         <div class="search-wrap">
@@ -170,140 +106,148 @@
           <input
             type="text"
             class="toolbar-search"
-            placeholder="Search event, order ID, customer..."
-            [(ngModel)]="eventSearch"
-            (ngModelChange)="onEventSearchChange()"
+            placeholder="Search orders…"
+            [(ngModel)]="orderSearch"
+            (ngModelChange)="onOrderSearchChange()"
           >
         </div>
         <select class="toolbar-filter" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
-          <option value="all">All Status</option>
-          <option value="received">Received</option>
-          <option value="pending">Pending</option>
-          <option value="processed">Processed</option>
-          <option value="failed">Failed</option>
+          <option value="all">All</option>
+          <option *ngFor="let s of uniqueStatuses" [value]="s">{{ s }}</option>
         </select>
+        <span class="meta-pill" *ngIf="ordersMeta">{{ filteredOrders.length }} / {{ ordersMeta.total }}</span>
       </div>
-      <div class="toolbar-actions">
-        <button type="button" class="btn-action-primary" (click)="simulateWebhook()">
-          <i class="bi bi-broadcast"></i> Simulate Careem Webhook
-        </button>
-      </div>
+      <button type="button" class="btn-action-primary" (click)="reloadSampleOrders()">
+        <i class="bi bi-arrow-repeat"></i> Refresh
+      </button>
     </div>
 
     <div class="compact-table-wrap">
-      <table class="compact-table" *ngIf="filteredEvents.length; else noEvents">
+      <table class="compact-table" *ngIf="filteredOrders.length; else noOrders">
         <thead>
           <tr>
-            <th>Partner</th>
-            <th>Event</th>
-            <th>Order ID</th>
-            <th>Customer</th>
-            <th>Amount</th>
-            <th>Received</th>
+            <th>ID</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th>Branch</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Pay</th>
+            <th>Created</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let event of filteredEvents">
+          <tr *ngFor="let order of filteredOrders" (click)="openOrderDetail(order)" class="row-click">
+            <td><code class="order-id">{{ order.id }}</code></td>
+            <td><span class="status-badge" [class]="'status-badge--' + order.status">{{ order.status }}</span></td>
+            <td>{{ order.branch?.name || '—' }}</td>
             <td>
-              <span class="partner-badge" [class]="'partner-badge--' + event.partner">
-                {{ partnerLabel(event.partner) }}
-              </span>
+              <div class="cell-primary">{{ order.customer?.name || '—' }}</div>
+              <div class="cell-sub">{{ order.customer?.phone_number || '' }}</div>
             </td>
-            <td><code class="event-type">{{ event.eventType }}</code></td>
-            <td><code class="order-id">{{ eventOrderId(event) }}</code></td>
-            <td class="cell-primary">{{ eventCustomer(event) }}</td>
-            <td class="cell-amount">
-              AED {{ eventAmount(event) | number:'1.2-2' }}
-            </td>
-            <td>{{ event.receivedAt | date:'medium' }}</td>
-            <td>
-              <span class="status-badge" [class]="'status-badge--' + event.status">
-                {{ statusLabel(event.status) }}
-              </span>
-            </td>
-            <td class="cell-actions">
-              <button type="button" class="btn-icon" title="View payload" (click)="openEventDetail(event)">
+            <td>{{ orderItemCount(order) }}</td>
+            <td class="cell-amount">{{ orderTotal(order) | number:'1.2-2' }}</td>
+            <td class="cell-muted">{{ order.merchant_pay_type || '—' }}</td>
+            <td class="cell-muted">{{ order.created_at | date:'dd MMM yy' }}</td>
+            <td class="cell-actions" (click)="$event.stopPropagation()">
+              <button type="button" class="btn-icon" title="View" (click)="openOrderDetail(order)">
                 <i class="bi bi-eye"></i>
-              </button>
-              <button
-                type="button"
-                class="btn-icon btn-icon-success"
-                title="Mark processed"
-                (click)="markProcessed(event)"
-                [disabled]="event.status === 'processed'"
-              >
-                <i class="bi bi-check-lg"></i>
-              </button>
-              <button
-                type="button"
-                class="btn-icon btn-icon-danger"
-                title="Mark failed"
-                (click)="markFailed(event)"
-                [disabled]="event.status === 'failed' || event.status === 'processed'"
-              >
-                <i class="bi bi-x-lg"></i>
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <ng-template #noEvents>
+      <ng-template #noOrders>
         <div class="empty-state">
-          <i class="bi bi-broadcast"></i>
-          <p>No webhook events yet. Enable Careem and click Simulate Careem Webhook.</p>
+          <p>No orders. Enable Careem, save credentials, then refresh.</p>
         </div>
       </ng-template>
     </div>
   </div>
 </div>
 
-<!-- Event Detail Modal -->
-<ng-template #eventDetailModal let-modal>
-  <div class="modal-header">
-    <h5 class="modal-title">
-      <span class="partner-badge" [class]="'partner-badge--' + selectedEvent?.partner">
-        {{ partnerLabel(selectedEvent!.partner) }}
-      </span>
-      {{ selectedEvent?.eventType }}
-    </h5>
-    <button type="button" class="btn-close" (click)="closeModal()"></button>
-  </div>
-  <div class="modal-body" *ngIf="selectedEvent">
-    <div class="detail-grid">
-      <div class="detail-row">
-        <span class="detail-label">Status</span>
-        <span class="status-badge" [class]="'status-badge--' + selectedEvent.status">
-          {{ statusLabel(selectedEvent.status) }}
-        </span>
+<!-- Compact Order Modal -->
+<ng-template #orderDetailModal let-modal>
+  <div class="int-modal">
+    <div class="int-modal-header">
+      <div class="int-modal-title-wrap">
+        <span class="order-id">#{{ selectedOrder?.id }}</span>
+        <span class="status-badge" [class]="'status-badge--' + selectedOrder?.status">{{ selectedOrder?.status }}</span>
       </div>
-      <div class="detail-row">
-        <span class="detail-label">Received</span>
-        <span>{{ selectedEvent.receivedAt | date:'medium' }}</span>
-      </div>
-      <div class="detail-row" *ngIf="selectedEvent.processedAt">
-        <span class="detail-label">Processed</span>
-        <span>{{ selectedEvent.processedAt | date:'medium' }}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Message</span>
-        <span>{{ selectedEvent.message }}</span>
-      </div>
+      <button type="button" class="btn-close-sm" (click)="closeModal()" aria-label="Close">×</button>
     </div>
 
-    <h6 class="payload-title">Webhook Payload</h6>
-    <pre class="payload-json">{{ payloadPreview(selectedEvent) }}</pre>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">Close</button>
-    <button
-      type="button"
-      class="btn btn-primary btn-sm"
-      (click)="markProcessed(selectedEvent!); closeModal()"
-      *ngIf="selectedEvent?.status !== 'processed'"
-    >
-      <i class="bi bi-check-lg"></i> Mark Processed
-    </button>
+    <div class="int-modal-body" *ngIf="selectedOrder">
+      <div class="info-tiles">
+        <div class="info-tile">
+          <span class="info-label">Branch</span>
+          <span class="info-value">{{ selectedOrder.branch?.name || '—' }}</span>
+        </div>
+        <div class="info-tile">
+          <span class="info-label">Total</span>
+          <span class="info-value accent">AED {{ selectedOrder.price?.original_total_price | number:'1.2-2' }}</span>
+        </div>
+        <div class="info-tile">
+          <span class="info-label">Pay</span>
+          <span class="info-value">{{ selectedOrder.merchant_pay_type }} / {{ selectedOrder.delivery_type }}</span>
+        </div>
+        <div class="info-tile">
+          <span class="info-label">Fees</span>
+          <span class="info-value">D {{ selectedOrder.price?.delivery_fee | number:'1.0-2' }} · S {{ selectedOrder.price?.service_fee | number:'1.0-2' }}</span>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-line">
+          <span class="info-label">Customer</span>
+          <span>{{ selectedOrder.customer?.name }} · {{ selectedOrder.customer?.phone_number }}</span>
+        </div>
+        <div class="info-line">
+          <span class="info-label">Address</span>
+          <span>{{ customerAddress(selectedOrder) }}</span>
+        </div>
+        <div class="info-line">
+          <span class="info-label">Captain</span>
+          <span>{{ selectedOrder.captain?.name || '—' }} · {{ selectedOrder.captain?.eta | date:'short' }}</span>
+        </div>
+        <div class="info-line" *ngIf="selectedOrder.price?.promo_code">
+          <span class="info-label">Promo</span>
+          <span>{{ selectedOrder.price.promo_code }}</span>
+        </div>
+        <div class="info-line" *ngIf="selectedOrder.notes">
+          <span class="info-label">Notes</span>
+          <span>{{ selectedOrder.notes }}</span>
+        </div>
+      </div>
+
+      <div class="items-head">Items ({{ selectedOrder.items?.length || 0 }})</div>
+      <table class="compact-table items-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Qty</th>
+            <th>Unit</th>
+            <th>Total</th>
+            <th>Disc.</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of selectedOrder.items">
+            <td><code>{{ item.id }}</code></td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.unit_price | number:'1.2-2' }}</td>
+            <td>{{ item.total_price | number:'1.2-2' }}</td>
+            <td>{{ item.discount | number:'1.2-2' }}</td>
+            <td class="cell-muted">{{ item.notes || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="int-modal-footer">
+      <button type="button" class="btn-modal-close" (click)="closeModal()">Close</button>
+    </div>
   </div>
 </ng-template>
