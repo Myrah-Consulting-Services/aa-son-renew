@@ -7,11 +7,12 @@ import { NgbModal, NgbModalRef, NgbActiveModal } from '@ng-bootstrap/ng-bootstra
 import { InvoiceSetting } from '../invoice-setting/invoice-setting';
 import { LoyaltyGiftCards } from '../loyalty-gift-cards/loyalty-gift-cards';
 import { MarketplaceSync } from '../marketplace-sync/marketplace-sync';
+import { Integration } from '../integration/integration';
 
 @Component({
   selector: 'app-company-setting',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, CommonModule, LoyaltyGiftCards, MarketplaceSync],
+  imports: [ReactiveFormsModule, FormsModule, CommonModule, LoyaltyGiftCards, MarketplaceSync, Integration],
   templateUrl: './company-setting.html',
   styleUrl: './company-setting.scss'
 })

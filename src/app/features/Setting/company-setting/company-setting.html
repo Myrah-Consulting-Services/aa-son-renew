@@ -22,6 +22,10 @@
       <i class="bi bi-shop me-2"></i>
       Marketplace Sync
     </div>
+    <div class="tab-item" [class.active]="activeTab === 'integration'" (click)="switchTab('integration')">
+      <i class="bi bi-diagram-3 me-2"></i>
+      Integration
+    </div>
     <!-- <div class="tab-item" [class.active]="activeTab === 'invoice-template'" (click)="switchTab('invoice-template')">
       <i class="bi bi-file-earmark-text me-2"></i>
       Invoice Template
@@ -659,6 +663,17 @@
       </div>
       <div class="tab-body">
         <app-marketplace-sync></app-marketplace-sync>
+      </div>
+    </div>
+
+    <!-- Integration Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'integration'">
+      <div class="tab-header">
+        <h3 class="tab-title">Integration</h3>
+        <p class="tab-description">Connect partners via webhook — Careem and other apps push order events into your software</p>
+      </div>
+      <div class="tab-body">
+        <app-integration></app-integration>
       </div>
     </div>
 
