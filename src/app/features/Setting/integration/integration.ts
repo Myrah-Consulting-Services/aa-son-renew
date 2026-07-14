@@ -85,6 +85,7 @@ export class Integration implements OnInit {
   orders: CareemOrder[] = [];
   filteredOrders: CareemOrder[] = [];
   ordersMeta: CareemOrdersMeta | null = null;
+  ordersLoading = false;
   orderSearch = '';
   statusFilter = 'all';
   selectedOrder: CareemOrder | null = null;
@@ -101,7 +102,6 @@ export class Integration implements OnInit {
 
   ngOnInit() {
     this.loadSettings();
-    this.refreshOrders();
   }
 
   private initForms() {
@@ -168,15 +168,37 @@ export class Integration implements OnInit {
   saveSettings() {
     this.settingsSaving = true;
     const payload = this.buildSettingsPayload();
-    this.integrationService.saveSettings(payload).subscribe(() => {
-      this.currentSettings = payload;
-      this.settingsSaving = false;
-      this.toast.show('Success', 'Integration settings saved', 'success');
+    // Preserve has_secret from last load so Ready badge stays correct after save without retyping secret
+    if (this.currentSettings?.partners?.careem?.has_secret) {
+      payload.partners.careem.has_secret = true;
+    }
+    this.integrationService.saveSettings(payload).subscribe({
+      next: (res: any) => {
+        this.settingsSaving = false;
+        if (res?.status === 200) {
+          this.currentSettings = payload;
+          if (res.data?.has_secret) {
+            this.currentSettings.partners.careem.has_secret = true;
+          }
+          this.toast.show('Success', 'Integration settings saved', 'success');
+          this.loadSettings();
+        } else {
+          this.toast.show('Error', res?.error || 'Failed to save settings', 'danger');
+        }
+      },
+      error: () => {
+        this.settingsSaving = false;
+        this.toast.show('Error', 'Failed to save settings', 'danger');
+      },
     });
   }
 
   isPartnerConfigured(id: IntegrationPartner): boolean {
-    return this.integrationService.isPartnerConfigured(id, this.buildSettingsPayload());
+    const payload = this.buildSettingsPayload();
+    if (this.currentSettings?.partners?.[id]?.has_secret) {
+      payload.partners[id].has_secret = true;
+    }
+    return this.integrationService.isPartnerConfigured(id, payload);
   }
 
   secretKey(partnerId: string, fieldKey: string): string {
@@ -195,29 +217,62 @@ export class Integration implements OnInit {
   testConnection(id: IntegrationPartner) {
     const partner = this.partners.find(p => p.id === id);
     if (!partner) return;
-    const missing = partner.fields.filter(
-      f => f.required && !this.settingsForm.get(`${id}_${f.key}`)?.value?.trim()
-    );
-    if (missing.length) {
-      this.toast.show(
-        'Validation',
-        `Please fill in ${missing.map(f => f.label).join(', ')}`,
-        'warning'
-      );
+
+    const clientId = (this.settingsForm.get(`${id}_client_id`)?.value || '').trim();
+    const clientSecret = (this.settingsForm.get(`${id}_client_secret`)?.value || '').trim();
+    const hasSavedSecret = !!this.currentSettings?.partners?.[id]?.has_secret;
+
+    if (!clientId) {
+      this.toast.show('Validation', 'Please fill in Client ID', 'warning');
       return;
     }
-    this.toast.show(
-      'Connection Test',
-      `${partner.name} Client ID / Secret saved locally. Orders API connect pending.`,
-      'success'
-    );
+    if (!clientSecret && !hasSavedSecret) {
+      this.toast.show('Validation', 'Please fill in Client Secret', 'warning');
+      return;
+    }
+
+    this.integrationService.testConnection(clientId, clientSecret).subscribe({
+      next: (res: any) => {
+        if (res?.status === 200) {
+          this.toast.show(
+            'Success',
+            res.message || `${partner.name} token obtained successfully`,
+            'success'
+          );
+        } else {
+          this.toast.show('Error', res?.error || 'Token request failed', 'danger');
+        }
+      },
+      error: () => {
+        this.toast.show('Error', 'Token request failed', 'danger');
+      },
+    });
   }
 
   refreshOrders() {
-    const response = this.integrationService.getCareemOrders();
-    this.orders = response.data || [];
-    this.ordersMeta = response.meta || null;
-    this.applyOrderFilters();
+    this.ordersLoading = true;
+    this.integrationService.getCareemOrders().subscribe({
+      next: (res: any) => {
+        this.ordersLoading = false;
+        if (res?.status === 200) {
+          this.orders = res.data || [];
+          this.ordersMeta = res.meta || null;
+          this.applyOrderFilters();
+        } else {
+          this.orders = [];
+          this.ordersMeta = null;
+          this.applyOrderFilters();
+          this.toast.show('Error', res?.error || 'Failed to load Careem orders', 'danger');
+        }
+      },
+      error: () => {
+        this.ordersLoading = false;
+        this.orders = [];
+        this.ordersMeta = null;
+        this.applyOrderFilters();
+        this.toast.show('Error', 'Failed to load Careem orders', 'danger');
+      },
+    });
   }
 
   reloadSampleOrders() {
@@ -230,11 +285,34 @@ export class Integration implements OnInit {
       this.toast.show('Validation', 'Enter Client ID and Client Secret first', 'warning');
       return;
     }
-    const response = this.integrationService.refreshCareemOrders();
-    this.orders = response.data || [];
-    this.ordersMeta = response.meta || null;
-    this.applyOrderFilters();
-    this.toast.show('Orders', `Loaded ${this.orders.length} Careem sample order(s)`, 'success');
+    this.ordersLoading = true;
+    this.integrationService.refreshCareemOrders().subscribe({
+      next: (res: any) => {
+        this.ordersLoading = false;
+        if (res?.status === 200) {
+          this.orders = res.data || [];
+          this.ordersMeta = res.meta || null;
+          this.applyOrderFilters();
+          this.toast.show(
+            'Orders',
+            `Loaded ${this.orders.length} Careem order(s)`,
+            'success'
+          );
+        } else {
+          this.orders = [];
+          this.ordersMeta = null;
+          this.applyOrderFilters();
+          this.toast.show('Error', res?.error || 'Failed to refresh Careem orders', 'danger');
+        }
+      },
+      error: () => {
+        this.ordersLoading = false;
+        this.orders = [];
+        this.ordersMeta = null;
+        this.applyOrderFilters();
+        this.toast.show('Error', 'Failed to refresh Careem orders', 'danger');
+      },
+    });
   }
 
   applyOrderFilters() {

@@ -117,8 +117,14 @@
         </select>
         <span class="meta-pill" *ngIf="ordersMeta">{{ filteredOrders.length }} / {{ ordersMeta.total }}</span>
       </div>
-      <button type="button" class="btn-action-primary" (click)="reloadSampleOrders()">
-        <i class="bi bi-arrow-repeat"></i> Refresh
+      <button
+        type="button"
+        class="btn-action-primary"
+        (click)="reloadSampleOrders()"
+        [disabled]="ordersLoading"
+      >
+        <i class="bi bi-arrow-repeat"></i>
+        {{ ordersLoading ? 'Loading…' : 'Refresh' }}
       </button>
     </div>
 
@@ -160,7 +166,8 @@
       </table>
       <ng-template #noOrders>
         <div class="empty-state">
-          <p>No orders. Enable Careem, save credentials, then refresh.</p>
+          <p *ngIf="ordersLoading">Loading Careem orders…</p>
+          <p *ngIf="!ordersLoading">No orders. Enable Careem, save credentials, then refresh.</p>
         </div>
       </ng-template>
     </div>
