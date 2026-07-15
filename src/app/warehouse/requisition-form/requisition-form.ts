@@ -301,7 +301,7 @@ export class RequisitionForm implements OnInit, OnDestroy {
         const term = (searchTerm || '').trim();
         this.searchingItems = true;
         // Empty term → fetch all items (show on focus after clearing)
-        return this.api.listItems(term, { warehouse: 1 });
+        return this.api.listItems(term);
       }),
       takeUntil(this.destroy$)
     ).subscribe({
@@ -338,7 +338,7 @@ export class RequisitionForm implements OnInit, OnDestroy {
     }
     // No results yet — load all items so dropdown is populated on first focus
     this.searchingItems = true;
-    this.api.listItems('', { warehouse: 1 }).subscribe({
+    this.api.listItems('').subscribe({
       next: (res: any) => {
         this.searchingItems = false;
         if (res?.status === 200) {
