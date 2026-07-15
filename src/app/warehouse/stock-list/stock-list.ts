@@ -39,32 +39,29 @@ export class StockList implements OnInit {
     this.loading = true;
     this.currentPage = page;
     const payload: any = {
-      warehouse: this.selectedWarehouseId,
       page: this.currentPage,
       page_size: this.pageSize,
     };
+    // Warehouse tab: company + pagination only. Showroom tab: keep warehouse filter.
+    if (this.selectedWarehouseId === 2) {
+      payload.warehouse = 2;
+    }
     this.svc.listItems('', payload).subscribe((res: any) => {
       this.loading = false;
-      if(res.status == 200){
+      if (res.status == 200) {
         this.total_count = res.total_count;
         this.stock = res.data;
-        // Process location data if available
-        if (res) {
-          this.currentPage = res.current_page;
-          this.totalPages = res.total_pages;
-          this.totalData = res.total_count;
-          this.pageSize = res.page_size;
-        }
+        const paginated = res.Paginated_data || res.paginated_data || {};
+        this.currentPage = paginated.page_number || paginated.page || res.current_page || this.currentPage;
+        this.totalPages = paginated.total_pages || res.total_pages || 0;
+        this.totalData = paginated.total_count || res.total_count || 0;
+        this.pageSize = paginated.page_size || res.page_size || this.pageSize;
         this.processLocationData();
-        
-        // Show success message
-        const locationType = this.selectedWarehouseId === 1 ? 'Warehouse' : 'Showroom';
-      } 
+      }
     }, (error) => {
       this.loading = false;
       console.error('Error loading stock data:', error);
     });
-    
   }
 
   onPageChange(page: number) {
