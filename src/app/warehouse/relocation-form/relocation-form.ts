@@ -137,7 +137,7 @@ getlocation(){
   });
 }
   laoditems(){
-    this.svc.listItems('', { warehouse: 1 }).subscribe((res: any) => {
+    this.svc.listItems('').subscribe((res: any) => {
       if (res.status == 200) {
         this.items = res.data;
         this.tryLoadRelocationForEdit();
@@ -271,19 +271,28 @@ getlocation(){
   save() {
     let hasError = false;
     this.itemsArray.controls.forEach((itemForm, i) => {
-      // Find available qty for fromLocation
-      const itemId = itemForm.get('itemId')?.value;
+      // Use itemLocations (same source as From Location dropdown), not listItems cache
       const fromLocationId = itemForm.get('fromLocationId')?.value;
       let availableQty = 0;
-      const matchedItem = this.items?.find((itm: any) => itm.id == itemId);
-      if (matchedItem && matchedItem.locations) {
-        const loc = matchedItem.locations.find((l: any) => l.location_id == fromLocationId);
-        if (loc) availableQty = loc.qty;
+      const loc = (this.itemLocations[i] || []).find(
+        (l: any) => l.location_id == fromLocationId
+      );
+      if (loc) {
+        availableQty = Number(loc.qty) || 0;
+      } else {
+        // Fallback: listItems locations if item-wise cache is empty
+        const itemId = itemForm.get('itemId')?.value;
+        const matchedItem = this.items?.find((itm: any) => itm.id == itemId);
+        const listLoc = matchedItem?.locations?.find(
+          (l: any) => l.location_id == fromLocationId
+        );
+        if (listLoc) availableQty = Number(listLoc.qty) || 0;
       }
       const errorMsg = this.validateQuantity(itemForm as FormGroup, availableQty);
       if (errorMsg) {
         hasError = true;
         itemForm.get('quantity')?.setErrors({ custom: errorMsg });
+        itemForm.get('quantity')?.markAsTouched();
       } else {
         itemForm.get('quantity')?.setErrors(null);
       }
@@ -351,7 +360,7 @@ getlocation(){
 
   // Load items from API
   loadItems(searchTerm: string = ''): void {
-    this.svc.listItems(searchTerm, { warehouse: 1 }).subscribe({
+    this.svc.listItems(searchTerm).subscribe({
       next: (res: any) => {
         if (res.status == 200 && Array.isArray(res.data)) {
           this.availableItems = res.data;
