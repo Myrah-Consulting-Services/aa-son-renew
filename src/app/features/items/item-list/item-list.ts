@@ -69,22 +69,17 @@ export class ItemList implements OnInit {
   }
 
   exportItems(){
-    this.api.post('/items/export-items/', {
-      company: this.api.getUserCompany()
-    }).subscribe({
-      next: (res: any) => {
-        console.log(res);
-        if (res.status === 200) {
-          window.location.href = res.data
-        
-          
-          console.log('File download initiated:', res.data);
-        } else {
-          console.error('Export failed or invalid response');
-        }
+    const company = this.api.getUserCompany();
+    this.api.postBlob('/items/export-items/', { company }).subscribe({
+      next: (blob: Blob) => {
+        this.api.handleBlobExport(
+          blob,
+          `Company_${company}_Item_Excel.xlsx`,
+          (message) => this.toast.show('Export failed', message, 'danger')
+        );
       },
-      error: (error) => {
-        console.error('Export error:', error);
+      error: () => {
+        this.toast.show('Export failed', 'Unable to export items', 'danger');
       }
     });
   }

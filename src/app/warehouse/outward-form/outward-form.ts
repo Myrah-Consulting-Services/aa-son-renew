@@ -570,7 +570,7 @@ export class OutwardForm implements OnInit {
           sourceWarehouseId: [null],
           sourceLocationId: [null],
           remarks: [''],
-          barcode: [reqItem.barcode1 || '']
+          barcode: [reqItem.barcode1 || reqItem.barcode || reqItem.item_code || '']
         });
         
         this.items.push(newItem);
@@ -697,7 +697,7 @@ export class OutwardForm implements OnInit {
             sourceWarehouseId: [null],
             sourceLocationId: [null],
             remarks: [''],
-            barcode: [orderItem.item_info?.barcode1 || orderItem.item_info?.barcode1 || orderItem.item_info?.barcode1 || '']
+            barcode: [orderItem.item_info?.barcode1 || orderItem.item_info?.barcode || orderItem.item_info?.item_code || orderItem.barcode || orderItem.item_code || '']
           });
           
           this.items.push(newItem);
@@ -1044,7 +1044,7 @@ export class OutwardForm implements OnInit {
           sourceWarehouseId: [itemData.sourceWarehouseId || itemData.source_warehouse_id || null],
           sourceLocationId: [itemData.sourceLocationId || itemData.source_location_id || null],
           remarks: [itemData.remarks || ''],
-          barcode: [itemData.barcode1 || '', Validators.required]
+          barcode: [itemData.barcode1 || itemData.barcode || itemData.item_code || '', Validators.required]
         });
 
         this.items.push(itemForm);
@@ -1447,7 +1447,7 @@ export class OutwardForm implements OnInit {
       unit: (itemOption.units && itemOption.units.length > 0) ? itemOption.units[0].id : 0,
       rate: itemOption.sales_price || 0,
       amount: 0,
-      barcode: itemOption.barcode1 || itemOption.barcode1 || itemOption.barcode1 || ''
+      barcode: itemOption.barcode1 || itemOption.barcode || itemOption.item_code || itemOption.code || ''
     });
     this.itemSearchTerms[index] = itemOption.name || itemOption.item_name;
     this.filteredItems[index] = [];
