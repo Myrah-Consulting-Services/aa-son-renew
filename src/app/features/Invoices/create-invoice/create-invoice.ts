@@ -32,6 +32,7 @@ export class CreateInvoice implements OnInit, OnDestroy {
   private warnedItems = new Set<string>(); // Track items that have been warned
   private isProcessingQtyChange = false; // Flag to prevent recursive calls
   private isProcessingCurrencyChange = false; // Flag to prevent checkbox interference during currency changes
+  private previousInvPayCurrency: number = 1; // Track last payment currency for AED↔USD conversion
   inset_data: any = {};
   currencies = [
     { id: 1, code: 'AED', name: 'AED - UAE Dirham' },
@@ -393,6 +394,8 @@ export class CreateInvoice implements OnInit, OnDestroy {
         this.invoiceData = data;
         this.showbutton = true
         this.set_inv_type=data.invoice_type?.toString() ?? '';
+        // Prevent pay-currency valueChanges from re-converting during load
+        this.previousInvPayCurrency = Number(data.inv_pay_currency) || 1;
         // Patch main invoice fields (excluding items and extra_charge)
         this.invoiceForm.patchValue({
           is_converted_inv:data.is_converted_inv,
@@ -932,77 +935,34 @@ export class CreateInvoice implements OnInit, OnDestroy {
   // }
 
   subscribeToFormChanges(): void {
+    // MUST register before form valueChanges — convert pay amount before calculateTotals can wipe it
+    this.invoiceForm.get('inv_pay_currency')?.valueChanges.subscribe(newVal => {
+      const newPay = Number(newVal) || 1;
+      const oldPay = Number(this.previousInvPayCurrency) || 1;
+      if (newPay === oldPay) return;
+
+      this.isProcessingCurrencyChange = true;
+      this.applyReceivedAmountForPayCurrency(oldPay, newPay);
+      this.previousInvPayCurrency = newPay;
+
+      setTimeout(() => {
+        this.isProcessingCurrencyChange = false;
+      }, 150);
+    });
+
     // Main subscription to recalculate totals whenever the form changes
     this.formChangesSubscription = this.invoiceForm.valueChanges.subscribe(values => {
-      console.log('📊 Form changed - recalculating totals');
-      console.log('Items:', values.items);
-      console.log('Received amount:', values.received_amount);
-      console.log('Full payment checked:', values.full_payment);
-      console.log('Handover to:', values.handover_to);
       this.calculateTotals(values.items, values.extra_charge, values.received_amount);
     });
 
     // Watch for full_payment checkbox changes
     this.invoiceForm.get('full_payment')?.valueChanges.subscribe(fullPayment => {
-      console.log('🔍 Full Payment Checkbox Changed:', fullPayment);
       if (fullPayment) {
-        const totalAmount = Number(this.invoiceForm.get('final_total_amount')?.value) || 0;
-        const currency = Number(this.invoiceForm.get('currency')?.value);
-        const invPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value);
-
-        console.log('💰 Full Payment Calculation:', {
-          totalAmount,
-          currency,
-          invPayCurrency,
-          isCurrencyConversion: this.inset_data?.is_currency_conversion,
-          conversionRate: this.inset_data?.currency_conversion_rate,
-          exchangeRate: this.invoiceForm.get('exchange_rate')?.value
-        });
-
-        let receivedAmount = totalAmount;
-
-        // Convert based on currency and payment currency
-        if (currency === 1 && invPayCurrency === 2) {
-          // Invoice in AED, Payment in USD - convert to USD
-          if (this.inset_data?.is_currency_conversion) {
-            receivedAmount = totalAmount / this.inset_data.currency_conversion_rate;
-            console.log('🔄 AED to USD (conversion):', totalAmount, '/', this.inset_data.currency_conversion_rate, '=', receivedAmount);
-          } else {
-            const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-            receivedAmount = totalAmount / exchangeRate;
-            console.log('🔄 AED to USD (exchange):', totalAmount, '/', exchangeRate, '=', receivedAmount);
-          }
-        } else if (currency === 2 && invPayCurrency === 1) {
-          // Invoice in USD, Payment in AED - convert to AED
-          if (this.inset_data?.is_currency_conversion) {
-            receivedAmount = totalAmount * this.inset_data.currency_conversion_rate;
-            console.log('🔄 USD to AED (conversion):', totalAmount, '*', this.inset_data.currency_conversion_rate, '=', receivedAmount);
-          } else {
-            const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-            receivedAmount = totalAmount * exchangeRate;
-            console.log('🔄 USD to AED (exchange):', totalAmount, '*', exchangeRate, '=', receivedAmount);
-          }
-        } else if(currency !==1 && currency !==2) {
-          const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-          if(invPayCurrency === 1){
-            receivedAmount = Number(this.getAEDAmount());
-          }else if(invPayCurrency === 2){
-            receivedAmount = Number(this.getUSDAmount());
-          }
-          console.log('🔄 Same currency or other scenario, using totalAmount:', totalAmount);
-        }
-
-        console.log('✅ Final received amount:', receivedAmount);
-
-        this.invoiceForm.patchValue({
-          received_amount: (receivedAmount).toFixed(2)
-        }, { emitEvent: false });
+        const invPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value) || 1;
+        const receivedAmount = this.getFullPaymentAmountInPayCurrency(invPayCurrency);
+        this.setReceivedAmountValue(receivedAmount);
       } else {
-        // If unchecked, clear the received amount
-        console.log('❌ Clearing received amount');
-        this.invoiceForm.patchValue({
-          received_amount: '0.00'
-        }, { emitEvent: false });
+        this.setReceivedAmountValue(0);
       }
     });
 
@@ -1050,47 +1010,30 @@ export class CreateInvoice implements OnInit, OnDestroy {
     const receivableAmount = finalTotalAmount - (+received || 0);
 
     // Sync full_payment checkbox based on amounts
-    // Don't interfere with checkbox during currency changes
+    // Compare in invoice currency so AED/USD pay-currency switches don't wipe received_amount
     if (!this.isProcessingCurrencyChange) {
       const receivedAmount = +received || 0;
+      const receivedInInvoiceCurrency = this.convertPayAmountToInvoiceCurrency(receivedAmount);
       const isFullPaymentChecked = this.invoiceForm.get('full_payment')?.value;
+      const isFullyPaid =
+        finalTotalAmount > 0 &&
+        Math.abs(receivedInInvoiceCurrency - finalTotalAmount) < 0.05;
 
-      console.log('🔍 Checkbox logic check:');
-      console.log('- Final Total Amount:', finalTotalAmount);
-      console.log('- Received Amount:', receivedAmount);
-      console.log('- Is Full Payment Checked:', isFullPaymentChecked);
-      console.log('- Is Processing Currency Change:', this.isProcessingCurrencyChange);
-
-      if (finalTotalAmount > 0 && receivedAmount === finalTotalAmount) {
+      if (isFullyPaid) {
         if (!isFullPaymentChecked) {
-          console.log('✅ Auto-checking Full Payment');
           this.invoiceForm.get('full_payment')?.patchValue(true, { emitEvent: false });
         }
-      } else if (isFullPaymentChecked && receivedAmount !== finalTotalAmount) {
-        // Only uncheck if the user manually changed the amount (not during currency conversion)
-        // Check if this is a currency conversion scenario
+      } else if (isFullPaymentChecked && !isFullyPaid) {
+        // Do not reset received_amount on currency mismatches — only uncheck when
+        // pay currency matches invoice currency and amount no longer equals total.
         const currency = Number(this.invoiceForm.get('currency')?.value);
         const invPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value);
 
-        console.log('- Invoice Currency:', currency);
-        console.log('- Payment Currency:', invPayCurrency);
-
-        // If currencies are different, this might be a currency conversion, so don't uncheck
         if (currency === invPayCurrency) {
-          console.log('🔄 Total amount changed - unchecking Full Payment and clearing received amount');
-          console.log('Total Amount:', finalTotalAmount, 'Received Amount:', receivedAmount);
-
-          // Uncheck the checkbox and clear the received amount
-          this.invoiceForm.patchValue({
-            full_payment: false,
-            received_amount: '0.00'
-          }, { emitEvent: false });
-        } else {
-          console.log('💱 Currency conversion detected - keeping checkbox checked');
+          this.invoiceForm.get('full_payment')?.patchValue(false, { emitEvent: false });
+          // Keep received_amount as user-entered; do not force 0 (breaks AED↔USD toggle)
         }
       }
-    } else {
-      console.log('🚫 Skipping checkbox logic - currency change in progress');
     }
 
     this.invoiceForm.patchValue({
@@ -2688,8 +2631,132 @@ export class CreateInvoice implements OnInit, OnDestroy {
   }
 
   getPaymentCurrencyCode(): string {
-    const invPayCurrency = this.invoiceForm.get('inv_pay_currency')?.value;
+    const invPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value);
     return invPayCurrency === 2 ? 'USD' : 'AED';
+  }
+
+  /** AED↔USD rate used for payment currency conversion (sales + purchase). */
+  private getPayConversionRate(): number {
+    if (this.inset_data?.is_currency_conversion) {
+      return Number(this.inset_data.currency_conversion_rate) || 1;
+    }
+    return Number(this.invoiceForm.get('exchange_rate')?.value) || 1;
+  }
+
+  /** Convert amount from current payment currency into invoice currency for comparisons. */
+  private convertPayAmountToInvoiceCurrency(amountInPayCurrency: number): number {
+    const amount = Number(amountInPayCurrency) || 0;
+    if (!amount) return 0;
+
+    const currency = Number(this.invoiceForm.get('currency')?.value);
+    const invPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value) || 1;
+    const rate = this.getPayConversionRate() || 1;
+
+    if (currency === invPayCurrency) return amount;
+    // Invoice AED, payment USD → to AED
+    if (currency === 1 && invPayCurrency === 2) return amount * rate;
+    // Invoice USD, payment AED → to USD
+    if (currency === 2 && invPayCurrency === 1) return amount / rate;
+
+    // Other invoice currencies: bridge via exchange_rate (invoice → AED) and conversion rate
+    const exchangeRate = Number(this.invoiceForm.get('exchange_rate')?.value) || 1;
+    if (invPayCurrency === 1) {
+      // pay AED → invoice
+      return exchangeRate ? amount / exchangeRate : amount;
+    }
+    if (invPayCurrency === 2) {
+      // pay USD → AED → invoice
+      const inAed = amount * rate;
+      return exchangeRate ? inAed / exchangeRate : inAed;
+    }
+    return amount;
+  }
+
+  /**
+   * Full payment amount expressed in the selected payment currency (AED/USD).
+   * Same logic for sales and purchase invoices.
+   */
+  getFullPaymentAmountInPayCurrency(invPayCurrency: number): number {
+    const totalAmount = Number(this.invoiceForm.get('final_total_amount')?.value) || 0;
+    const currency = Number(this.invoiceForm.get('currency')?.value);
+    const payCurrency = Number(invPayCurrency) || 1;
+    const rate = this.getPayConversionRate() || 1;
+
+    if (!totalAmount) return 0;
+
+    // Same currency — use invoice total as-is
+    if (currency === payCurrency) {
+      return totalAmount;
+    }
+
+    if (currency === 1 && payCurrency === 2) {
+      // Invoice AED → pay USD
+      return totalAmount / rate;
+    }
+    if (currency === 2 && payCurrency === 1) {
+      // Invoice USD → pay AED
+      return totalAmount * rate;
+    }
+
+    // Other invoice currencies — bridge via AED
+    const exchangeRate = Number(this.invoiceForm.get('exchange_rate')?.value) || 1;
+    const totalInAed = totalAmount * exchangeRate;
+    if (payCurrency === 1) return totalInAed;
+    if (payCurrency === 2) return totalInAed / rate;
+    return totalAmount;
+  }
+
+  /** Convert a received/paid amount between AED and USD payment currencies. */
+  private convertBetweenPayCurrencies(amount: number, fromPay: number, toPay: number): number {
+    const from = Number(fromPay) || 1;
+    const to = Number(toPay) || 1;
+    if (from === to || !amount) return amount;
+
+    const rate = this.getPayConversionRate() || 1;
+    if (from === 1 && to === 2) return amount / rate; // AED → USD
+    if (from === 2 && to === 1) return amount * rate; // USD → AED
+    return amount;
+  }
+
+  private setReceivedAmountValue(amount: number): void {
+    const value = Number(Number(amount || 0).toFixed(2));
+    // setValue on control (not group patchValue) so UI always updates
+    this.invoiceForm.get('received_amount')?.setValue(value, { emitEvent: false });
+  }
+
+  /**
+   * Apply AED/USD payment-currency change to received_amount.
+   * Always recalculates full-payment amount from invoice total (sales + purchase).
+   */
+  private applyReceivedAmountForPayCurrency(oldPay: number, newPay: number): void {
+    const isFullPayment = !!this.invoiceForm.get('full_payment')?.value;
+    const current = Number(this.invoiceForm.get('received_amount')?.value) || 0;
+
+    if (isFullPayment) {
+      const converted = this.getFullPaymentAmountInPayCurrency(newPay);
+      this.setReceivedAmountValue(converted);
+      return;
+    }
+
+    if (current > 0 && oldPay !== newPay) {
+      const converted = this.convertBetweenPayCurrencies(current, oldPay, newPay);
+      this.setReceivedAmountValue(converted);
+    }
+  }
+
+  /** When user changes AED/USD on Amount Paid/Received — convert received_amount. */
+  onInvPayCurrencyChange(): void {
+    this.isProcessingCurrencyChange = true;
+
+    const newPay = Number(this.invoiceForm.get('inv_pay_currency')?.value) || 1;
+    const oldPay = Number(this.previousInvPayCurrency) || 1;
+
+    this.applyReceivedAmountForPayCurrency(oldPay, newPay);
+    this.previousInvPayCurrency = newPay;
+
+    setTimeout(() => {
+      this.isProcessingCurrencyChange = false;
+    }, 150);
   }
 
   getReceivableInPaymentCurrency(): any {
@@ -3144,93 +3211,19 @@ export class CreateInvoice implements OnInit, OnDestroy {
     const isFullPayment = this.invoiceForm.get('full_payment')?.value;
 
     if (isFullPayment) {
-      const totalAmount = this.invoiceForm.get('final_total_amount')?.value || 0;
-      const currency = Number(this.invoiceForm.get('currency')?.value);
-      const invPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value);
-
-      let receivedAmount = totalAmount;
-
-      // Convert based on currency and payment currency
-      if (currency === 1 && invPayCurrency === 2) {
-        // Invoice in AED, Payment in USD - convert to USD
-        if (this.inset_data?.is_currency_conversion) {
-          receivedAmount = totalAmount / this.inset_data.currency_conversion_rate;
-        } else {
-          const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-          receivedAmount = totalAmount / exchangeRate;
-        }
-      } else if (currency === 2 && invPayCurrency === 1) {
-        // Invoice in USD, Payment in AED - convert to AED
-        if (this.inset_data?.is_currency_conversion) {
-          receivedAmount = totalAmount * this.inset_data.currency_conversion_rate;
-        } else {
-          const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-          receivedAmount = totalAmount * exchangeRate;
-        }
-      }else if(currency !==1 && currency !==2){
-        if(invPayCurrency === 1){
-          receivedAmount = Number(this.getAEDAmount());
-        }else if(invPayCurrency === 2){
-          receivedAmount = Number(this.getUSDAmount());
-        }
-      }
-      // If currency and payment currency are the same, use totalAmount as-is
-
-      this.invoiceForm.patchValue({
-        received_amount: Number(receivedAmount).toFixed(2)
-      }, { emitEvent: false });
-
-      console.log('Handover changed - Amount updated to:', receivedAmount);
-    }else{
-      this.invoiceForm.patchValue({
-        received_amount: '0.00'
-      }, { emitEvent: false });
+      const invPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value) || 1;
+      const receivedAmount = this.getFullPaymentAmountInPayCurrency(invPayCurrency);
+      this.setReceivedAmountValue(receivedAmount);
+    } else {
+      this.setReceivedAmountValue(0);
     }
-    // else{
-    //   const totalAmount = this.invoiceForm.get('received_amount')?.value || 0;
-    //   const currency = Number(this.invoiceForm.get('currency')?.value);
-    //   const invPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value);
 
-    //   let receivedAmount =totalAmount
-    //   if (currency === 1 && invPayCurrency === 2) {
-    //     // Invoice in AED, Payment in USD - convert to USD
-    //     if (this.inset_data?.is_currency_conversion) {
-    //       receivedAmount = totalAmount / this.inset_data.currency_conversion_rate;
-    //     } else {
-    //       const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-    //       receivedAmount = totalAmount / exchangeRate;
-    //     }
-    //   } else if (currency === 2 && invPayCurrency === 1) {
-    //     // Invoice in USD, Payment in AED - convert to AED
-    //     if (this.inset_data?.is_currency_conversion) {
-    //       receivedAmount = totalAmount * this.inset_data.currency_conversion_rate;
-    //     } else {
-    //       const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-    //       receivedAmount = totalAmount * exchangeRate;
-    //     }
-    //   }else if(currency !==1 && currency !==2){
-    //     if(invPayCurrency === 1){
-    //       const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-
-    //       receivedAmount = totalAmount * exchangeRate;
-    //       console.log('🔄 Currency other (to AED conversion):', totalAmount, '×', exchangeRate, '=', receivedAmount);
-    //     }else if(invPayCurrency === 2){
-    //       const exchangeRate = this.invoiceForm.get('exchange_rate')?.value || 1;
-    //       const conversionRate = this.inset_data.currency_conversion_rate || 1;
-    //       receivedAmount = (totalAmount * exchangeRate) / conversionRate;
-    //       console.log('🔄 Currency other (to USD conversion):', totalAmount, '×', exchangeRate, '÷', conversionRate, '=', receivedAmount);
-    //     }
-    //   }
-    //   this.invoiceForm.patchValue({
-    //     received_amount: Number(receivedAmount).toFixed(2)
-    //   }, { emitEvent: false });
-    //   console.log('Handover changed - Amount updated to:1', receivedAmount);
-    // }
+    this.previousInvPayCurrency = Number(this.invoiceForm.get('inv_pay_currency')?.value) || 1;
 
     // Reset flag after a short delay to allow form changes to complete
     setTimeout(() => {
       this.isProcessingCurrencyChange = false;
-    }, 100);
+    }, 150);
   }
 
   // Update VAT percentage based on VAT category selection

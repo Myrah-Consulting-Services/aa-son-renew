@@ -764,7 +764,7 @@
               <div class="summary-item">
                 <span class="summary-label"></span>
                 <div class="input-group input-group-sm">
-                 <select name="" id="" formControlName="inv_pay_currency" class="form-select form-select-sm input-group-text">
+                 <select name="" id="" formControlName="inv_pay_currency" class="form-select form-select-sm input-group-text" (change)="onInvPayCurrencyChange()">
                     <option  [value]="1"> AED </option>
                     <option  [value]="2"> USD </option>
                   </select>
