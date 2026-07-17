@@ -152,16 +152,17 @@ export class ItemMaster {
     this.modalRef = this.modalService.open(this.createItemModal, { size: 'xl', centered: true, backdrop: 'static' });
   }
   deleteItem(item: any) {
-    if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
-      console.log('Delete item:', item);
-      this.api.delete('/items/delete-item/'+item.id+'/').subscribe((res:any)=>{
-        if(res.status==200){
-          this.loadItems();
-          this.toast.show('Success', 'Item deleted successfully', 'success');
-        }
-      })
-      // Implement delete functionality
+    if (!confirm(`Do you want to delete "${item.name}"?`)) {
+      return;
     }
+    this.api.delete('/items/delete-item/' + item.id + '/').subscribe((res: any) => {
+      if (res.status == 200) {
+        this.loadItems();
+        this.toast.show('Success', 'Item deleted successfully', 'success');
+      } else {
+        this.toast.show('Error', res.message || 'Item not deleted', 'danger');
+      }
+    });
   }
   handleItemSubmit(item: any) {
     console.log('Item submitted:', item);

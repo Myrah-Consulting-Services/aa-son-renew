@@ -401,15 +401,16 @@ export class SalesRegister implements OnInit {
   }
 
   deleteInvoice(id: any) {
-    if(confirm('Are you sure you want to delete this invoice?')){
-      this.api.delete('/invoice/delete-invoice/'+id+'/').subscribe((res:any)=>{
-        if(res.status==200){
-          this.getSalesRegister(this.currentPage);
-          this.toast.show('Success', 'Invoice deleted successfully', 'success');
-        }
-      })
-    }else{
-      this.toast.show('Error', 'Invoice not deleted', 'danger');
+    if (!confirm('Do you want to delete this invoice?')) {
+      return;
     }
+    this.api.delete('/invoice/delete-invoice/' + id + '/').subscribe((res: any) => {
+      if (res.status == 200) {
+        this.getSalesRegister(this.currentPage);
+        this.toast.show('Success', 'Invoice deleted successfully', 'success');
+      } else {
+        this.toast.show('Error', res.message || 'Invoice not deleted', 'danger');
+      }
+    });
   }
 }

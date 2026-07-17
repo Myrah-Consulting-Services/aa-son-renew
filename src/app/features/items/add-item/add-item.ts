@@ -214,14 +214,17 @@ export class AddItem implements OnInit {
   }
 
   deleteItem(item: any) {
-    if (confirm('Are you sure you want to delete this item?')) {
-      this.api.delete('/items/delete-item/' + item.id + '/').subscribe((res: any) => {
-        if (res.status == 200) {
-          this.loadItems(true);
-          this.toast.show('Success', 'Item deleted successfully', 'success');
-        }
-      });
+    if (!confirm(`Do you want to delete "${item.name || 'this item'}"?`)) {
+      return;
     }
+    this.api.delete('/items/delete-item/' + item.id + '/').subscribe((res: any) => {
+      if (res.status == 200) {
+        this.loadItems(true);
+        this.toast.show('Success', 'Item deleted successfully', 'success');
+      } else {
+        this.toast.show('Error', res.message || 'Item not deleted', 'danger');
+      }
+    });
   }
 
   closeModal() { if (this.modalRef) this.modalRef.close(); }
