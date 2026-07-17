@@ -102,8 +102,10 @@
                     </td>
                     <td *ngIf="outwardType === 'REQ'">
                       <select class="form-select form-select-sm" formControlName="from_location">
-                        <option [ngValue]="null">Select</option>
-                        <option [ngValue]="loc.id" *ngFor="let loc of fromLocations">{{ loc.name }}</option>
+                        <option [ngValue]="null">Select location with stock</option>
+                        <option [ngValue]="loc.id" *ngFor="let loc of itemFromLocations[i] || []">
+                          {{ loc.name }} ({{ loc.qty }} in stock){{ loc.warehouse_name ? ' — ' + loc.warehouse_name : '' }}
+                        </option>
                       </select>
                     </td>
                     <td *ngIf="outwardType === 'REQ' && isInternalTransfer">

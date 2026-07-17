@@ -62,9 +62,9 @@
         <li class="nav-item" *ngIf="isAuthenticated$ | async">
           <a class="nav-link" routerLink="/manage-money" routerLinkActive="active">Manage Money</a>
         </li>
-        <li class="nav-item" *ngIf="isAuthenticated$ | async">
+        <!-- <li class="nav-item" *ngIf="isAuthenticated$ | async">
           <a class="nav-link" routerLink="/reports/chart-of-accounts" routerLinkActive="active">COA</a>
-        </li>
+        </li> -->
         <!-- Reports Dropdown -->
         <li class="nav-item dropdown" *ngIf="isAuthenticated$ | async">
           <a class="nav-link" routerLink="/reports/report-list" id="reportsDropdown" role="button" routerLinkActive="active">
