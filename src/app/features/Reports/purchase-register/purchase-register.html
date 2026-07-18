@@ -259,7 +259,7 @@
                     <button class="action-btn btn-view" title="View Invoice" (click)="viewInvoice(invoice.id)">
                       <i class="bi bi-eye"></i>
                     </button>
-                    <button class="action-btn btn-delete" title="Delete Invoice" (click)="deleteInvoice(invoice.id)">
+                    <button class="action-btn btn-delete" title="Delete Invoice" (click)="openDeleteConfirm(invoice, deleteInvoiceModal)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
@@ -343,3 +343,28 @@
     </div>
   </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<ng-template #deleteInvoiceModal let-modal>
+  <div class="delete-confirm-modal">
+    <div class="modal-header border-0 pb-0">
+      <h6 class="modal-title">Delete Invoice?</h6>
+      <button type="button" class="btn-close btn-close-sm" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body pt-2">
+      <p class="mb-1">
+        Delete invoice <strong>{{ invoiceToDelete?.invoice_no || '#' + invoiceToDelete?.id }}</strong>?
+      </p>
+      <p class="text-muted small mb-0" *ngIf="invoiceToDelete?.party_name">
+        Party: {{ invoiceToDelete.party_name }}
+      </p>
+      <p class="text-muted small mb-0 mt-1">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer border-0 pt-0">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="modal.dismiss()">Cancel</button>
+      <button type="button" class="btn btn-sm btn-danger" [disabled]="deleting" (click)="confirmDeleteInvoice()">
+        {{ deleting ? 'Deleting…' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</ng-template>

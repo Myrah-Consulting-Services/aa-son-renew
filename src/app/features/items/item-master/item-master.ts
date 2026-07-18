@@ -155,13 +155,24 @@ export class ItemMaster {
     if (!confirm(`Do you want to delete "${item.name}"?`)) {
       return;
     }
-    this.api.delete('/items/delete-item/' + item.id + '/').subscribe((res: any) => {
-      if (res.status == 200) {
-        this.loadItems();
-        this.toast.show('Success', 'Item deleted successfully', 'success');
-      } else {
-        this.toast.show('Error', res.message || 'Item not deleted', 'danger');
-      }
+    this.api.delete('/items/delete-item/' + item.id + '/').subscribe({
+      next: (res: any) => {
+        const message = res?.message || res?.error || '';
+        if (res.status == 200) {
+          this.loadItems();
+          this.toast.show('Success', message || 'Item deleted successfully', 'success');
+        } else {
+          this.toast.show('Error', message || 'Item not deleted', 'danger');
+        }
+      },
+      error: (err: any) => {
+        const message =
+          err?.error?.message ||
+          err?.error?.error ||
+          err?.message ||
+          'Failed to delete item';
+        this.toast.show('Error', message, 'danger');
+      },
     });
   }
   handleItemSubmit(item: any) {

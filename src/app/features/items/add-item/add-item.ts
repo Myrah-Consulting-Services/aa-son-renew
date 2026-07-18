@@ -31,6 +31,8 @@ export class AddItem implements OnInit {
   modalMode: 'create' | 'edit' = 'create';
   modalRef: any = null;
   itemId: any;
+  itemToDelete: any = null;
+  deleting = false;
 
   loading        = false;
   warehouse_value = 0;
@@ -213,17 +215,50 @@ export class AddItem implements OnInit {
     this.modalRef  = this.modalService.open(this.createItemModal, { size: 'xl', centered: true, backdrop: 'static' });
   }
 
-  deleteItem(item: any) {
-    if (!confirm(`Do you want to delete "${item.name || 'this item'}"?`)) {
-      return;
-    }
-    this.api.delete('/items/delete-item/' + item.id + '/').subscribe((res: any) => {
-      if (res.status == 200) {
+  openDeleteConfirm(item: any, modalTemplate: any) {
+    this.itemToDelete = item;
+    this.modalService.open(modalTemplate, {
+      size: 'sm',
+      centered: true,
+      backdrop: 'static',
+    });
+  }
+
+  confirmDeleteItem() {
+    const item = this.itemToDelete;
+    if (!item?.id || this.deleting) return;
+
+    this.deleting = true;
+    this.api.delete('/items/delete-item/' + item.id + '/').subscribe({
+      next: (res: any) => {
+        this.deleting = false;
+        const message = res?.message || res?.error || '';
+        const status = Number(res?.status);
+        const failed = status >= 400 || (!!res?.error && status !== 200);
+
+        if (failed) {
+          this.modalService.dismissAll();
+          this.toast.show('Error', message || 'Item not deleted', 'danger');
+          return;
+        }
+
+        this.itemToDelete = null;
+        this.modalService.dismissAll();
         this.loadItems(true);
-        this.toast.show('Success', 'Item deleted successfully', 'success');
-      } else {
-        this.toast.show('Error', res.message || 'Item not deleted', 'danger');
-      }
+        this.toast.show('Success', message || 'Item deleted successfully', 'success');
+      },
+      error: (err: any) => {
+        this.deleting = false;
+        this.modalService.dismissAll();
+        const body = err?.error;
+        const message =
+          (typeof body === 'string' ? body : null) ||
+          body?.message ||
+          body?.error ||
+          err?.message ||
+          'Failed to delete item';
+        this.toast.show('Error', message, 'danger');
+      },
     });
   }
 

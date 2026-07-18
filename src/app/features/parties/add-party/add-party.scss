@@ -543,3 +543,18 @@ $vendor-purple-text: #41299b;
     }
   }
 }
+
+.delete-confirm-modal {
+  .modal-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .modal-body {
+    font-size: 0.85rem;
+  }
+
+  .modal-footer {
+    gap: 0.4rem;
+  }
+}

@@ -27,6 +27,8 @@ export class AddParty implements OnInit {
   @Output() addParty = new EventEmitter<any>();
   modalRef: any;
   loading = false;
+  partyToDelete: any = null;
+  deleting = false;
 
   constructor(
     private modalService: NgbModal,
@@ -174,19 +176,51 @@ export class AddParty implements OnInit {
     // this.toast.show('Success', 'Party updated successfully', 'success');
   }
 
-  deleteParty(partyId: string) {
-    if (confirm('Are you sure you want to delete this party?')) {
-      this.api.delete(`/party/delete-party/${partyId}/`).subscribe({
-        next: (response: any) => {
-          this.loadParties(); // Refresh list after deletion
-          this.toast.show('Success', 'Party deleted successfully', 'success');
-        },
-        error: (error) => {
-          console.error('Error deleting party:', error);
-          this.toast.show('Error', 'Failed to delete party', 'danger');
+  openDeleteConfirm(party: any, modalTemplate: any) {
+    this.partyToDelete = party;
+    this.modalService.open(modalTemplate, {
+      size: 'sm',
+      centered: true,
+      backdrop: 'static',
+    });
+  }
+
+  confirmDeleteParty() {
+    const partyId = this.partyToDelete?.id;
+    if (!partyId || this.deleting) return;
+
+    this.deleting = true;
+    this.api.delete(`/party/delete-party/${partyId}/`).subscribe({
+      next: (res: any) => {
+        this.deleting = false;
+        const message = res?.message || res?.error || '';
+        const status = Number(res?.status);
+        const failed = status >= 400 || (!!res?.error && status !== 200);
+
+        if (failed) {
+          this.modalService.dismissAll();
+          this.toast.show('Error', message || 'Failed to delete party', 'danger');
+          return;
         }
-      });
-    }
+
+        this.partyToDelete = null;
+        this.modalService.dismissAll();
+        this.loadParties();
+        this.toast.show('Success', message || 'Party deleted successfully', 'success');
+      },
+      error: (error: any) => {
+        this.deleting = false;
+        this.modalService.dismissAll();
+        const body = error?.error;
+        const message =
+          (typeof body === 'string' ? body : null) ||
+          body?.message ||
+          body?.error ||
+          error?.message ||
+          'Failed to delete party';
+        this.toast.show('Error', message, 'danger');
+      },
+    });
   }
 
   onAddParty(party: any) {

@@ -82,6 +82,8 @@ export class SalesRegister implements OnInit {
   
   // Make Math available in template
   Math = Math;
+  invoiceToDelete: any = null;
+  deleting = false;
 
   constructor(
     private api: Api,
@@ -400,17 +402,49 @@ export class SalesRegister implements OnInit {
     });
   }
 
-  deleteInvoice(id: any) {
-    if (!confirm('Do you want to delete this invoice?')) {
-      return;
-    }
-    this.api.delete('/invoice/delete-invoice/' + id + '/').subscribe((res: any) => {
-      if (res.status == 200) {
-        this.getSalesRegister(this.currentPage);
-        this.toast.show('Success', 'Invoice deleted successfully', 'success');
-      } else {
-        this.toast.show('Error', res.message || 'Invoice not deleted', 'danger');
-      }
+  openDeleteConfirm(invoice: any, modalTemplate: any) {
+    this.invoiceToDelete = invoice;
+    this.modalService.open(modalTemplate, {
+      size: 'sm',
+      centered: true,
+      backdrop: 'static',
+    });
+  }
+
+  confirmDeleteInvoice() {
+    const id = this.invoiceToDelete?.id;
+    if (!id || this.deleting) return;
+
+    this.deleting = true;
+    this.api.delete('/invoice/delete-invoice/' + id + '/').subscribe({
+      next: (res: any) => {
+        this.deleting = false;
+        const message = res?.message || '';
+        const cannotDelete = /cannot be deleted/i.test(message);
+
+        if (res?.status == 200 && !cannotDelete) {
+          this.invoiceToDelete = null;
+          this.modalService.dismissAll();
+          this.getSalesRegister(this.currentPage);
+          this.toast.show('Success', message || 'Invoice deleted successfully', 'success');
+        } else {
+          this.modalService.dismissAll();
+          this.toast.show(
+            'Error',
+            message || 'Invoice not deleted',
+            'danger'
+          );
+        }
+      },
+      error: (err: any) => {
+        this.deleting = false;
+        this.modalService.dismissAll();
+        this.toast.show(
+          'Error',
+          err?.error?.message || err?.message || 'Failed to delete invoice',
+          'danger'
+        );
+      },
     });
   }
 }

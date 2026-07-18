@@ -101,7 +101,7 @@
                         </button>
                         <button 
                             class="icon-btn btn-delete" 
-                            (click)="deleteParty(party.id); $event.stopPropagation()" 
+                            (click)="openDeleteConfirm(party, deletePartyModal); $event.stopPropagation()" 
                             title="Delete Party">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -158,6 +158,28 @@
     </div>
     <div class="text-center">
       <button class="btn btn-sm btn-primary" (click)="createparty()">Create</button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Delete Confirmation Modal -->
+<ng-template #deletePartyModal let-modal>
+  <div class="delete-confirm-modal">
+    <div class="modal-header border-0 pb-0">
+      <h6 class="modal-title">Delete Party?</h6>
+      <button type="button" class="btn-close btn-close-sm" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body pt-2">
+      <p class="mb-1">
+        Delete <strong>{{ partyToDelete?.partyName || 'this party' }}</strong>?
+      </p>
+      <p class="text-muted small mb-0">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer border-0 pt-0">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="modal.dismiss()">Cancel</button>
+      <button type="button" class="btn btn-sm btn-danger" [disabled]="deleting" (click)="confirmDeleteParty()">
+        {{ deleting ? 'Deleting…' : 'Delete' }}
+      </button>
     </div>
   </div>
 </ng-template>

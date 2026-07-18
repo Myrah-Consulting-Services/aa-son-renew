@@ -106,7 +106,7 @@
                         </button>
                         <button 
                             class="icon-btn btn-delete" 
-                            (click)="deleteItem(item); $event.stopPropagation()" 
+                            (click)="openDeleteConfirm(item, deleteItemModal); $event.stopPropagation()" 
                             title="Delete Item">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -153,4 +153,26 @@
     <div class="modal-body">
         <app-create-item [itemId]="itemId" (addItem)="handleItemSubmit($event)" [modalRef]="modalRef" (close)="closeModal()"></app-create-item>
     </div>
+</ng-template>
+
+<!-- Delete Confirmation Modal -->
+<ng-template #deleteItemModal let-modal>
+  <div class="delete-confirm-modal">
+    <div class="modal-header border-0 pb-0">
+      <h6 class="modal-title">Delete Item?</h6>
+      <button type="button" class="btn-close btn-close-sm" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body pt-2">
+      <p class="mb-1">
+        Delete <strong>{{ itemToDelete?.name || 'this item' }}</strong>?
+      </p>
+      <p class="text-muted small mb-0">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer border-0 pt-0">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="modal.dismiss()">Cancel</button>
+      <button type="button" class="btn btn-sm btn-danger" [disabled]="deleting" (click)="confirmDeleteItem()">
+        {{ deleting ? 'Deleting…' : 'Delete' }}
+      </button>
+    </div>
+  </div>
 </ng-template>
