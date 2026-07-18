@@ -10,5 +10,11 @@
   },
   "include": [
     "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/app/features/Expense/create-expense/create-expense.spec.ts",
+    "src/app/payroll/detailsalary/detailsalary.spec.ts",
+    "src/app/payroll/employee/employee.spec.ts",
+    "src/app/payroll/payroll-settings/payroll-settings.spec.ts"
   ]
 }

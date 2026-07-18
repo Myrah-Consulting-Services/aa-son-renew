@@ -260,6 +260,11 @@ const routes: Routes = [
     path:'jv/jv-list',
     loadComponent: () =>
       import('./jv/jv-list/jv-list').then(m => m.JvList)
+  },
+  {
+    path: 'sales/platform-integration',
+    loadComponent: () =>
+      import('./platform-integration-page/platform-integration-page').then(m => m.PlatformIntegrationPage)
   }
 ];
 

@@ -1,0 +1,49 @@
+.platform-integration-page {
+  padding: 1rem 1.25rem 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 750;
+  color: #1c1633;
+}
+
+.page-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #6b6580;
+  max-width: 560px;
+}
+
+.btn-settings-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #ddd6fe;
+  background: #f5f3ff;
+  color: #41299b;
+  font-size: 0.8rem;
+  font-weight: 650;
+  text-decoration: none;
+
+  &:hover {
+    background: #ede9fe;
+    color: #35208a;
+  }
+}
+
+.page-body {
+  background: transparent;
+}

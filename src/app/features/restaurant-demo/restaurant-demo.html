@@ -1,0 +1,525 @@
+<div class="resto-demo">
+  <!-- Top bar -->
+  <header class="demo-topbar">
+    <div class="brand-block">
+      <div class="brand-mark">E</div>
+      <div>
+        <div class="brand-title">Esarwa · Restaurant Counter</div>
+        <div class="brand-sub">{{ merchant.name }} · {{ merchant.branch }}</div>
+      </div>
+    </div>
+
+    <nav class="flow-nav">
+      <button type="button" class="flow-step" [class.active]="activeSection === 'orders'" (click)="goTo('orders')">
+        <span class="step-num">1</span> Orders
+      </button>
+      <button type="button" class="flow-step" [class.active]="activeSection === 'bill'" (click)="openBill()" [disabled]="!selected">
+        <span class="step-num">2</span> Bill + VAT
+      </button>
+      <button type="button" class="flow-step" [class.active]="activeSection === 'terminal'" (click)="goTo('terminal')" [disabled]="!selected">
+        <span class="step-num">3</span> Pine Labs
+      </button>
+      <button type="button" class="flow-step" [class.active]="activeSection === 'dashboard'" (click)="goTo('dashboard')">
+        <span class="step-num">4</span> Owner view
+      </button>
+      <button type="button" class="flow-step" [class.active]="activeSection === 'reconcile'" (click)="goTo('reconcile')">
+        <span class="step-num">5</span> Payout
+      </button>
+    </nav>
+
+    <div class="top-actions">
+      <span class="sim-badge" title="Talabat / Keeta / Pine Labs are simulated for this recording">
+        <i class="bi bi-broadcast"></i> Demo data · simulated integrations
+      </span>
+      <button type="button" class="btn-ghost" (click)="resetDemo()">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset
+      </button>
+    </div>
+  </header>
+
+  <!-- Recording strip -->
+  <div class="recording-strip">
+    <div class="rec-left">
+      <span class="live-dot" [class.running]="feedRunning"></span>
+      <strong>{{ feedRunning ? 'Live feed running' : 'Unified order desk' }}</strong>
+      <span class="muted">Every channel · one screen · AED · 5% VAT</span>
+    </div>
+    <div class="rec-actions">
+      <button type="button" class="btn-primary-demo" (click)="startLiveFeed()" [disabled]="feedRunning || remainingArrivals === 0">
+        <i class="bi bi-play-fill"></i>
+        {{ remainingArrivals === 0 ? 'Feed complete' : 'Start live feed' }}
+      </button>
+      <button type="button" class="btn-secondary-demo" (click)="pushNextArrival()" [disabled]="remainingArrivals === 0">
+        <i class="bi bi-plus-circle"></i> Next arrival ({{ remainingArrivals }})
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== SECTION: ORDERS ========== -->
+  <section class="demo-stage" *ngIf="activeSection === 'orders'">
+    <div class="stage-grid orders-grid">
+      <!-- Order list -->
+      <div class="panel orders-panel">
+        <div class="panel-head">
+          <h2>Live orders</h2>
+          <span class="count-pill">{{ orders.length }}</span>
+        </div>
+        <div class="order-list">
+          <button
+            type="button"
+            class="order-card"
+            *ngFor="let order of orders; trackBy: trackByOrderId"
+            [class.selected]="selected?.id === order.id"
+            [class.flash]="flashId === order.id"
+            [class.paid]="order.status === 'paid'"
+            (click)="selectOrder(order)"
+          >
+            <div class="order-card-top">
+              <span class="channel-tag" [attr.data-channel]="order.channel">{{ channelLabel(order.channel) }}</span>
+              <span class="status-tag" [attr.data-status]="order.status">{{ statusLabel(order.status) }}</span>
+            </div>
+            <div class="order-id">{{ order.channelOrderId }}</div>
+            <div class="order-customer">{{ order.customerName }}</div>
+            <div class="order-card-bottom">
+              <span>{{ order.items.length }} item{{ order.items.length === 1 ? '' : 's' }}</span>
+              <strong>AED {{ order.total | number:'1.2-2' }}</strong>
+            </div>
+            <div class="new-arrival-banner" *ngIf="flashId === order.id && order.isLiveArrival">Just arrived</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Detail + walk-in -->
+      <div class="panel detail-panel">
+        <div class="panel-head">
+          <h2>Selected order</h2>
+          <span class="muted" *ngIf="selected">{{ channelLabel(selected.channel) }}</span>
+        </div>
+
+        <ng-container *ngIf="selected; else noSelection">
+          <div class="detail-meta">
+            <div>
+              <div class="meta-label">Order</div>
+              <div class="meta-value">{{ selected.channelOrderId }}</div>
+            </div>
+            <div>
+              <div class="meta-label">Customer</div>
+              <div class="meta-value">{{ selected.customerName }}</div>
+            </div>
+            <div>
+              <div class="meta-label">Arrived</div>
+              <div class="meta-value">{{ selected.arrivedAt | date:'shortTime' }}</div>
+            </div>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selected.items">
+                <td>{{ item.name }}</td>
+                <td>{{ item.qty }}</td>
+                <td>AED {{ item.unitPrice | number:'1.2-2' }}</td>
+                <td>AED {{ item.lineTotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="mini-totals">
+            <div><span>Subtotal</span><span>AED {{ selected.subtotal | number:'1.2-2' }}</span></div>
+            <div><span>VAT {{ merchant.vatRate }}%</span><span>AED {{ selected.vatAmount | number:'1.2-2' }}</span></div>
+            <div class="grand"><span>Total</span><span>AED {{ selected.total | number:'1.2-2' }}</span></div>
+          </div>
+
+          <div class="detail-actions">
+            <button type="button" class="btn-primary-demo" (click)="openBill()">
+              <i class="bi bi-receipt"></i> Open itemised bill
+            </button>
+            <button
+              type="button"
+              class="btn-secondary-demo"
+              (click)="chargeOnTerminal()"
+              [disabled]="selected.status === 'paid'"
+            >
+              <i class="bi bi-credit-card-2-front"></i>
+              {{ selected.status === 'paid' ? 'Already paid' : 'Charge on terminal' }}
+            </button>
+          </div>
+        </ng-container>
+        <ng-template #noSelection>
+          <div class="empty-hint">Select an order from the left to bill it.</div>
+        </ng-template>
+
+        <div class="walkin-box">
+          <div class="panel-head compact">
+            <h3>Walk-in order</h3>
+            <span class="muted">Enter at the counter</span>
+          </div>
+          <div class="menu-grid">
+            <div class="menu-item" *ngFor="let item of menu">
+              <div class="menu-info">
+                <strong>{{ item.name }}</strong>
+                <span>AED {{ item.price | number:'1.2-2' }}</span>
+              </div>
+              <div class="qty-ctrl">
+                <button type="button" (click)="decrementWalkIn(item.id)">−</button>
+                <span>{{ walkInQty[item.id] || 0 }}</span>
+                <button type="button" (click)="incrementWalkIn(item.id)">+</button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-primary-demo full" (click)="addWalkIn()" [disabled]="!walkInSelectionCount">
+            <i class="bi bi-plus-lg"></i> Add walk-in ({{ walkInSelectionCount }})
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SECTION: BILL ========== -->
+  <section class="demo-stage" *ngIf="activeSection === 'bill' && selected">
+    <div class="stage-grid bill-grid">
+      <div class="panel bill-panel">
+        <div class="panel-head">
+          <h2>Tax invoice</h2>
+          <span class="channel-tag" [attr.data-channel]="selected.channel">{{ channelLabel(selected.channel) }}</span>
+        </div>
+
+        <div class="invoice-sheet">
+          <div class="inv-header">
+            <div>
+              <div class="inv-merchant">{{ merchant.name }}</div>
+              <div class="inv-ar">{{ merchant.nameAr }}</div>
+              <div class="inv-meta">{{ merchant.address }}, {{ merchant.city }}</div>
+              <div class="inv-meta">TRN: {{ merchant.trn }}</div>
+              <div class="inv-meta">VAT Registered Company</div>
+            </div>
+            <div class="inv-right">
+              <div class="inv-title">TAX INVOICE</div>
+              <div class="inv-meta">No. {{ selected.invoiceNumber || '—' }}</div>
+              <div class="inv-meta">{{ selected.arrivedAt | date:'medium' }}</div>
+              <div class="inv-meta">Order {{ selected.channelOrderId }}</div>
+            </div>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>VAT</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selected.items; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.qty }}</td>
+                <td>AED {{ item.unitPrice | number:'1.2-2' }}</td>
+                <td>{{ merchant.vatRate }}%</td>
+                <td>AED {{ item.lineTotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="inv-totals">
+            <div><span>Taxable amount</span><strong>AED {{ selected.subtotal | number:'1.2-2' }}</strong></div>
+            <div><span>VAT {{ merchant.vatRate }}%</span><strong>AED {{ selected.vatAmount | number:'1.2-2' }}</strong></div>
+            <div class="grand"><span>Total due</span><strong>AED {{ selected.total | number:'1.2-2' }}</strong></div>
+          </div>
+
+          <p class="inv-note">
+            Same VAT-correct billing for delivery and walk-in — itemised, TRN shown, totals in AED.
+          </p>
+        </div>
+
+        <div class="detail-actions">
+          <button type="button" class="btn-secondary-demo" (click)="goTo('orders')">
+            <i class="bi bi-arrow-left"></i> Back to orders
+          </button>
+          <button
+            type="button"
+            class="btn-primary-demo"
+            (click)="chargeOnTerminal()"
+            [disabled]="selected.status === 'paid'"
+          >
+            <i class="bi bi-phone"></i>
+            {{ selected.status === 'paid' ? 'Paid on Pine Labs' : 'Charge on Pine Labs terminal' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="panel receipt-preview">
+        <div class="panel-head"><h2>Receipt preview</h2></div>
+        <div class="thermal-receipt">
+          <div class="rcpt-center">
+            <strong>{{ merchant.name }}</strong>
+            <div>{{ merchant.city }}</div>
+            <div>TRN {{ merchant.trn }}</div>
+            <div class="rcpt-rule">TAX INVOICE</div>
+            <div>{{ selected.invoiceNumber || 'Draft' }}</div>
+          </div>
+          <div class="rcpt-line" *ngFor="let item of selected.items">
+            <span>{{ item.qty }}× {{ item.name }}</span>
+            <span>{{ item.lineTotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="rcpt-rule"></div>
+          <div class="rcpt-line"><span>Subtotal</span><span>{{ selected.subtotal | number:'1.2-2' }}</span></div>
+          <div class="rcpt-line"><span>VAT 5%</span><span>{{ selected.vatAmount | number:'1.2-2' }}</span></div>
+          <div class="rcpt-line total"><span>TOTAL AED</span><span>{{ selected.total | number:'1.2-2' }}</span></div>
+          <div class="rcpt-center muted-sm">Channel: {{ channelLabel(selected.channel) }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SECTION: TERMINAL ========== -->
+  <section class="demo-stage" *ngIf="activeSection === 'terminal'">
+    <div class="stage-grid terminal-grid">
+      <div class="panel terminal-panel">
+        <div class="panel-head">
+          <h2>Pine Labs terminal</h2>
+          <span class="sim-badge compact">Simulated payment flow</span>
+        </div>
+
+        <div class="terminal-device" [attr.data-state]="terminal.state">
+          <div class="device-bezel">
+            <div class="device-brand">PINE LABS</div>
+            <div class="device-screen">
+              <div class="device-amount" *ngIf="terminal.state !== 'idle'">
+                AED {{ terminal.amount | number:'1.2-2' }}
+              </div>
+              <div class="device-amount idle" *ngIf="terminal.state === 'idle'">
+                AED {{ (selected?.total || 0) | number:'1.2-2' }}
+              </div>
+              <div class="device-msg">{{ terminal.message }}</div>
+              <div class="device-state">{{ terminalStateLabel(terminal.state) }}</div>
+              <div class="tap-anim" *ngIf="terminal.state === 'awaiting_tap' || terminal.state === 'sent_to_terminal'">
+                <i class="bi bi-contactless"></i>
+              </div>
+              <div class="approved-check" *ngIf="terminal.state === 'approved' || terminal.state === 'receipt_issued'">
+                <i class="bi bi-check-circle-fill"></i>
+              </div>
+            </div>
+            <div class="device-footer">
+              <span *ngIf="terminal.cardLast4">•••• {{ terminal.cardLast4 }}</span>
+              <span *ngIf="terminal.authCode">Auth {{ terminal.authCode }}</span>
+              <span *ngIf="!terminal.authCode && terminal.state === 'idle'">Tap Charge to send amount</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button type="button" class="btn-secondary-demo" (click)="goTo('bill')">
+            <i class="bi bi-arrow-left"></i> Back to bill
+          </button>
+          <button
+            type="button"
+            class="btn-primary-demo"
+            (click)="chargeOnTerminal()"
+            [disabled]="!selected || selected.status === 'paid' || (terminal.state !== 'idle' && terminal.state !== 'receipt_issued')"
+          >
+            <i class="bi bi-lightning-charge-fill"></i>
+            {{ selected?.status === 'paid' ? 'Payment complete' : 'Charge on terminal' }}
+          </button>
+          <button
+            type="button"
+            class="btn-secondary-demo"
+            (click)="goTo('dashboard')"
+            [disabled]="selected?.status !== 'paid' && terminal.state !== 'receipt_issued'"
+          >
+            Owner dashboard <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel payment-summary">
+        <div class="panel-head"><h2>Payment summary</h2></div>
+        <div class="summary-rows" *ngIf="selected">
+          <div class="summary-row"><span>Merchant</span><strong>{{ merchant.name }}</strong></div>
+          <div class="summary-row"><span>Order</span><strong>{{ selected.channelOrderId }}</strong></div>
+          <div class="summary-row"><span>Invoice</span><strong>{{ selected.invoiceNumber || '—' }}</strong></div>
+          <div class="summary-row"><span>Channel</span><strong>{{ channelLabel(selected.channel) }}</strong></div>
+          <div class="summary-row"><span>Amount</span><strong>AED {{ selected.total | number:'1.2-2' }}</strong></div>
+          <div class="summary-row"><span>RRN</span><strong>{{ terminal.rrn || '—' }}</strong></div>
+          <div class="summary-row"><span>Status</span><strong>{{ terminalStateLabel(terminal.state) }}</strong></div>
+        </div>
+        <p class="inv-note">
+          Billing and payment on one device — the Pine Labs terminal becomes the system the restaurant runs on.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SECTION: DASHBOARD ========== -->
+  <section class="demo-stage" *ngIf="activeSection === 'dashboard'">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Owner dashboard · today</h2>
+        <span class="muted">All channels in one place</span>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Total sales</div>
+          <div class="kpi-value">AED {{ dashboard.totalSales | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">VAT collected</div>
+          <div class="kpi-value">AED {{ dashboard.totalVat | number:'1.2-2' }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Orders</div>
+          <div class="kpi-value">{{ dashboard.orderCount }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Paid / Pending</div>
+          <div class="kpi-value">{{ dashboard.paidCount }} / {{ dashboard.pendingCount }}</div>
+        </div>
+      </div>
+
+      <div class="channel-stats">
+        <div class="channel-stat" *ngFor="let ch of dashboard.byChannel" [attr.data-channel]="ch.channel">
+          <div class="channel-stat-head">
+            <span class="channel-tag" [attr.data-channel]="ch.channel">{{ ch.label }}</span>
+            <strong>{{ ch.orderCount }} orders</strong>
+          </div>
+          <div class="channel-stat-sales">AED {{ ch.sales | number:'1.2-2' }}</div>
+          <div class="channel-stat-vat">VAT AED {{ ch.vat | number:'1.2-2' }}</div>
+          <div class="channel-bar">
+            <div
+              class="channel-bar-fill"
+              [style.width.%]="dashboard.totalSales ? (ch.sales / dashboard.totalSales) * 100 : 0"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="recent-table-wrap">
+        <h3>Recent activity</h3>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Channel</th>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Total</th>
+              <th>VAT</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of orders">
+              <td><span class="channel-tag" [attr.data-channel]="order.channel">{{ channelLabel(order.channel) }}</span></td>
+              <td>{{ order.channelOrderId }}</td>
+              <td>{{ order.customerName }}</td>
+              <td>AED {{ order.total | number:'1.2-2' }}</td>
+              <td>AED {{ order.vatAmount | number:'1.2-2' }}</td>
+              <td><span class="status-tag" [attr.data-status]="order.status">{{ statusLabel(order.status) }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detail-actions">
+        <button type="button" class="btn-secondary-demo" (click)="goTo('orders')">
+          <i class="bi bi-arrow-left"></i> Back to orders
+        </button>
+        <button type="button" class="btn-primary-demo" (click)="goTo('reconcile')">
+          <i class="bi bi-cash-stack"></i> Talabat payout reconciliation
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SECTION: RECONCILE ========== -->
+  <section class="demo-stage" *ngIf="activeSection === 'reconcile'">
+    <div class="stage-grid reconcile-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Talabat payout reconciliation</h2>
+          <span class="sim-badge compact">Demo matching · local calculation</span>
+        </div>
+
+        <div class="recon-banner" [class.matched]="payout.matched">
+          <i class="bi" [class.bi-check-circle-fill]="payout.matched" [class.bi-exclamation-triangle-fill]="!payout.matched"></i>
+          <div>
+            <strong>{{ payout.matched ? 'Payout matched' : 'Variance found' }}</strong>
+            <div>{{ payout.statementId }} · {{ payout.periodLabel }}</div>
+          </div>
+        </div>
+
+        <div class="recon-lines">
+          <div class="recon-line" *ngFor="let line of payout.lines" [attr.data-kind]="line.kind">
+            <span>{{ line.label }}</span>
+            <strong>AED {{ line.amount | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="recon-compare">
+          <div>
+            <div class="meta-label">Expected (from orders)</div>
+            <div class="kpi-value sm">AED {{ payout.expectedPayout | number:'1.2-2' }}</div>
+          </div>
+          <div>
+            <div class="meta-label">Talabat statement</div>
+            <div class="kpi-value sm">AED {{ payout.statementPayout | number:'1.2-2' }}</div>
+          </div>
+        </div>
+
+        <div class="order-refs">
+          <div class="meta-label">Matched order refs</div>
+          <div class="ref-chips">
+            <span class="ref-chip" *ngFor="let ref of payout.orderRefs">{{ ref }}</span>
+            <span class="muted" *ngIf="!payout.orderRefs.length">No Talabat orders yet</span>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button type="button" class="btn-secondary-demo" (click)="goTo('dashboard')">
+            <i class="bi bi-arrow-left"></i> Owner dashboard
+          </button>
+          <button type="button" class="btn-primary-demo" (click)="goTo('orders')">
+            <i class="bi bi-arrow-counterclockwise"></i> Back to counter
+          </button>
+        </div>
+      </div>
+
+      <div class="panel close-panel">
+        <div class="panel-head"><h2>Partnership frame</h2></div>
+        <div class="close-copy">
+          <p>
+            Orders, billing, VAT and payment — running on one device.
+            The terminal stops being a card reader and becomes the system the restaurant runs on.
+          </p>
+          <ul>
+            <li>Unified Talabat · Keeta · walk-in desk</li>
+            <li>VAT-correct itemised bills in AED</li>
+            <li>Charge directly on Pine Labs</li>
+            <li>Owner view + payout match</li>
+          </ul>
+          <div class="close-device">
+            <div class="mini-terminal">
+              <div class="mini-screen">
+                <div>Esarwa</div>
+                <strong>AED {{ dashboard.totalSales | number:'1.0-0' }}</strong>
+                <span>Today · all channels</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="demo-toast" *ngIf="toastMessage">{{ toastMessage }}</div>
+</div>

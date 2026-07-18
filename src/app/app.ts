@@ -26,7 +26,7 @@ export class App implements OnInit {
 
   get showNavbar() {
     const path = this.router.url.split('?')[0];
-    if (path === '/login' || path === '/select-company') {
+    if (path === '/login' || path === '/select-company' || path === '/restaurant-demo') {
       return false;
     }
     if (path === '/create-company' && this.router.url.includes('from=select')) {

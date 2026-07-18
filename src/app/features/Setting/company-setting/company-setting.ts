@@ -8,11 +8,12 @@ import { InvoiceSetting } from '../invoice-setting/invoice-setting';
 import { LoyaltyGiftCards } from '../loyalty-gift-cards/loyalty-gift-cards';
 import { MarketplaceSync } from '../marketplace-sync/marketplace-sync';
 import { Integration } from '../integration/integration';
+import { TestIntegration } from '../test-integration/test-integration';
 
 @Component({
   selector: 'app-company-setting',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, CommonModule, LoyaltyGiftCards, MarketplaceSync, Integration],
+  imports: [ReactiveFormsModule, FormsModule, CommonModule, LoyaltyGiftCards, MarketplaceSync, Integration, TestIntegration],
   templateUrl: './company-setting.html',
   styleUrl: './company-setting.scss'
 })

@@ -22,9 +22,13 @@
       <i class="bi bi-shop me-2"></i>
       Marketplace Sync
     </div>
-    <div class="tab-item" [class.active]="activeTab === 'integration'" (click)="switchTab('integration')">
+    <!--<div class="tab-item" [class.active]="activeTab === 'integration'" (click)="switchTab('integration')">
       <i class="bi bi-diagram-3 me-2"></i>
       Integration
+    </div> -->
+    <div class="tab-item" [class.active]="activeTab === 'test-integration'" (click)="switchTab('test-integration')">
+      <i class="bi bi-diagram-2 me-2"></i>
+      Platform Integration
     </div>
     <!-- <div class="tab-item" [class.active]="activeTab === 'invoice-template'" (click)="switchTab('invoice-template')">
       <i class="bi bi-file-earmark-text me-2"></i>
@@ -674,6 +678,17 @@
       </div>
       <div class="tab-body">
         <app-integration></app-integration>
+      </div>
+    </div>
+
+    <!-- Platform Integration Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'test-integration'">
+      <div class="tab-header">
+        <h3 class="tab-title">Platform Integration</h3>
+        <p class="tab-description">Connect Careem, Talabat &amp; Keeta partner credentials</p>
+      </div>
+      <div class="tab-body">
+        <app-test-integration></app-test-integration>
       </div>
     </div>
 

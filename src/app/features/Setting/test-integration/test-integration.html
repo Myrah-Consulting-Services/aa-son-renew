@@ -1,0 +1,626 @@
+<div class="test-integration">
+  <!--<div class="demo-banner">
+    <i class="bi bi-flask"></i>
+    <span>Platform Integration uses <strong>local dummy data</strong> — Careem, Talabat &amp; Keeta connections are simulated for demo/QA.</span>
+  </div>-->
+
+  <!-- Connections — horizontal grid -->
+  <div class="sub-tab-pane" *ngIf="showConnections && activeSubTab === 'connections'">
+    <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+      <div class="connect-panel wide">
+        <div class="connect-panel-top">
+          <div>
+            <h4 class="connect-title">Partner Connections</h4>
+            <p class="connect-hint">Credentials are pre-filled with demo values. Toggle, Test Connection, then view orders.</p>
+          </div>
+          <button type="submit" class="btn-save-setting" [disabled]="settingsSaving">
+            {{ settingsSaving ? 'Saving…' : 'Save Settings' }}
+          </button>
+        </div>
+
+        <div class="partner-grid">
+          <div
+            *ngFor="let partner of partners"
+            class="partner-card"
+            [class.enabled]="settingsForm.get(partner.id + '_enabled')?.value"
+            [class.connected]="isConnected(partner.id)"
+          >
+            <div class="partner-row-head">
+              <div class="gateway-brand">
+                <div class="gateway-logo" [style.background]="partner.color">
+                  <i [class]="partner.icon"></i>
+                </div>
+                <div class="gateway-info">
+                  <span class="gateway-name">{{ partner.name }}</span>
+                  <span class="gateway-type">{{ partner.label }}</span>
+                </div>
+              </div>
+              <div class="gateway-header-actions">
+                <span
+                  class="gateway-status-badge"
+                  [class.connected]="isConnected(partner.id)"
+                  [class.disconnected]="!isConnected(partner.id)"
+                >
+                  {{ isConnected(partner.id) ? 'Connected' : 'Setup' }}
+                </span>
+                <label class="gateway-toggle">
+                  <input type="checkbox" [formControlName]="partner.id + '_enabled'">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <p class="partner-desc">{{ partner.description }}</p>
+
+            <div class="partner-row-body">
+              <div class="gateway-fields stacked">
+                <div class="form-group" *ngFor="let field of partner.fields">
+                  <label [for]="'test_' + partner.id + '_' + field.key" class="form-label">
+                    {{ field.label }}
+                    <span class="required" *ngIf="field.required">*</span>
+                  </label>
+                  <div class="secret-input-wrap" *ngIf="field.secret">
+                    <input
+                      [id]="'test_' + partner.id + '_' + field.key"
+                      [type]="isSecretVisible(partner.id, field.key) ? 'text' : 'password'"
+                      class="form-control"
+                      [formControlName]="partner.id + '_' + field.key"
+                      [placeholder]="field.placeholder"
+                      autocomplete="off"
+                    >
+                    <button type="button" class="secret-toggle-btn" (click)="toggleSecretVisibility(partner.id, field.key)">
+                      <i class="bi" [class.bi-eye]="!isSecretVisible(partner.id, field.key)" [class.bi-eye-slash]="isSecretVisible(partner.id, field.key)"></i>
+                    </button>
+                  </div>
+                  <input
+                    *ngIf="!field.secret"
+                    [id]="'test_' + partner.id + '_' + field.key"
+                    type="text"
+                    class="form-control"
+                    [formControlName]="partner.id + '_' + field.key"
+                    [placeholder]="field.placeholder"
+                    autocomplete="off"
+                  >
+                </div>
+              </div>
+              <div class="partner-actions">
+                <button
+                  type="button"
+                  class="btn-test-connection"
+                  (click)="testConnection(partner.id)"
+                  [disabled]="testingPartner === partner.id || !settingsForm.get(partner.id + '_enabled')?.value"
+                >
+                  {{ testingPartner === partner.id ? 'Testing…' : 'Test Connection' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Orders (Sales → Platform Integration page only) -->
+  <div class="sub-tab-pane" *ngIf="showOrders">
+    <div class="orders-kpis">
+      <div class="order-kpi">
+        <div class="kpi-icon total"><i class="bi bi-bag-check"></i></div>
+        <div>
+          <span>Total orders</span>
+          <strong>{{ totalOrders }}</strong>
+          <small>AED {{ totalSales | number:'1.2-2' }} gross sales</small>
+        </div>
+      </div>
+      <div class="order-kpi">
+        <div class="kpi-icon paid"><i class="bi bi-check-circle"></i></div>
+        <div>
+          <span>Paid</span>
+          <strong>{{ paidOrders }}</strong>
+          <small>AED {{ paidAmount | number:'1.2-2' }} received</small>
+        </div>
+      </div>
+      <div class="order-kpi">
+        <div class="kpi-icon pending"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+          <span>Awaiting payment</span>
+          <strong>{{ awaitingPaymentOrders }}</strong>
+          <small>AED {{ awaitingPaymentAmount | number:'1.2-2' }} outstanding</small>
+        </div>
+      </div>
+      <div class="order-kpi">
+        <div class="kpi-icon vat"><i class="bi bi-receipt"></i></div>
+        <div>
+          <span>VAT collected</span>
+          <strong>AED {{ totalVat | number:'1.2-2' }}</strong>
+          <small>5% UAE VAT</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="manager-toolbar">
+      <div class="toolbar-left">
+        <div class="search-wrap">
+          <i class="bi bi-search"></i>
+          <input
+            type="text"
+            class="toolbar-search"
+            placeholder="Search order, invoice, customer…"
+            [(ngModel)]="orderSearch"
+            (ngModelChange)="onOrderSearchChange()"
+          >
+        </div>
+        <select class="toolbar-filter" [(ngModel)]="partnerFilter" (ngModelChange)="onPartnerFilterChange()">
+          <option value="all">All partners</option>
+          <option value="careem">Careem</option>
+          <option value="talabat">Talabat</option>
+          <option value="keeta">Keeta</option>
+        </select>
+        <select class="toolbar-filter" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
+          <option value="all">All status</option>
+          <option *ngFor="let s of uniqueStatuses" [value]="s">{{ s }}</option>
+        </select>
+        <select class="toolbar-filter" [(ngModel)]="paymentStatusFilter" (ngModelChange)="onPaymentStatusFilterChange()">
+          <option value="all">All payment</option>
+          <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
+          <option value="awaiting_mobile">Awaiting mobile</option>
+          <option value="failed">Failed</option>
+          <option value="refunded">Refunded</option>
+        </select>
+        <span class="meta-pill">{{ filteredOrders.length }} / {{ orders.length }}</span>
+      </div>
+      <div class="toolbar-actions">
+        <button
+          type="button"
+          class="btn-live-fetch"
+          (click)="fetchLiveData()"
+          [disabled]="liveFetching || ordersLoading"
+        >
+          <span class="live-dot" [class.spinning]="liveFetching"></span>
+          <i class="bi bi-broadcast"></i>
+          {{ liveFetching ? 'Fetching live…' : 'Live fetch' }}
+        </button>
+        <button
+          type="button"
+          class="btn-action-primary"
+          (click)="reloadSampleOrders()"
+          [disabled]="ordersLoading || liveFetching"
+        >
+          <i class="bi bi-arrow-repeat"></i>
+          {{ ordersLoading ? 'Loading…' : 'Refresh Dummy Orders' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="partner-chips">
+      <button type="button" class="chip" [class.active]="partnerFilter === 'all'" (click)="partnerFilter = 'all'; onPartnerFilterChange()">All</button>
+      <button type="button" class="chip" [class.active]="partnerFilter === 'careem'" (click)="partnerFilter = 'careem'; onPartnerFilterChange()">Careem</button>
+      <button type="button" class="chip" [class.active]="partnerFilter === 'talabat'" (click)="partnerFilter = 'talabat'; onPartnerFilterChange()">Talabat</button>
+      <button type="button" class="chip" [class.active]="partnerFilter === 'keeta'" (click)="partnerFilter = 'keeta'; onPartnerFilterChange()">Keeta</button>
+    </div>
+
+    <div class="compact-table-wrap">
+      <table class="compact-table" *ngIf="filteredOrders.length; else noOrders">
+        <thead>
+          <tr>
+            <th>Partner</th>
+            <th>Order</th>
+            <th>Status</th>
+            <th>Branch</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Pay type</th>
+            <th>Payment status</th>
+            <th>Created</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of filteredOrders" [class.live-row]="isLiveArrival(order.id)">
+            <td>
+              <span class="source-badge" [attr.data-partner]="order.partner">{{ partnerLabel(order.partner) }}</span>
+            </td>
+            <td><code class="order-id">{{ order.externalId }}</code></td>
+            <td><span class="status-badge" [class]="'status-badge--' + order.status">{{ order.status }}</span></td>
+            <td>{{ order.branch }}</td>
+            <td>
+              <div class="cell-primary">{{ order.customerName }}</div>
+              <div class="cell-sub">{{ order.customerPhone }}</div>
+            </td>
+            <td>{{ itemCount(order) }}</td>
+            <td class="cell-amount">AED {{ order.total | number:'1.2-2' }}</td>
+            <td class="cell-muted">{{ order.paymentType }}</td>
+            <td>
+              <span class="pay-badge" [attr.data-pay]="order.paymentStatus">
+                {{ paymentStatusLabel(order.paymentStatus) }}
+              </span>
+            </td>
+            <td class="cell-muted">{{ order.createdAt | date:'dd MMM yy HH:mm' }}</td>
+            <td class="cell-actions" (click)="$event.stopPropagation()">
+              <div class="action-btns">
+                <button
+                  type="button"
+                  class="btn-charge"
+                  *ngIf="canChargeOnTerminal(order)"
+                  title="Charge on Pine Labs terminal"
+                  (click)="chargeOnTerminal(order, $event)"
+                  [disabled]="chargingOrderId === order.id"
+                >
+                  <i class="bi bi-phone"></i>
+                  {{ chargingOrderId === order.id ? 'Sending…' : 'Charge on terminal' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn-awaiting"
+                  *ngIf="isAwaitingMobile(order)"
+                  disabled
+                  title="Waiting for payment on terminal / mobile"
+                >
+                  <i class="bi bi-phone-vibrate"></i> Awaiting mobile…
+                </button>
+                <button
+                  type="button"
+                  class="btn-confirm-mobile"
+                  *ngIf="isAwaitingMobile(order)"
+                  title="Simulate payment confirmation from mobile"
+                  (click)="confirmMobilePayment(order, $event)"
+                >
+                  <i class="bi bi-check2-circle"></i> Confirm from mobile
+                </button>
+                <button
+                  type="button"
+                  class="btn-receipt"
+                  *ngIf="order.paymentStatus === 'paid'"
+                  title="Preview payment receipt"
+                  (click)="openReceipt(order, $event)"
+                >
+                  <i class="bi bi-receipt-cutoff"></i> Receipt
+                </button>
+                <button type="button" class="btn-icon" title="View invoice" (click)="openInvoice(order, $event)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <div class="more-wrap">
+                  <button type="button" class="btn-icon" title="More" (click)="toggleActionMenu(order.id, $event)">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <div class="more-menu" *ngIf="openMenuOrderId === order.id" (click)="$event.stopPropagation()">
+                    <button
+                      type="button"
+                      *ngIf="canChargeOnTerminal(order)"
+                      (click)="chargeOnTerminal(order, $event)"
+                      [disabled]="chargingOrderId === order.id"
+                    >
+                      <i class="bi bi-credit-card-2-front"></i>
+                      {{ chargingOrderId === order.id ? 'Sending…' : 'Charge on terminal' }}
+                    </button>
+                    <button
+                      type="button"
+                      *ngIf="isAwaitingMobile(order)"
+                      (click)="confirmMobilePayment(order, $event)"
+                    >
+                      <i class="bi bi-phone"></i> Confirm from mobile
+                    </button>
+                    <button
+                      type="button"
+                      *ngIf="order.paymentStatus === 'paid'"
+                      (click)="openReceipt(order, $event)"
+                    >
+                      <i class="bi bi-receipt-cutoff"></i> Preview receipt
+                    </button>
+                    <button type="button" (click)="openOrderDetail(order, $event)">
+                      <i class="bi bi-card-list"></i> View details
+                    </button>
+                    <button type="button" (click)="openInvoice(order, $event)">
+                      <i class="bi bi-receipt"></i> View invoice
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noOrders>
+        <div class="empty-state">
+          <p *ngIf="ordersLoading">Loading test orders…</p>
+          <p *ngIf="!ordersLoading">No orders yet. Enable a partner, Test Connection, then Refresh.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice modal (eye) -->
+<ng-template #invoiceModal let-modal>
+  <div class="int-modal invoice-modal" *ngIf="selectedOrder">
+    <div class="int-modal-header">
+      <div class="int-modal-title-wrap">
+        <strong>TAX INVOICE</strong>
+        <span class="source-badge" [attr.data-partner]="selectedOrder.partner">{{ partnerLabel(selectedOrder.partner) }}</span>
+      </div>
+      <button type="button" class="btn-close-sm" (click)="closeModal()" aria-label="Close">×</button>
+    </div>
+
+    <div class="int-modal-body">
+      <div class="invoice-sheet">
+        <div class="inv-top">
+          <div>
+            <div class="inv-merchant">Al Manara Kitchen</div>
+            <div class="inv-meta">Al Quoz Industrial Area 3, Dubai</div>
+            <div class="inv-meta">TRN: 100312345600003</div>
+            <div class="inv-meta">VAT Registered Company</div>
+          </div>
+          <div class="inv-right">
+            <div class="inv-meta"><strong>No.</strong> {{ selectedOrder.invoiceNumber }}</div>
+            <div class="inv-meta"><strong>Order</strong> {{ selectedOrder.externalId }}</div>
+            <div class="inv-meta">{{ selectedOrder.createdAt | date:'medium' }}</div>
+            <div class="inv-meta">
+              Payment:
+              <span class="pay-badge" [attr.data-pay]="selectedOrder.paymentStatus">
+                {{ paymentStatusLabel(selectedOrder.paymentStatus) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="inv-customer">
+          <span class="info-label">Bill to</span>
+          <div>{{ selectedOrder.customerName }}</div>
+          <div class="cell-sub">{{ selectedOrder.customerPhone }}</div>
+          <div class="cell-sub">{{ selectedOrder.address }}</div>
+        </div>
+
+        <table class="compact-table items-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Unit</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of selectedOrder.items; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ item.name }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>AED {{ item.unit_price | number:'1.2-2' }}</td>
+              <td>AED {{ item.total_price | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="inv-totals">
+          <div><span>Subtotal</span><strong>AED {{ selectedOrder.subtotal | number:'1.2-2' }}</strong></div>
+          <div><span>VAT 5%</span><strong>AED {{ selectedOrder.vatAmount | number:'1.2-2' }}</strong></div>
+          <div><span>Delivery</span><strong>AED {{ selectedOrder.deliveryFee | number:'1.2-2' }}</strong></div>
+          <div class="grand"><span>Total</span><strong>AED {{ selectedOrder.total | number:'1.2-2' }}</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="int-modal-footer">
+      <button
+        type="button"
+        class="btn-charge"
+        *ngIf="canChargeOnTerminal(selectedOrder)"
+        (click)="chargeOnTerminal(selectedOrder, $event)"
+        [disabled]="chargingOrderId === selectedOrder.id"
+      >
+        <i class="bi bi-phone"></i>
+        {{ chargingOrderId === selectedOrder.id ? 'Sending…' : 'Charge on terminal' }}
+      </button>
+      <button
+        type="button"
+        class="btn-awaiting"
+        *ngIf="isAwaitingMobile(selectedOrder)"
+        disabled
+      >
+        <i class="bi bi-phone-vibrate"></i> Awaiting mobile…
+      </button>
+      <button
+        type="button"
+        class="btn-confirm-mobile"
+        *ngIf="isAwaitingMobile(selectedOrder)"
+        (click)="confirmMobilePayment(selectedOrder, $event)"
+      >
+        <i class="bi bi-check2-circle"></i> Confirm from mobile
+      </button>
+      <button type="button" class="btn-modal-close" (click)="closeModal()">Close</button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Paid receipt modal -->
+<ng-template #receiptModal let-modal>
+  <div class="int-modal receipt-modal" *ngIf="selectedOrder">
+    <div class="int-modal-header">
+      <div class="int-modal-title-wrap">
+        <strong>PAYMENT RECEIPT</strong>
+        <span class="pay-badge" data-pay="paid">Paid</span>
+      </div>
+      <button type="button" class="btn-close-sm" (click)="closeModal()" aria-label="Close">×</button>
+    </div>
+
+    <div class="int-modal-body">
+      <div class="thermal-receipt">
+        <div class="receipt-center">
+          <div class="receipt-merchant">Al Manara Kitchen</div>
+          <div>Al Quoz Industrial Area 3, Dubai</div>
+          <div>TRN: 100312345600003</div>
+          <div class="receipt-rule"></div>
+          <strong>PAYMENT RECEIPT</strong>
+          <div>{{ selectedOrder.invoiceNumber }}</div>
+          <div>{{ selectedOrder.externalId }}</div>
+        </div>
+
+        <div class="receipt-rule"></div>
+        <div class="receipt-line" *ngFor="let item of selectedOrder.items">
+          <span>{{ item.quantity }} × {{ item.name }}</span>
+          <span>{{ item.total_price | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-rule"></div>
+        <div class="receipt-line">
+          <span>Subtotal</span>
+          <span>{{ selectedOrder.subtotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-line">
+          <span>VAT 5%</span>
+          <span>{{ selectedOrder.vatAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-line">
+          <span>Delivery</span>
+          <span>{{ selectedOrder.deliveryFee | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-line receipt-total">
+          <span>TOTAL PAID AED</span>
+          <span>{{ selectedOrder.total | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-rule"></div>
+        <div class="receipt-meta">Method: {{ selectedOrder.paymentType }}</div>
+        <div class="receipt-meta">Reference: {{ selectedOrder.paymentReference || '—' }}</div>
+        <div class="receipt-meta">
+          Paid: {{ (selectedOrder.paidAt || selectedOrder.createdAt) | date:'medium' }}
+        </div>
+        <div class="receipt-center receipt-thanks">Thank you</div>
+      </div>
+    </div>
+
+    <div class="int-modal-footer">
+      <button type="button" class="btn-print" (click)="printReceipt()">
+        <i class="bi bi-printer"></i> Print receipt
+      </button>
+      <button type="button" class="btn-modal-close" (click)="closeModal()">Close</button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Detail modal (3-dots) -->
+<ng-template #orderDetailModal let-modal>
+  <div class="int-modal" *ngIf="selectedOrder">
+    <div class="int-modal-header">
+      <div class="int-modal-title-wrap">
+        <span class="source-badge" [attr.data-partner]="selectedOrder.partner">{{ partnerLabel(selectedOrder.partner) }}</span>
+        <span class="order-id">{{ selectedOrder.externalId }}</span>
+        <span class="status-badge" [class]="'status-badge--' + selectedOrder.status">{{ selectedOrder.status }}</span>
+        <span class="pay-badge" [attr.data-pay]="selectedOrder.paymentStatus">
+          {{ paymentStatusLabel(selectedOrder.paymentStatus) }}
+        </span>
+      </div>
+      <button type="button" class="btn-close-sm" (click)="closeModal()" aria-label="Close">×</button>
+    </div>
+
+    <div class="int-modal-body">
+      <div class="info-tiles">
+        <div class="info-tile">
+          <span class="info-label">Invoice</span>
+          <span class="info-value">{{ selectedOrder.invoiceNumber }}</span>
+        </div>
+        <div class="info-tile">
+          <span class="info-label">Branch</span>
+          <span class="info-value">{{ selectedOrder.branch }}</span>
+        </div>
+        <div class="info-tile">
+          <span class="info-label">Total</span>
+          <span class="info-value accent">AED {{ selectedOrder.total | number:'1.2-2' }}</span>
+        </div>
+        <div class="info-tile">
+          <span class="info-label">Pay type</span>
+          <span class="info-value">{{ selectedOrder.paymentType }}</span>
+        </div>
+        <div class="info-tile">
+          <span class="info-label">Payment status</span>
+          <span class="info-value">{{ paymentStatusLabel(selectedOrder.paymentStatus) }}</span>
+        </div>
+        <div class="info-tile">
+          <span class="info-label">Delivery fee</span>
+          <span class="info-value">AED {{ selectedOrder.deliveryFee | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-line">
+          <span class="info-label">Customer</span>
+          <span>{{ selectedOrder.customerName }} · {{ selectedOrder.customerPhone }}</span>
+        </div>
+        <div class="info-line">
+          <span class="info-label">Address</span>
+          <span>{{ selectedOrder.address }}</span>
+        </div>
+        <div class="info-line">
+          <span class="info-label">Created</span>
+          <span>{{ selectedOrder.createdAt | date:'medium' }}</span>
+        </div>
+        <div class="info-line">
+          <span class="info-label">VAT 5%</span>
+          <span>AED {{ selectedOrder.vatAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="items-head">Line items ({{ selectedOrder.items.length }})</div>
+      <table class="compact-table items-table">
+        <thead>
+          <tr>
+            <th>Item ID</th>
+            <th>Name</th>
+            <th>Qty</th>
+            <th>Unit</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of selectedOrder.items">
+            <td><code>{{ item.id }}</code></td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>AED {{ item.unit_price | number:'1.2-2' }}</td>
+            <td>AED {{ item.total_price | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="int-modal-footer">
+      <button
+        type="button"
+        class="btn-receipt"
+        *ngIf="selectedOrder.paymentStatus === 'paid'"
+        (click)="openReceipt(selectedOrder, $event)"
+      >
+        <i class="bi bi-receipt-cutoff"></i> Receipt
+      </button>
+      <button
+        type="button"
+        class="btn-charge"
+        *ngIf="canChargeOnTerminal(selectedOrder)"
+        (click)="chargeOnTerminal(selectedOrder, $event)"
+        [disabled]="chargingOrderId === selectedOrder.id"
+      >
+        <i class="bi bi-phone"></i>
+        {{ chargingOrderId === selectedOrder.id ? 'Sending…' : 'Charge on terminal' }}
+      </button>
+      <button
+        type="button"
+        class="btn-awaiting"
+        *ngIf="isAwaitingMobile(selectedOrder)"
+        disabled
+      >
+        <i class="bi bi-phone-vibrate"></i> Awaiting mobile…
+      </button>
+      <button
+        type="button"
+        class="btn-confirm-mobile"
+        *ngIf="isAwaitingMobile(selectedOrder)"
+        (click)="confirmMobilePayment(selectedOrder, $event)"
+      >
+        <i class="bi bi-check2-circle"></i> Confirm from mobile
+      </button>
+      <button type="button" class="btn-test-connection" (click)="openInvoiceFromDetail()">
+        <i class="bi bi-receipt"></i> Open invoice
+      </button>
+      <button type="button" class="btn-modal-close" (click)="closeModal()">Close</button>
+    </div>
+  </div>
+</ng-template>
