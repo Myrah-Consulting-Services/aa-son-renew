@@ -790,9 +790,11 @@
                 <span class="summary-label fw-bold" *ngIf="invoiceForm.get('invoice_type')?.value == '1' || invoiceForm.get('invoice_type')?.value == '3' || invoiceForm.get('invoice_type')?.value == '5' || invoiceForm.get('invoice_type')?.value == '6'">Payment Received In:</span>
                 <div class="input-group input-group-sm">
                   <select *ngIf="invoiceForm.get('received_amount_by')?.value=='1'" type="text" class="form-control fw-bold" formControlName="handover_to" (change)="onHandoverToChange()">
+                    <option value="" disabled hidden>Select cash account</option>
                     <option *ngFor="let c of cashList" [value]="c.id">{{ c.ledger_name }}-{{c.cashTypeCode}}</option>
                   </select>
                   <select *ngIf="invoiceForm.get('received_amount_by')?.value!=='1'" type="text" class="form-control fw-bold" formControlName="handover_to" (change)="onHandoverToChange()">
+                    <option value="" disabled hidden>Select bank account</option>
                     <option *ngFor="let b of uaeBanks" [value]="b.id">{{ b.bank_name }}-{{b.bankTypeCode}}</option>
                   </select>
                 </div>

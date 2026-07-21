@@ -1163,6 +1163,14 @@ export class CreateInvoice implements OnInit, OnDestroy {
   onSubmit(): void {
     this.invoiceForm.value.items = this.items.value;
 
+    const handoverToControl = this.invoiceForm.get('handover_to');
+    const handoverTo = handoverToControl?.value;
+    if (handoverToControl?.enabled && (handoverTo === null || handoverTo === undefined || handoverTo === '')) {
+      handoverToControl.markAsTouched();
+      this.toast.show('Warning', 'Please select Payment Received In account before saving the invoice', 'warning');
+      return;
+    }
+
     // Format against_grn_inv for purchase invoices
     if (this.invoiceForm.get('invoice_type')?.value == '2') {
       const formattedGrns = this.selectedGrns.map(grn => ({
