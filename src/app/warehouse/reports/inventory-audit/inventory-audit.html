@@ -1,0 +1,154 @@
+<div class="inventory-audit-container">
+  <!-- Breadcrumb Section -->
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse">Warehouse</a></li>
+        <li class="breadcrumb-item"><a routerLink="/warehouse/reports">Reports</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Inventory Audit</li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- Header Section -->
+  <section class="header-section">
+    <div class="inventory-audit-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="audit-logo">
+          <i class="bi bi-upc-scan"></i>
+        </span>
+        <div>
+          <h1 class="header-title">RFID Inventory Audit</h1>
+          <p class="header-subtitle">Cartons scanned via handheld RFID reader — inventory count demo</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="scan-result-badge">
+          <i class="bi bi-check-circle-fill me-1"></i>
+          {{ auditMeta.scanned }} of {{ auditMeta.expected }} scanned
+        </span>
+        <button class="btn btn-primary btn-sm" (click)="exportToCSV()">
+          <i class="bi bi-download me-1"></i>Export CSV
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Audit meta -->
+  <section class="meta-section">
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Audit ID</span>
+        <span class="meta-value">{{ auditMeta.auditId }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Warehouse</span>
+        <span class="meta-value">{{ auditMeta.warehouse }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Scanned By</span>
+        <span class="meta-value">{{ auditMeta.scannedBy }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Scanned At</span>
+        <span class="meta-value">{{ auditMeta.scannedAt }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Section -->
+  <section class="kpi-section">
+    <h2 class="section-title"><i class="bi bi-speedometer2 me-2 kpi-icon"></i>Audit Summary</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clipboard-check"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Expected</h3>
+          <p class="stat-number">{{ auditMeta.expected }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-upc-scan"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Scanned</h3>
+          <p class="stat-number">{{ auditMeta.scanned }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Matched</h3>
+          <p class="stat-number">{{ matchedCount }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-percent"></i>
+        </div>
+        <div class="stat-content">
+          <h3>Accuracy</h3>
+          <p class="stat-number">{{ accuracyPct.toFixed(0) }}%</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="main-content-section">
+    <div class="table-section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">
+            <i class="bi bi-box-seam me-2"></i>Cartons Scanned
+          </h3>
+          <span class="table-count">{{ cartons.length }} cartons</span>
+        </div>
+        <div class="table-body">
+          <table class="compact-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>RFID Tag ID</th>
+                <th>Product</th>
+                <th>Carton No</th>
+                <th>SKU</th>
+                <th>Location</th>
+                <th class="text-end">Qty</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let carton of cartons; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td><code class="rfid-tag">{{ carton.rfidTagId }}</code></td>
+                <td><strong>{{ carton.productName }}</strong></td>
+                <td>{{ carton.cartonNo }}</td>
+                <td>{{ carton.sku }}</td>
+                <td>{{ carton.location }}</td>
+                <td class="text-end fw-bold">{{ carton.qtyScanned }}/{{ carton.qtyExpected }}</td>
+                <td>
+                  <span class="badge"
+                    [class.bg-success]="carton.status === 'Matched'"
+                    [class.bg-danger]="carton.status === 'Missing'"
+                    [class.bg-warning]="carton.status === 'Unexpected'">
+                    {{ carton.status }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

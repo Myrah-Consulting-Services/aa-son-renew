@@ -54,7 +54,8 @@ export class ReportsDashboard {
       reports: [
         { name: 'Current Stock Levels', route: 'warehouse/reports/inventory', icon: 'bi-list-ul' },
         { name: 'Low Stock Alerts', route: 'warehouse/reports/inventory', icon: 'bi-exclamation-triangle', filter: 'low-stock' },
-        { name: 'Stock Valuation', route: 'warehouse/reports/inventory', icon: 'bi-calculator', filter: 'valuation' }
+        { name: 'Stock Valuation', route: 'warehouse/reports/inventory', icon: 'bi-calculator', filter: 'valuation' },
+        { name: 'RFID Inventory Audit', route: 'warehouse/reports/inventory-audit', icon: 'bi-upc-scan' }
       ]
     },
     {

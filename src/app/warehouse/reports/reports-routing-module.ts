@@ -20,6 +20,10 @@ const routes: Routes = [
         loadComponent: () => import('./inventory-report/inventory-report').then(m => m.InventoryReport)
       },
       {
+        path: 'inventory-audit',
+        loadComponent: () => import('./inventory-audit/inventory-audit').then(m => m.InventoryAudit)
+      },
+      {
         path: 'movements',
         loadComponent: () => import('./movements-report/movements-report').then(m => m.MovementsReport)
       },
