@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Api } from '../../core/services/api';
 import { ToastService } from '../../core/services/toast.service';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-stock-list',
@@ -28,7 +29,8 @@ export class StockList implements OnInit {
   totalData = 0;
   constructor(
     public svc: Api,
-    private toast: ToastService
+    private toast: ToastService,
+    private demo: DemoDataService
   ) {}
 
   ngOnInit() {
@@ -50,17 +52,30 @@ export class StockList implements OnInit {
       this.loading = false;
       if (res.status == 200) {
         this.total_count = res.total_count;
-        this.stock = res.data;
+        const apiData = res.data || [];
+        this.stock = this.demo.stock(apiData);
         const paginated = res.Paginated_data || res.paginated_data || {};
-        this.currentPage = paginated.page_number || paginated.page || res.current_page || this.currentPage;
-        this.totalPages = paginated.total_pages || res.total_pages || 0;
-        this.totalData = paginated.total_count || res.total_count || 0;
-        this.pageSize = paginated.page_size || res.page_size || this.pageSize;
+        if (apiData.length) {
+          this.currentPage = paginated.page_number || paginated.page || res.current_page || this.currentPage;
+          this.totalPages = paginated.total_pages || res.total_pages || 0;
+          this.totalData = paginated.total_count || res.total_count || 0;
+          this.pageSize = paginated.page_size || res.page_size || this.pageSize;
+        } else {
+          this.currentPage = 1;
+          this.totalPages = 1;
+          this.totalData = this.stock.length;
+          this.total_count = this.stock.length;
+        }
         this.processLocationData();
       }
     }, (error) => {
       this.loading = false;
       console.error('Error loading stock data:', error);
+      this.stock = this.demo.stock([]);
+      this.totalData = this.stock.length;
+      this.total_count = this.stock.length;
+      this.totalPages = 1;
+      this.processLocationData();
     });
   }
 

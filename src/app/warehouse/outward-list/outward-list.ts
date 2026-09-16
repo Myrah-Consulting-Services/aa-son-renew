@@ -8,6 +8,7 @@ import { Api } from '../../core/services/api';
 import { ToastService } from '../../core/services/toast.service';
 import { OutwardReq } from '../outward-req/outward-req';
 import * as pdfMake from 'pdfmake/build/pdfmake';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-outward-list',
@@ -46,7 +47,8 @@ export class OutwardList implements OnInit {
   constructor(
     private api: Api,
     private modalService: NgbModal,
-    private toast: ToastService
+    private toast: ToastService,
+    private demo: DemoDataService
   ) {}
 
   ngOnInit() {
@@ -79,23 +81,36 @@ export class OutwardList implements OnInit {
       next: (res: any) => {
         this.loading = false;
         if (res.status == 200) {
-          this.outwardTransactions = res.data || [];
+          const apiData = res.data || [];
+          this.outwardTransactions = this.demo.outwards(apiData);
           this.filteredTransactions = [...this.outwardTransactions];
           this.calculateStatistics();
-          if (res.paginated_data) {
+          if (res.paginated_data && apiData.length) {
             this.currentPage = res.paginated_data.current_page;
             this.totalPages = res.paginated_data.total_pages;
             this.totalData = res.paginated_data.total_data;
             this.pageSize = res.paginated_data.page_size;
+          } else {
+            this.currentPage = 1;
+            this.totalPages = 1;
+            this.totalData = this.outwardTransactions.length;
           }
         } else {
-          // this.setDefaultData();
+          this.outwardTransactions = this.demo.outwards([]);
+          this.filteredTransactions = [...this.outwardTransactions];
+          this.calculateStatistics();
+          this.totalData = this.outwardTransactions.length;
+          this.totalPages = 1;
         }
       },
       error: (error) => {
         this.loading = false;
         console.error('Error loading outward transactions:', error);
-        // this.toast.show('Error', 'Failed to load outward transactions', 'danger');
+        this.outwardTransactions = this.demo.outwards([]);
+        this.filteredTransactions = [...this.outwardTransactions];
+        this.calculateStatistics();
+        this.totalData = this.outwardTransactions.length;
+        this.totalPages = 1;
       }
     });
   }

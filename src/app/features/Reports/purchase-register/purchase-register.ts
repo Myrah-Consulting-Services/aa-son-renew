@@ -6,6 +6,7 @@ import { CreateInvoice } from '../../Invoices/create-invoice/create-invoice';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../core/services/toast.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 
 interface PurchaseInvoice {
   id: number;
@@ -90,7 +91,8 @@ export class PurchaseRegister implements OnInit {
     private fb: FormBuilder,
     private modalService:NgbModal,
     private toast:ToastService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private demo: DemoDataService
   ) {
     this.filterForm = this.fb.group({
       start_date: ['', Validators.required],
@@ -136,22 +138,44 @@ export class PurchaseRegister implements OnInit {
       next: (response: any) => {
         console.log('Purchase Register Response:', response);
         if (response && response.status === 200) {
-          this.purchaseInvoices = response.data || [];
+          const apiData = response.data || [];
+          this.purchaseInvoices = this.demo.purchaseInvoices(apiData);
           this.pagination = response.pagination || {
             current_page: 1,
             total_pages: 1,
             total_data: 0,
             page_size: 10
           };
-          this.initializePaginationIfMissing(response);
+          if (!apiData.length) {
+            this.pagination = {
+              current_page: 1,
+              total_pages: 1,
+              total_data: this.purchaseInvoices.length,
+              page_size: this.purchaseInvoices.length || this.pageSize
+            };
+          } else {
+            this.initializePaginationIfMissing(response);
+          }
         } else {
-          this.error = 'Failed to load purchase register data';
+          this.purchaseInvoices = this.demo.purchaseInvoices([]);
+          this.pagination = {
+            current_page: 1,
+            total_pages: 1,
+            total_data: this.purchaseInvoices.length,
+            page_size: this.purchaseInvoices.length || this.pageSize
+          };
         }
         this.loading = false;
       },
       error: (error) => {
         console.error('Error fetching purchase register:', error);
-        this.error = 'Error loading purchase register data';
+        this.purchaseInvoices = this.demo.purchaseInvoices([]);
+        this.pagination = {
+          current_page: 1,
+          total_pages: 1,
+          total_data: this.purchaseInvoices.length,
+          page_size: this.purchaseInvoices.length || this.pageSize
+        };
         this.loading = false;
       }
     });

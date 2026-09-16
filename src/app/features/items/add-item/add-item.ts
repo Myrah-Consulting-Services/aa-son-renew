@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateItem } from '../create-item/create-item';
 import { Api } from '../../../core/services/api';
 import { ToastService } from '../../../core/services/toast.service';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 @Component({
@@ -52,7 +53,8 @@ export class AddItem implements OnInit {
     private modalService: NgbModal,
     private api: Api,
     private elementRef: ElementRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private demo: DemoDataService
   ) {
     this.searchSubject.pipe(
       debounceTime(500),
@@ -135,12 +137,12 @@ export class AddItem implements OnInit {
         if (response && response.status === 200) {
           const raw = response.data;
           const list = Array.isArray(raw?.results) ? raw.results : Array.isArray(raw) ? raw : [];
-          this.items = list.map((item: any) => ({ ...item, qty: 1 }));
+          this.items = this.demo.items(list).map((item: any) => ({ ...item, qty: item.qty ?? 1 }));
         }
         this.loading = false;
       },
       error: () => {
-        this.toast.show('Error', 'Failed to search items', 'danger');
+        this.items = this.demo.items([]).map((item: any) => ({ ...item, qty: item.qty ?? 1 }));
         this.loading = false;
       }
     });
@@ -166,12 +168,20 @@ export class AddItem implements OnInit {
         if (response && response.status === 200) {
           const raw  = response.data;
           const list = Array.isArray(raw?.results) ? raw.results : Array.isArray(raw) ? raw : [];
-          this.items = [...(this.items || []), ...list.map((item: any) => ({ ...item, qty: 1 }))];
+          const mapped = list.map((item: any) => ({ ...item, qty: 1 }));
+          if (reset) {
+            this.items = this.demo.items(mapped).map((item: any) => ({ ...item, qty: item.qty ?? 1 }));
+          } else {
+            this.items = [...(this.items || []), ...mapped];
+            if (!this.items.length) {
+              this.items = this.demo.items([]).map((item: any) => ({ ...item, qty: item.qty ?? 1 }));
+            }
+          }
         }
         this.loading = false;
       },
       error: () => {
-        this.toast.show('Error', 'Failed to load items', 'danger');
+        this.items = this.demo.items([]).map((item: any) => ({ ...item, qty: item.qty ?? 1 }));
         this.loading = false;
       }
     });

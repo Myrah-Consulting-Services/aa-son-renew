@@ -7,6 +7,7 @@ import { Api } from '../../core/services/api';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../core/services/toast.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 interface InwardReceipt {
   id: number;
@@ -71,7 +72,8 @@ export class InwardList implements OnInit {
     private svc: Api,
     private modalService: NgbModal,
     private toast: ToastService,
-    private http: HttpClient
+    private http: HttpClient,
+    private demo: DemoDataService
   ) {}
 
   ngOnInit() {
@@ -136,10 +138,11 @@ export class InwardList implements OnInit {
     this.svc.post('/invoice/list-inward/s=' + search + '/', payload).subscribe({
       next: (res: any) => {
         if (res.status === 200) {
-          this.receipts = res.data || [];
+          const apiData = res.data || [];
+          this.receipts = this.demo.inwards(apiData);
           this.filteredReceipts = [...this.receipts];
 
-          if (res.kpis) {
+          if (res.kpis && apiData.length) {
             this.totalReceipts = res.kpis.total_receipts ?? 0;
             this.totalAmount = Number(res.kpis.total_amount ?? 0);
             this.todayReceipts = res.kpis.today ?? 0;
@@ -148,7 +151,7 @@ export class InwardList implements OnInit {
             this.calculateSummary();
           }
 
-          if (res.paginated_data) {
+          if (res.paginated_data && apiData.length) {
             this.currentPage = res.paginated_data.current_page ?? this.currentPage;
             this.totalPages = res.paginated_data.total_pages ?? 0;
             this.totalData = res.paginated_data.total_data ?? res.paginated_data.total_count ?? 0;
@@ -156,13 +159,20 @@ export class InwardList implements OnInit {
             if (apiPageSize != null) {
               this.pageSize = typeof apiPageSize === 'string' ? parseInt(apiPageSize, 10) : apiPageSize;
             }
+          } else {
+            this.totalData = this.receipts.length;
+            this.totalPages = 1;
           }
         }
         this.loading = false;
       },
       error: (error) => {
         this.loading = false;
-        this.toast.show('Error', 'Failed to load inward list', 'danger');
+        this.receipts = this.demo.inwards([]);
+        this.filteredReceipts = [...this.receipts];
+        this.calculateSummary();
+        this.totalData = this.receipts.length;
+        this.totalPages = 1;
       }
     });
   }

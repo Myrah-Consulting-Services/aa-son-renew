@@ -7,73 +7,73 @@ export class AttendanceService {
   private readonly STORAGE_KEY = 'attendance_data';
   private attendance = [
     {
-      employeeId: 'EMP001',
-      name: 'John Smith',
-      department: 'IT',
-      designation: 'Senior Developer',
+      employeeId: 'NRC001',
+      name: 'Omar Al Hashimi',
+      department: 'Projects',
+      designation: 'Project Manager',
       attendance: {} as { [key: string]: string }
     },
     {
-      employeeId: 'EMP002',
-      name: 'Sarah Johnson',
+      employeeId: 'NRC002',
+      name: 'Hassan Mansour',
+      department: 'Site Operations',
+      designation: 'Site Supervisor',
+      attendance: {} as { [key: string]: string }
+    },
+    {
+      employeeId: 'NRC003',
+      name: 'Priya Nair',
+      department: 'Estimation',
+      designation: 'Quantity Surveyor',
+      attendance: {} as { [key: string]: string }
+    },
+    {
+      employeeId: 'NRC004',
+      name: 'Mohammed Yousef',
+      department: 'Plant & Machinery',
+      designation: 'Plant Operator',
+      attendance: {} as { [key: string]: string }
+    },
+    {
+      employeeId: 'NRC005',
+      name: 'Suresh Kumar',
+      department: 'Site Operations',
+      designation: 'Site Engineer',
+      attendance: {} as { [key: string]: string }
+    },
+    {
+      employeeId: 'NRC006',
+      name: 'Anwar Hussain',
+      department: 'Plant & Machinery',
+      designation: 'Mechanic',
+      attendance: {} as { [key: string]: string }
+    },
+    {
+      employeeId: 'NRC007',
+      name: 'Layla Hassan',
+      department: 'Accounts',
+      designation: 'Accounts Officer',
+      attendance: {} as { [key: string]: string }
+    },
+    {
+      employeeId: 'NRC008',
+      name: 'Ravi Menon',
+      department: 'Site Operations',
+      designation: 'Lab Technician',
+      attendance: {} as { [key: string]: string }
+    },
+    {
+      employeeId: 'NRC009',
+      name: 'Fatima Al Nuaimi',
       department: 'HR',
-      designation: 'HR Manager',
+      designation: 'HR Officer',
       attendance: {} as { [key: string]: string }
     },
     {
-      employeeId: 'EMP003',
-      name: 'Michael Brown',
-      department: 'Finance',
-      designation: 'Accountant',
-      attendance: {} as { [key: string]: string }
-    },
-    {
-      employeeId: 'EMP004',
-      name: 'Emily Davis',
-      department: 'Marketing',
-      designation: 'Marketing Specialist',
-      attendance: {} as { [key: string]: string }
-    },
-    {
-      employeeId: 'EMP005',
-      name: 'David Wilson',
-      department: 'Operations',
-      designation: 'Operations Manager',
-      attendance: {} as { [key: string]: string }
-    },
-    {
-      employeeId: 'EMP006',
-      name: 'Lisa Anderson',
-      department: 'IT',
-      designation: 'QA Engineer',
-      attendance: {} as { [key: string]: string }
-    },
-    {
-      employeeId: 'EMP007',
-      name: 'Robert Taylor',
-      department: 'Sales',
-      designation: 'Sales Executive',
-      attendance: {} as { [key: string]: string }
-    },
-    {
-      employeeId: 'EMP008',
-      name: 'Jennifer Martinez',
-      department: 'Finance',
-      designation: 'Financial Analyst',
-      attendance: {} as { [key: string]: string }
-    },
-    {
-      employeeId: 'EMP009',
-      name: 'Christopher Lee',
-      department: 'Marketing',
-      designation: 'Marketing Manager',
-      attendance: {} as { [key: string]: string }
-    },
-    {
-      employeeId: 'EMP010',
-      name: 'Amanda Garcia',
-      department: 'HR',
-      designation: 'HR Assistant',
+      employeeId: 'NRC010',
+      name: 'Carlos Mendoza',
+      department: 'Plant & Machinery',
+      designation: 'Heavy Driver',
       attendance: {} as { [key: string]: string }
     }
   ];

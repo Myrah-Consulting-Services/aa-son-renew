@@ -2220,7 +2220,7 @@ export class CreateInvoice implements OnInit, OnDestroy {
           {
             width: '*', text: [
               'For ',
-              { text: 'AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)', bold: true }
+              { text: 'Nablus Road Contracting', bold: true }
             ], margin: [0, 18, 0, 0], fontSize: 12
           },
           { width: '*', text: 'Received the above goods in good conditions', alignment: 'right', margin: [0, 18, 0, 0], fontSize: 12 }
@@ -2270,21 +2270,21 @@ export class CreateInvoice implements OnInit, OnDestroy {
         },
         // Company Name
         {
-          text: 'AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)',
+          text: 'Nablus Road Contracting',
           style: 'companyName',
           alignment: 'center',
           margin: [0, 0, 0, 4]
         },
         // Address and Contact
         {
-          text: 'POST BOX NO. 4713, DUBAI, U.A.E.\nTEL :04-3536699 FAX :04-3536611 Email : raisem@eim.ae',
+          text: 'Warehouse 14, Al Quoz Industrial Area 3, Dubai, U.A.E. | P.O. Box 118820\nTEL : +971 4 338 2140 | Email : info@nablusroad.ae',
           style: 'companyInfo',
           alignment: 'center',
           margin: [0, 0, 0, 2]
         },
         // TRN
         {
-          text: 'TRN : 100033732700003',
+          text: 'TRN : 100456789012345',
           style: 'trn',
           alignment: 'center',
           margin: [0, 0, 0, 10]
@@ -2403,8 +2403,8 @@ export class CreateInvoice implements OnInit, OnDestroy {
                     { text: this.companyData?.business_name, fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
                     // { text: this.companyData?.business_name_arabic || '', fontSize: 14, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
                     { text: this.companyData?.address1, fontSize: 10, alignment: 'center', margin: [0, 0, 0, 0] },
-                    { text: `TEL :${this.companyData?.phone_no || '04-3536699'} FAX :${this.companyData?.alternate_business_no || '04-3536611'} Email : ${this.companyData?.email || 'raisem@eim.ae'}`, fontSize: 10, alignment: 'center', margin: [0, 0, 0, 0] },
-                    { text: `TRN : ${this.companyData?.tax_registration_number || '100033732700003'}`, fontSize: 11, bold: true, alignment: 'center', color: '#000', margin: [0, 0, 0, 6] },
+                    { text: `TEL :${this.companyData?.phone_no || '+971 4 338 2140'} FAX :${this.companyData?.alternate_business_no || '+971 50 612 8840'} Email : ${this.companyData?.email || 'info@nablusroad.ae'}`, fontSize: 10, alignment: 'center', margin: [0, 0, 0, 0] },
+                    { text: `TRN : ${this.companyData?.tax_registration_number || '100456789012345'}`, fontSize: 11, bold: true, alignment: 'center', color: '#000', margin: [0, 0, 0, 6] },
                     // Additional company information
                     ...(this.companyData?.license_number ? [{ text: `License: ${this.companyData.license_number}`, fontSize: 9, alignment: 'center', margin: [0, 0, 0, 2] }] : []),
                     ...(this.companyData?.vat_registered ? [{ text: 'VAT Registered Company', fontSize: 9, alignment: 'center', color: '#0066cc', margin: [0, 0, 0, 2] }] : [])
@@ -2582,7 +2582,7 @@ export class CreateInvoice implements OnInit, OnDestroy {
               [
                 {
                   stack: [
-                    { text: `For      ${this.companyData?.business_name || 'AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)'}`, bold: false, fontSize: 12, margin: [0, 8, 0, 8] },
+                    { text: `For      ${this.companyData?.business_name || 'Nablus Road Contracting'}`, bold: false, fontSize: 12, margin: [0, 8, 0, 8] },
                     {
                       table: {
                         widths: ['33%', '33%', '34%'],

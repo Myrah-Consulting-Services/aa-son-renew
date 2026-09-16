@@ -6,6 +6,7 @@ import { NgbActiveModal, NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap'
 import { Api } from '../../core/services/api';
 import { ToastService } from '../../core/services/toast.service';
 import { number } from 'echarts';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-leavemanagement',
@@ -87,6 +88,7 @@ export class LeaveManagement implements OnInit {
     private toast: ToastService,
     private activeModal: NgbActiveModal,
     private api: Api,
+    private demo: DemoDataService,
   ) {
     this.leaveForm = this.fb.group({
       employee: [number, Validators.required],
@@ -130,27 +132,38 @@ export class LeaveManagement implements OnInit {
     })
   }
   initializeData() {
-    this.apiService.get('/attendance/list-leave-requests/?'+"page="+this.currentPage+1+'&'+"limit="+this.pageSize+'&'+"company_id="+this.api.getCompanyId()).subscribe((res: any) => {      
-      if(res.status == 200){
-        this.filteredLeaveRequests = res.data;
-        this.pagination_data=res.pagination_data    
-        this.totalData = this.pagination_data.total_data;
+    this.apiService.get('/attendance/list-leave-requests/?'+"page="+this.currentPage+1+'&'+"limit="+this.pageSize+'&'+"company_id="+this.api.getCompanyId()).subscribe({
+      next: (res: any) => {      
+        if(res.status == 200){
+          const apiData = res.data || [];
+          this.filteredLeaveRequests = this.demo.leaveRequests(apiData);
+          this.pagination_data=res.pagination_data    
+          this.totalData = apiData.length ? this.pagination_data?.total_data : this.filteredLeaveRequests.length;
 
-        if (res.stats) {
-          this.totalPending = res.stats.pending ?? 0;
-          this.totalApproved = res.stats.approved ?? 0;
-          this.totalRejected = res.stats.rejected ?? 0;
-          this.totalRequests = res.stats.total ?? 0;
-        } else {
+          if (res.stats && apiData.length) {
+            this.totalPending = res.stats.pending ?? 0;
+            this.totalApproved = res.stats.approved ?? 0;
+            this.totalRejected = res.stats.rejected ?? 0;
+            this.totalRequests = res.stats.total ?? 0;
+          } else {
+            this.calculateStatistics();
+          }
+
+        }
+        else{
+          this.filteredLeaveRequests = this.demo.leaveRequests([]);
+          this.totalData = this.filteredLeaveRequests.length;
           this.calculateStatistics();
         }
-
-      }
-      else{
-        this.toast.show(res.message, 'error');
+        this.totalPages = Math.ceil(this.totalData / this.pageSize);
+      },
+      error: () => {
+        this.filteredLeaveRequests = this.demo.leaveRequests([]);
+        this.totalData = this.filteredLeaveRequests.length;
+        this.calculateStatistics();
+        this.totalPages = Math.ceil(this.totalData / this.pageSize);
       }
     });
-    this.totalPages = Math.ceil(this.totalData / this.pageSize);
   }
 
   // Statistics methods

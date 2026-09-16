@@ -92,27 +92,35 @@ export class GratuityComponent implements OnInit {
     this.employees = [
       {
         employee_id: 1,
-        employee_name: 'Ahmed Al Mansouri',
-        basic_salary: 8000,
-        gross_salary: 12000,
-        joining_date: '2020-01-15',
-        designation: 'Software Developer'
+        employee_name: 'Omar Al Hashimi',
+        basic_salary: 12000,
+        gross_salary: 24000,
+        joining_date: '2019-03-01',
+        designation: 'Project Manager'
       },
       {
         employee_id: 2,
-        employee_name: 'Fatima Al Zaabi',
-        basic_salary: 10000,
-        gross_salary: 15000,
-        joining_date: '2019-06-01',
-        designation: 'Senior Developer'
+        employee_name: 'Hassan Mansour',
+        basic_salary: 6000,
+        gross_salary: 12000,
+        joining_date: '2021-06-15',
+        designation: 'Site Supervisor'
       },
       {
         employee_id: 3,
-        employee_name: 'Omar Al Falasi',
-        basic_salary: 12000,
-        gross_salary: 18000,
-        joining_date: '2018-03-10',
-        designation: 'Team Lead'
+        employee_name: 'Priya Nair',
+        basic_salary: 7000,
+        gross_salary: 14000,
+        joining_date: '2022-02-01',
+        designation: 'Quantity Surveyor'
+      },
+      {
+        employee_id: 4,
+        employee_name: 'Mohammed Yousef',
+        basic_salary: 3500,
+        gross_salary: 6000,
+        joining_date: '2020-09-10',
+        designation: 'Plant Operator'
       }
     ];
   }

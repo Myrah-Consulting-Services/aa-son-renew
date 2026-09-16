@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Api } from '../../core/services/api';
+import { NABLUS_WAREHOUSE_DASHBOARD } from '../../core/demo/nablus-road-contracting.data';
 
 @Component({
   selector: 'app-warehouse-dashboard',
@@ -159,73 +160,97 @@ export class WarehouseDashboard implements OnInit {
     this.svc.post('/warehouses/warehouse-dashboard/', payload).subscribe({
       next: (res: any) => {
         this.dashboardLoading = false;
-        if (res.status === 200) {
-          // KPIs
-          this.dashboardKpis = res.kpis || this.dashboardKpis;
-
-          // Sync warehouses / locations / stock counts for existing template bindings
-          this.warehouses = Array(this.dashboardKpis.warehouses).fill({});
-          this.locations  = Array(this.dashboardKpis.rack_locations).fill({});
-          this.stock      = Array(this.dashboardKpis.total_stock_items).fill({});
-          this.outwardTransactions = Array(this.dashboardKpis.outward_transactions).fill({});
-
-          // Process flow counts — stored in a flat object, bound directly in HTML
-          this.processFlowCards = res.process_flow_cards || [];
-          const pfc = res.process_flow_counts || {};
-          const cardOverrides: Record<string, number> = {};
-          this.processFlowCards.forEach((c: any) => { cardOverrides[c.key] = c.count; });
-          this.processFlowCounts = {
-            loading_bay:   cardOverrides['loading_bay']   ?? pfc.loading_bay   ?? 0,
-            putaway_tasks: cardOverrides['putaway_tasks'] ?? pfc.putaway_tasks  ?? 0,
-            rack_storage:  cardOverrides['rack_storage']  ?? pfc.rack_storage   ?? 0,
-            rack_movement: cardOverrides['rack_movement'] ?? pfc.rack_movement  ?? 0,
-            picking_tasks: cardOverrides['picking_tasks'] ?? pfc.picking_tasks  ?? 0,
-            dispatch:      cardOverrides['dispatch']      ?? pfc.dispatch       ?? 0,
-          };
-
-          // Workflow stats
-          const pf = res.process_flow || {};
-          this.workflowStats.putawayTasks.pending  = pf.putaway_tasks_pending  ?? 0;
-          this.workflowStats.rackMovements.pending = pf.rack_movements_pending ?? 0;
-          this.workflowStats.pickingTasks.pending  = pf.picking_tasks_pending  ?? 0;
-          this.workflowStats.loadingBay.utilization = pf.loading_bay_utilization_percent ?? 0;
-
-          // Putaway statistics
-          if (res.putaway_statistics) {
-            this.putawayStatistics = res.putaway_statistics;
-            const byStatus = res.putaway_statistics.by_putaway_status || [];
-            const completed = byStatus.find((s: any) => s.putaway_status === 'Completed');
-            const inProgress = byStatus.find((s: any) => s.putaway_status === 'In Progress');
-            this.workflowStats.putawayTasks.completed  = completed?.count  ?? 0;
-            this.workflowStats.putawayTasks.inProgress = inProgress?.count ?? 0;
-          }
-
-          // Picking statistics
-          if (res.picking_statistics) {
-            this.pickingStatistics = res.picking_statistics;
-            this.workflowStats.pickingTasks.pending = res.picking_statistics.pending ?? 0;
-          }
-
-          // Rack movements statistics
-          this.rackMovementsStatistics = res.rack_movements_statistics || null;
-
-          // Loading bay status
-          this.loadingBayStatus = res.loading_bay_status || [];
-
-          // Low stock alerts
-          this.lowStockAlerts = res.low_stock_alerts || this.lowStockAlerts;
-
-          // Recent activity
-          this.recentActivity = res.recent_activity || [];
-
-          // Fast / slow moving items
-          this.fastMovingItems = res.fast_moving_items || [];
-          this.slowMovingItems = res.slow_moving_items  || [];
+        if (res.status === 200 && res.kpis && (res.kpis.warehouses > 0 || res.kpis.total_stock_items > 0)) {
+          this.applyWarehouseApiData(res);
+        } else {
+          this.applyDemoWarehouseDashboard();
         }
       },
       error: () => {
         this.dashboardLoading = false;
+        this.applyDemoWarehouseDashboard();
       }
+    });
+  }
+
+  private applyWarehouseApiData(res: any): void {
+    // KPIs
+    this.dashboardKpis = res.kpis || this.dashboardKpis;
+
+    // Sync warehouses / locations / stock counts for existing template bindings
+    this.warehouses = Array(this.dashboardKpis.warehouses).fill({});
+    this.locations  = Array(this.dashboardKpis.rack_locations).fill({});
+    this.stock      = Array(this.dashboardKpis.total_stock_items).fill({});
+    this.outwardTransactions = Array(this.dashboardKpis.outward_transactions).fill({});
+
+    // Process flow counts — stored in a flat object, bound directly in HTML
+    this.processFlowCards = res.process_flow_cards || [];
+    const pfc = res.process_flow_counts || {};
+    const cardOverrides: Record<string, number> = {};
+    this.processFlowCards.forEach((c: any) => { cardOverrides[c.key] = c.count; });
+    this.processFlowCounts = {
+      loading_bay:   cardOverrides['loading_bay']   ?? pfc.loading_bay   ?? 0,
+      putaway_tasks: cardOverrides['putaway_tasks'] ?? pfc.putaway_tasks  ?? 0,
+      rack_storage:  cardOverrides['rack_storage']  ?? pfc.rack_storage   ?? 0,
+      rack_movement: cardOverrides['rack_movement'] ?? pfc.rack_movement  ?? 0,
+      picking_tasks: cardOverrides['picking_tasks'] ?? pfc.picking_tasks  ?? 0,
+      dispatch:      cardOverrides['dispatch']      ?? pfc.dispatch       ?? 0,
+    };
+
+    // Workflow stats
+    const pf = res.process_flow || {};
+    this.workflowStats.putawayTasks.pending  = pf.putaway_tasks_pending  ?? 0;
+    this.workflowStats.rackMovements.pending = pf.rack_movements_pending ?? 0;
+    this.workflowStats.pickingTasks.pending  = pf.picking_tasks_pending  ?? 0;
+    this.workflowStats.loadingBay.utilization = pf.loading_bay_utilization_percent ?? 0;
+
+    // Putaway statistics
+    if (res.putaway_statistics) {
+      this.putawayStatistics = res.putaway_statistics;
+      const byStatus = res.putaway_statistics.by_putaway_status || [];
+      const completed = byStatus.find((s: any) => s.putaway_status === 'Completed');
+      const inProgress = byStatus.find((s: any) => s.putaway_status === 'In Progress');
+      this.workflowStats.putawayTasks.completed  = completed?.count  ?? 0;
+      this.workflowStats.putawayTasks.inProgress = inProgress?.count ?? 0;
+    }
+
+    // Picking statistics
+    if (res.picking_statistics) {
+      this.pickingStatistics = res.picking_statistics;
+      this.workflowStats.pickingTasks.pending = res.picking_statistics.pending ?? 0;
+    }
+
+    // Rack movements statistics
+    this.rackMovementsStatistics = res.rack_movements_statistics || null;
+
+    // Loading bay status
+    this.loadingBayStatus = res.loading_bay_status || [];
+
+    // Low stock alerts
+    this.lowStockAlerts = res.low_stock_alerts || this.lowStockAlerts;
+
+    // Recent activity
+    this.recentActivity = res.recent_activity || [];
+
+    // Fast / slow moving items
+    this.fastMovingItems = res.fast_moving_items || [];
+    this.slowMovingItems = res.slow_moving_items  || [];
+  }
+
+  private applyDemoWarehouseDashboard(): void {
+    const demo = NABLUS_WAREHOUSE_DASHBOARD;
+    this.applyWarehouseApiData({
+      kpis: demo.kpis,
+      process_flow_counts: demo.process_flow_counts,
+      process_flow: demo.process_flow,
+      putaway_statistics: demo.putaway_statistics,
+      picking_statistics: demo.picking_statistics,
+      rack_movements_statistics: demo.rack_movements_statistics,
+      loading_bay_status: demo.loading_bay_status,
+      low_stock_alerts: demo.low_stock_alerts,
+      recent_activity: demo.recent_activity,
+      fast_moving_items: demo.fast_moving_items,
+      slow_moving_items: demo.slow_moving_items,
     });
   }
 
@@ -500,16 +525,16 @@ export class WarehouseDashboard implements OnInit {
     
     this.addTestResult('🧪 Starting Complete Warehouse Workflow Test...', 'info');
     this.addTestResult('📋 Testing with 3 sample materials:', 'info');
-    this.addTestResult('   1. Electronic Components (Fragile, 500 PCS)', 'info');
-    this.addTestResult('   2. Steel Pipes (Heavy, 50 PCS)', 'info');  
-    this.addTestResult('   3. Cold Storage Chemicals (Temperature Control, 100 Bottles)', 'info');
+    this.addTestResult('   1. Asphalt Mix Hot — Wearing Course (120 TON)', 'info');
+    this.addTestResult('   2. Steel Rebar 16mm (25 TON)', 'info');  
+    this.addTestResult('   3. Road Marking Paint — White (200 LTR)', 'info');
     
     console.log('🧪 Starting Complete Warehouse Workflow Test...');
     console.log('═══════════════════════════════════════════════════');
     console.log('📋 Testing with 3 sample materials:');
-    console.log('   1. Electronic Components (Fragile, 500 PCS)');
-    console.log('   2. Steel Pipes (Heavy, 50 PCS)');  
-    console.log('   3. Cold Storage Chemicals (Temperature Control, 100 Bottles)');
+    console.log('   1. Asphalt Mix Hot — Wearing Course (120 TON)');
+    console.log('   2. Steel Rebar 16mm (25 TON)');  
+    console.log('   3. Road Marking Paint — White (200 LTR)');
     console.log('═══════════════════════════════════════════════════');
     
     // Step 1: Create sample materials for testing
@@ -551,52 +576,52 @@ export class WarehouseDashboard implements OnInit {
   private createSampleMaterials(): any[] {
     return [
       {
-        id: 'TEST-001',
-        name: 'Electronic Components - Resistors',
-        category: 'Electronics',
-        quantity: 500,
-        unit: 'PCS',
-        barcode: 'ELEC001',
+        id: 'NRC-MAT-001',
+        name: 'Asphalt Mix Hot (Wearing Course)',
+        category: 'Asphalt',
+        quantity: 120,
+        unit: 'TON',
+        barcode: 'ASPWEAR01',
         properties: {
-          isFragile: true,
-          requiresTemperatureControl: false,
-          dimensions: { length: 10, width: 5, height: 2 },
-          weight: 0.5
+          isFragile: false,
+          requiresTemperatureControl: true,
+          dimensions: { length: 100, width: 100, height: 80 },
+          weight: 1000
         },
-        supplier: 'TechParts Ltd',
-        poReference: 'PO-2024-001'
+        supplier: 'National Asphalt Co. LLC',
+        poReference: 'PO-NRC-2026-041'
       },
       {
-        id: 'TEST-002', 
-        name: 'Steel Pipes - 2 inch',
-        category: 'Construction',
-        quantity: 50,
-        unit: 'PCS',
-        barcode: 'STEEL002',
+        id: 'NRC-MAT-002', 
+        name: 'Steel Rebar 16mm',
+        category: 'Steel',
+        quantity: 25,
+        unit: 'TON',
+        barcode: 'STL16MM01',
         properties: {
           isFragile: false,
           requiresTemperatureControl: false,
-          dimensions: { length: 300, width: 5, height: 5 },
-          weight: 25
+          dimensions: { length: 1200, width: 50, height: 50 },
+          weight: 1000
         },
-        supplier: 'SteelWorks Inc',
-        poReference: 'PO-2024-002'
+        supplier: 'Al Futtaim Building Materials',
+        poReference: 'PO-NRC-2026-042'
       },
       {
-        id: 'TEST-003',
-        name: 'Cold Storage Items - Chemicals',
-        category: 'Chemicals',
-        quantity: 100,
-        unit: 'BOTTLES',
-        barcode: 'CHEM003',
+        id: 'NRC-MAT-003',
+        name: 'Road Marking Paint - White',
+        category: 'Consumables',
+        quantity: 200,
+        unit: 'LTR',
+        barcode: 'RMPWHT01',
         properties: {
           isFragile: true,
-          requiresTemperatureControl: true,
-          dimensions: { length: 15, width: 15, height: 25 },
-          weight: 2
+          requiresTemperatureControl: false,
+          dimensions: { length: 30, width: 30, height: 40 },
+          weight: 5
         },
-        supplier: 'ChemCorp',
-        poReference: 'PO-2024-003'
+        supplier: 'Gulf Safety Supplies LLC',
+        poReference: 'PO-NRC-2026-043'
       }
     ];
   }

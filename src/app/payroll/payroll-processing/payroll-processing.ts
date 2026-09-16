@@ -21,10 +21,10 @@ export class PayrollProcessingComponent implements OnInit {
   currentDate = new Date();
   
   employees = [
-    { employeeId: 'EMP001', name: 'John Smith', grossSalary: 50000 },
-    { employeeId: 'EMP002', name: 'Sarah Johnson', grossSalary: 45000 },
-    { employeeId: 'EMP003', name: 'Michael Brown', grossSalary: 55000 },
-    { employeeId: 'EMP004', name: 'Emily Davis', grossSalary: 48000 }
+    { employeeId: 'NRC001', name: 'Omar Al Hashimi', grossSalary: 24000 },
+    { employeeId: 'NRC002', name: 'Hassan Mansour', grossSalary: 12000 },
+    { employeeId: 'NRC003', name: 'Priya Nair', grossSalary: 14000 },
+    { employeeId: 'NRC004', name: 'Mohammed Yousef', grossSalary: 6000 }
   ];
 
   selectedPeriod: any = {

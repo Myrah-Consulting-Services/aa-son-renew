@@ -8,6 +8,7 @@ import { ExpenseCategory } from '../expense-category/expense-category';
 import { ToastService } from '../../../core/services/toast.service';
 import { CreateExpenseComponent } from '../create-expense/create-expense';
 import { ExpenseLedger } from '../expense-ledger/expense-ledger';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-expense-list',
@@ -40,7 +41,7 @@ export class ExpenseList {
     const day = date.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
-  constructor(private api: Api,private fb:FormBuilder,private modalService: NgbModal,private toast:ToastService) {
+  constructor(private api: Api,private fb:FormBuilder,private modalService: NgbModal,private toast:ToastService, private demo: DemoDataService) {
  
     this.expenselistform=this.fb.group({
       start_date: [],
@@ -58,8 +59,11 @@ export class ExpenseList {
   getExpenseList(){
     this.api.post('/expense/expense-report/'+ this.api.getUserCompany()+'/',this.expenselistform.value).subscribe({
       next: (response: any) => {
-        this.expenses=response.data;
+        this.expenses = this.demo.expenses(response.data);
         console.log('Expense list:', response);
+      },
+      error: () => {
+        this.expenses = this.demo.expenses([]);
       }
     });
   }

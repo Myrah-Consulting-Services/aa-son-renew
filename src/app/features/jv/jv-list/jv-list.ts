@@ -7,6 +7,7 @@ import { Api } from '../../../core/services/api';
 import { ToastService } from '../../../core/services/toast.service';
 import { CreateJv } from '../create-jv/create-jv';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 
 interface JvEntry {
   voucher_id: number;
@@ -65,7 +66,8 @@ export class JvList implements OnInit {
     private fb: FormBuilder,
     private api: Api,
     private toast: ToastService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private demo: DemoDataService
   ) {
     this.jvForm = this.fb.group({
       start_date: [this.api.getDateRange().start_date, Validators.required],
@@ -93,15 +95,20 @@ export class JvList implements OnInit {
         console.log(res);
         const response = res as JvResponse;
         if (response.status === 200) {
-          this.jvData = response.data || [];
+          const apiData = response.data || [];
+          this.jvData = this.demo.journalVouchers(apiData);
           this.hasData = this.jvData.length > 0;
           
           // Set pagination data
-          if (response.pagination) {
+          if (response.pagination && apiData.length) {
             this.currentPage = response.pagination.current_page;
             this.totalPages = response.pagination.total_pages;
             this.totalData = response.pagination.total_data;
             this.pageSize = response.pagination.page_size;
+          } else {
+            this.currentPage = 1;
+            this.totalPages = 1;
+            this.totalData = this.jvData.length;
           }
           
           // Set summary data
@@ -109,20 +116,22 @@ export class JvList implements OnInit {
           
           this.loading = false;
         } else {
-          this.jvData = [];
-          this.hasData = false;
+          this.jvData = this.demo.journalVouchers([]);
+          this.hasData = this.jvData.length > 0;
+          this.totalData = this.jvData.length;
+          this.totalPages = 1;
           this.summary = {};
           this.loading = false;
-          this.toast.show('Error', 'Failed to fetch JV list', 'danger');
         }
       },
       error: (error) => {
         console.error('Error fetching JV list:', error);
-        this.jvData = [];
-        this.hasData = false;
+        this.jvData = this.demo.journalVouchers([]);
+        this.hasData = this.jvData.length > 0;
+        this.totalData = this.jvData.length;
+        this.totalPages = 1;
         this.summary = {};
         this.loading = false;
-        this.toast.show('Error', 'Failed to fetch JV list', 'danger');
       }
     });
   }

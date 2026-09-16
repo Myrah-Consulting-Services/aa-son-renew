@@ -8,6 +8,7 @@ import { PartyLegers } from '../party-legers/party-legers';
 import { Api } from '../../../core/services/api';
 import { ToastService } from '../../../core/services/toast.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-party-list',
@@ -32,7 +33,8 @@ export class PartyList implements OnInit {
   constructor(
     private api: Api,
     private toast: ToastService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private demo: DemoDataService
   ) {}
   
   ngOnInit() {
@@ -54,16 +56,26 @@ export class PartyList implements OnInit {
     }).subscribe({
       next: (response: any) => {
         if(response.status === 200){
-          this.parties = response.data;
-          if(response.data.length > 0){
-            this.onAddParty(response.data[0])
-            this.selectedParty = response.data[0];
+          this.parties = this.demo.parties(response.data);
+          if(this.parties.length > 0){
+            this.onAddParty(this.parties[0])
+            this.selectedParty = this.parties[0];
+          }
+        } else {
+          this.parties = this.demo.parties([]);
+          if(this.parties.length > 0){
+            this.onAddParty(this.parties[0]);
+            this.selectedParty = this.parties[0];
           }
         }
       },
       error: (error) => {
         console.error('Error fetching party list:', error);
-        this.toast.show('Error', 'Failed to load parties', 'danger');
+        this.parties = this.demo.parties([]);
+        if(this.parties.length > 0){
+          this.onAddParty(this.parties[0]);
+          this.selectedParty = this.parties[0];
+        }
       }
     });
   }
@@ -100,11 +112,14 @@ export class PartyList implements OnInit {
   }
 
   downloadSampleFile() {
-    // Create sample file content
+    // Nablus Road Contracting (Dubai) import sample
     const sampleData = [
       ['Party Name', 'Party Type', 'Mobile Number', 'Email', 'TRN', 'Billing Address', 'Shipping Address', 'Opening Balance'],
-      ['Sample Customer', 'Customer', '1234567890', 'customer@example.com', 'TRN123', '123 Main St', '123 Main St', '0.00'],
-      ['Sample Vendor', 'Vendor', '0987654321', 'vendor@example.com', 'TRN456', '456 Oak Ave', '456 Oak Ave', '0.00']
+      ['Dubai Municipality - Roads', 'Customer', '97143122222', 'roads@dm.gov.ae', '100111222333444', 'Dubai Municipality HQ, Deira, Dubai', 'Dubai Municipality HQ, Deira, Dubai', '125000.00'],
+      ['RTA Dubai', 'Customer', '97148000000', 'procurement@rta.ae', '100222333444555', 'Roads & Transport Authority, Dubai', 'RTA HQ, Dubai', '85000.00'],
+      ['Emaar Properties PJSC', 'Customer', '97143668888', 'contracts@emaar.ae', '100333444555666', 'Emaar Square, Downtown Dubai', 'Emaar Square, Downtown Dubai', '42000.00'],
+      ['Al Futtaim Building Materials', 'Vendor', '97142955555', 'sales@afbm.ae', '100444555666777', 'Al Quoz Industrial Area, Dubai', 'Al Quoz Industrial Area, Dubai', '18000.00'],
+      ['National Asphalt Co. LLC', 'Vendor', '97143321000', 'orders@nationalasphalt.ae', '100555666777888', 'Jebel Ali Industrial, Dubai', 'Jebel Ali Industrial, Dubai', '9500.00']
     ];
 
     // Convert to CSV

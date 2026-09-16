@@ -5,6 +5,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, FormsModule } f
 import { Api } from '../../../core/services/api';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../core/services/toast.service';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-putaway-tasks-list',
@@ -48,7 +49,8 @@ export class PutawayTasksListComponent implements OnInit {
   constructor(private fb: FormBuilder, private router: Router, 
     private apiService: Api,
      private modalService: NgbModal,
-    private toast:ToastService) {
+    private toast:ToastService,
+    private demo: DemoDataService) {
     this.filterForm = this.fb.group({
       search: [''],
       status: [''],
@@ -110,9 +112,10 @@ export class PutawayTasksListComponent implements OnInit {
     const search = this.searchText ? this.searchText : '';
     this.apiService.post('/invoice/putaway-list/s=' + search + '/', payload).subscribe((res: any) => {
       if(res.status == 200){
-        this.tasks = res.data;
+        const apiData = res.data || [];
+        this.tasks = this.demo.putawayTasks(apiData);
         this.filteredTasks = [...this.tasks];
-        if (res.summary?.by_putaway_status) {
+        if (res.summary?.by_putaway_status && apiData.length) {
           const byStatus: any[] = res.summary.by_putaway_status;
           this.stats.pendingTasks    = byStatus.find((s: any) => s.putaway_status_id === 1)?.count ?? 0;
           this.stats.assignedTasks   = byStatus.find((s: any) => s.putaway_status_id === 2)?.count ?? 0;
@@ -120,11 +123,15 @@ export class PutawayTasksListComponent implements OnInit {
           this.stats.completedToday  = res.summary.completed_today
             ?? byStatus.find((s: any) => s.putaway_status_id === 4)?.count ?? 0;
         }
-        if (res.paginated_data) {
+        if (res.paginated_data && apiData.length) {
           this.currentPage = res.paginated_data.current_page;
           this.totalPages = res.paginated_data.total_pages;
           this.totalData = res.paginated_data.total_count;
           this.pageSize = res.paginated_data.page_size;
+        } else {
+          this.currentPage = 1;
+          this.totalPages = 1;
+          this.totalData = this.tasks.length;
         }
         // Populate FormArray for each task
         this.taskFormArray.clear();
@@ -135,7 +142,24 @@ export class PutawayTasksListComponent implements OnInit {
             // add other fields as needed
           }));
         });
+      } else {
+        this.tasks = this.demo.putawayTasks([]);
+        this.filteredTasks = [...this.tasks];
+        this.totalData = this.tasks.length;
+        this.totalPages = 1;
       }
+    }, () => {
+      this.tasks = this.demo.putawayTasks([]);
+      this.filteredTasks = [...this.tasks];
+      this.totalData = this.tasks.length;
+      this.totalPages = 1;
+      this.taskFormArray.clear();
+      this.filteredTasks.forEach((task: any) => {
+        this.taskFormArray.push(this.fb.group({
+          id: [task.id],
+          assignedWorker: [task.assignedWorker || ''],
+        }));
+      });
     });
   }
 

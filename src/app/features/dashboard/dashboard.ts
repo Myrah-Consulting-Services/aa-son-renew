@@ -6,6 +6,7 @@ import { DatePipe } from '@angular/common';
 import { Chart } from 'chart.js/auto';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgxEchartsModule, NGX_ECHARTS_CONFIG } from 'ngx-echarts';
+import { NABLUS_DASHBOARD } from '../../core/demo/nablus-road-contracting.data';
 
 @Component({
   selector: 'app-dashboard',
@@ -286,51 +287,61 @@ export class Dashboard {
     return adjusted.toISOString().split('T')[0];
   }
   getReports() {
-    this.api.post('/reports/dashboard/',{company:this.api.getCompanyId()}).subscribe((res:any)=>{
-      if(res.status == 200){
-        this.reports = res.data.dashboard_data;
-      }
+    this.api.post('/reports/dashboard/',{company:this.api.getCompanyId()}).subscribe({
+      next: (res:any)=>{
+        if(res.status == 200 && res.data?.dashboard_data){
+          this.reports = res.data.dashboard_data;
+          // Use demo KPIs when company has no seeded financials yet
+          const d = this.reports;
+          const empty =
+            !d ||
+            ((d.bank_balance == null || Number(d.bank_balance) === 0) &&
+              (d.cash_balance == null || Number(d.cash_balance) === 0) &&
+              (d.receivables == null || Number(d.receivables) === 0) &&
+              (d.total_parties == null || Number(d.total_parties) === 0));
+          if (empty) {
+            this.applyDemoReports();
+          }
+        } else {
+          this.applyDemoReports();
+        }
+      },
+      error: () => this.applyDemoReports()
     });
   }
   getRecentTransactions() {
-    // /reports/recent-transactions/
     this.api.post('/reports/recent-transactions/',{company:this.api.getCompanyId(),
       limit:this.itemsPerPage,
       page:this.currentPage
-    }).subscribe((res:any)=>{
-      if(res.status == 200){
-        this.recent_transactions = res.data.transactions;
-      }
+    }).subscribe({
+      next: (res:any)=>{
+        if(res.status == 200 && Array.isArray(res.data?.transactions) && res.data.transactions.length > 0){
+          this.recent_transactions = res.data.transactions;
+        } else {
+          this.applyDemoTransactions();
+        }
+      },
+      error: () => this.applyDemoTransactions()
     });
   }
   getChartData() {
-    this.api.post('/reports/get_weekly_sales/1/',{company:this.api.getCompanyId()}).subscribe((res:any)=>{
-      if(res.status == 200){
-        this.chart_data = res.data;
-        const rows: any[] = Array.isArray(this.chart_data) ? this.chart_data : (this.chart_data ? [this.chart_data] : []);
-        this.weeklySales = rows.map((r: any) => {
-          let label = r?.weekday || r?.invoice_date || '';
-          // Format weekday to show abbreviation (e.g., "Friday" -> "Fri")
-          if (label && label.length > 3) {
-            const weekdayMap: { [key: string]: string } = {
-              'Monday': 'Mon',
-              'Tuesday': 'Tue',
-              'Wednesday': 'Wed',
-              'Thursday': 'Thu',
-              'Friday': 'Fri',
-              'Saturday': 'Sat',
-              'Sunday': 'Sun'
-            };
-            label = weekdayMap[label] || label.substring(0, 3);
+    this.api.post('/reports/get_weekly_sales/1/',{company:this.api.getCompanyId()}).subscribe({
+      next: (res:any)=>{
+        if(res.status == 200 && res.data){
+          this.chart_data = res.data;
+          const rows: any[] = Array.isArray(this.chart_data) ? this.chart_data : (this.chart_data ? [this.chart_data] : []);
+          const mapped = this.mapWeeklySales(rows);
+          if (mapped.length && mapped.some(s => s.value > 0)) {
+            this.weeklySales = mapped;
+            this.maxSales = this.weeklySales.reduce((m, it) => Math.max(m, it.value), 0) || 1;
+          } else {
+            this.applyDemoWeeklySales();
           }
-          return {
-            label: label,
-            value: Number(r?.total_day_sales || 0),
-            count: Number(r?.invoice_count || 0)
-          };
-        });
-        this.maxSales = this.weeklySales.reduce((m, it) => Math.max(m, it.value), 0) || 1;
-      }
+        } else {
+          this.applyDemoWeeklySales();
+        }
+      },
+      error: () => this.applyDemoWeeklySales()
     });
   }
   getExpenseIncome() {
@@ -340,77 +351,119 @@ export class Dashboard {
       start_date:this.start_date,
       end_date:this.end_date
     }
-    this.api.post('/reports/get_expense_income/1/',data).subscribe((res:any)=>{
-      if(res.status == 200){
-        const chartData = [
-          ['Date', 'Total Income', 'Total Expense'],
-          ...res.data.map((item: { day: any; date: any; total_income: any; total_expense: any; }) => [
-            item.date || item.day, 
-            item.total_income || 0, 
-            item.total_expense || 0
-          ])
-        ];
-        
-        // Get max value for Y axis
-        const maxValue = Math.max(
-          ...res.data.map((item: any) => Math.max(item.total_income || 0, item.total_expense || 0)),
-          1
-        );
-        
-        this.option = {
-          legend: { 
-            show: false
-          },
-          tooltip: {
-            trigger: 'axis',
-            formatter: (params: any) => {
-              let result = params[0].name + '<br/>';
-              params.forEach((param: any) => {
-                result += param.marker + param.seriesName + ': ' + this.getcurrency() + ' ' + this.formatNumber(param.value) + '<br/>';
-              });
-              return result;
-            }
-          },
-          grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '3%',
-            containLabel: true
-          },
-          xAxis: { 
-            type: 'category',
-            boundaryGap: true,
-            data: res.data.map((item: any) => item.date || item.day)
-          },
-          yAxis: {
-            type: 'value',
-            min: 0,
-            max: maxValue > 0 ? maxValue : 1,
-            splitNumber: 5,
-            axisLabel: {
-              formatter: (value: number) => this.formatChartValue(value)
-            }
-          },
-          series: [{
-            type: 'bar',
-            name: 'Total Income',
-            data: res.data.map((item: any) => item.total_income || 0),
-            itemStyle: {
-              color: '#4caf50'
-            }
-          },
-          {
-            type: 'bar',
-            name: 'Total Expense',
-            data: res.data.map((item: any) => item.total_expense || 0),
-            itemStyle: {
-              color: '#f44336'
-            }
-          }],
-          color: ['#4caf50', '#f44336']
-        };
-      }
+    this.api.post('/reports/get_expense_income/1/',data).subscribe({
+      next: (res:any)=>{
+        if(res.status == 200 && Array.isArray(res.data) && res.data.length > 0){
+          const hasValues = res.data.some((item: any) => (item.total_income || 0) > 0 || (item.total_expense || 0) > 0);
+          if (hasValues) {
+            this.applyExpenseIncomeChart(res.data);
+            return;
+          }
+        }
+        this.applyDemoExpenseIncome();
+      },
+      error: () => this.applyDemoExpenseIncome()
     });
+  }
+
+  private applyDemoReports() {
+    this.reports = { ...NABLUS_DASHBOARD.reports };
+  }
+
+  private applyDemoTransactions() {
+    this.recent_transactions = NABLUS_DASHBOARD.recent_transactions.map((t) => ({ ...t }));
+  }
+
+  private applyDemoWeeklySales() {
+    this.weeklySales = this.mapWeeklySales(NABLUS_DASHBOARD.weekly_sales);
+    this.maxSales = this.weeklySales.reduce((m, it) => Math.max(m, it.value), 0) || 1;
+  }
+
+  private applyDemoExpenseIncome() {
+    this.applyExpenseIncomeChart(NABLUS_DASHBOARD.expense_income);
+  }
+
+  private mapWeeklySales(rows: any[]): { label: string; value: number; count: number }[] {
+    return rows.map((r: any) => {
+      let label = r?.weekday || r?.invoice_date || '';
+      if (label && label.length > 3) {
+        const weekdayMap: { [key: string]: string } = {
+          'Monday': 'Mon',
+          'Tuesday': 'Tue',
+          'Wednesday': 'Wed',
+          'Thursday': 'Thu',
+          'Friday': 'Fri',
+          'Saturday': 'Sat',
+          'Sunday': 'Sun'
+        };
+        label = weekdayMap[label] || label.substring(0, 3);
+      }
+      return {
+        label: label,
+        value: Number(r?.total_day_sales || 0),
+        count: Number(r?.invoice_count || 0)
+      };
+    });
+  }
+
+  private applyExpenseIncomeChart(rows: any[]) {
+    const maxValue = Math.max(
+      ...rows.map((item: any) => Math.max(item.total_income || 0, item.total_expense || 0)),
+      1
+    );
+
+    this.option = {
+      legend: { 
+        show: false
+      },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          let result = params[0].name + '<br/>';
+          params.forEach((param: any) => {
+            result += param.marker + param.seriesName + ': ' + this.getcurrency() + ' ' + this.formatNumber(param.value) + '<br/>';
+          });
+          return result;
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: { 
+        type: 'category',
+        boundaryGap: true,
+        data: rows.map((item: any) => item.date || item.day)
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: maxValue > 0 ? maxValue : 1,
+        splitNumber: 5,
+        axisLabel: {
+          formatter: (value: number) => this.formatChartValue(value)
+        }
+      },
+      series: [{
+        type: 'bar',
+        name: 'Total Income',
+        data: rows.map((item: any) => item.total_income || 0),
+        itemStyle: {
+          color: '#4caf50'
+        }
+      },
+      {
+        type: 'bar',
+        name: 'Total Expense',
+        data: rows.map((item: any) => item.total_expense || 0),
+        itemStyle: {
+          color: '#f44336'
+        }
+      }],
+      color: ['#4caf50', '#f44336']
+    };
   }
   createExpenseIncomeChart() {
     const ctx = document.getElementById('expenseIncomeChart') as HTMLCanvasElement;

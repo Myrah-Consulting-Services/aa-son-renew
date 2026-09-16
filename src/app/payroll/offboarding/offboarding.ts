@@ -104,45 +104,45 @@ export class OffboardingComponent implements OnInit {
     });
   }
 
-  // Load sample data for demonstration
+  // Load sample data for demonstration — Nablus Road Contracting
   loadSampleData(): void {
     this.offboardingEmployees = [
       {
         id: 1,
-        employee_id: 'EMP001',
-        name: 'Rajesh Kumar',
-        department: 'IT Development',
-        position: 'Senior Developer',
-        offboarding_date: '2024-01-15',
+        employee_id: 'NRC005',
+        name: 'Suresh Kumar',
+        department: 'Site Operations',
+        position: 'Site Engineer',
+        offboarding_date: '2026-09-30',
         status: 'pending',
-        reason: 'Career growth opportunity',
-        exit_interview_date: '2024-01-10',
+        reason: 'Contract completion',
+        exit_interview_date: '2026-09-25',
         clearance_status: 'pending',
         handover_status: 'in_progress'
       },
       {
         id: 2,
-        employee_id: 'EMP002',
-        name: 'Priya Sharma',
-        department: 'Human Resources',
-        position: 'HR Manager',
-        offboarding_date: '2024-01-20',
+        employee_id: 'NRC006',
+        name: 'Anwar Hussain',
+        department: 'Plant & Machinery',
+        position: 'Mechanic',
+        offboarding_date: '2026-10-05',
         status: 'in_progress',
         reason: 'Personal reasons',
-        exit_interview_date: '2024-01-15',
+        exit_interview_date: '2026-09-28',
         clearance_status: 'completed',
         handover_status: 'completed'
       },
       {
         id: 3,
-        employee_id: 'EMP003',
-        name: 'Amit Patel',
-        department: 'Finance',
-        position: 'Accountant',
-        offboarding_date: '2024-01-25',
+        employee_id: 'NRC007',
+        name: 'Layla Hassan',
+        department: 'Accounts',
+        position: 'Accounts Officer',
+        offboarding_date: '2026-10-15',
         status: 'completed',
-        reason: 'Better opportunity',
-        exit_interview_date: '2024-01-20',
+        reason: 'Relocation abroad',
+        exit_interview_date: '2026-10-10',
         clearance_status: 'completed',
         handover_status: 'completed'
       }

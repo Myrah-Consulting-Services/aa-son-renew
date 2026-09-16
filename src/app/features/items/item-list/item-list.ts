@@ -6,6 +6,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { RouterModule } from '@angular/router';
 import { ItemLedgers } from '../item-ledgers/item-ledgers';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-item-list',
@@ -29,7 +30,8 @@ export class ItemList implements OnInit {
   constructor(
     private api: Api,
     private toast: ToastService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private demo: DemoDataService
   ) {}
   
   ngOnInit() {
@@ -50,16 +52,20 @@ export class ItemList implements OnInit {
     }).subscribe({
       next: (response: any) => {
         if (response.status === 200) {
-          this.items = response.data;
-          if (response.data.length > 0) {
-            this.onAddItem(response.data[0]);
-            this.selectedItem = response.data[0];
+          this.items = this.demo.items(response.data);
+          if (this.items.length > 0) {
+            this.onAddItem(this.items[0]);
+            this.selectedItem = this.items[0];
           }
         }
       },
       error: (error) => {
         console.error('Error fetching item list:', error);
-        this.toast.show('Error', 'Failed to load items', 'danger');
+        this.items = this.demo.items([]);
+        if (this.items.length > 0) {
+          this.onAddItem(this.items[0]);
+          this.selectedItem = this.items[0];
+        }
       }
     });
   }
@@ -122,11 +128,17 @@ export class ItemList implements OnInit {
   }
 
   downloadSampleFile() {
-    // Create sample file content
+    // Nablus Road Contracting (Dubai) materials & services sample
     const sampleData = [
       ['Item Name', 'Item Code', 'Item Type', 'Sales Price', 'Purchase Price', 'Unit', 'HSN Code', 'Description'],
-      ['Sample Item 1', 'ITEM001', 'Product', '100.00', '80.00', 'PCS', '12345678', 'Sample description'],
-      ['Sample Item 2', 'ITEM002', 'Service', '50.00', '40.00', 'HRS', '87654321', 'Sample service description']
+      ['Asphalt Mix Hot (Base Course)', 'ASP-BASE-01', 'Product', '285.00', '220.00', 'TON', '27150000', 'Hot mix asphalt for road base course'],
+      ['Asphalt Mix Hot (Wearing Course)', 'ASP-WEAR-01', 'Product', '320.00', '250.00', 'TON', '27150000', 'Wearing course asphalt for finished roads'],
+      ['Crushed Aggregate 20mm', 'AGG-20MM', 'Product', '45.00', '32.00', 'TON', '25171000', '20mm crushed stone aggregate'],
+      ['Bitumen 60/70', 'BIT-6070', 'Product', '1850.00', '1620.00', 'TON', '27132000', 'Penetration grade bitumen 60/70'],
+      ['Road Marking Paint - White', 'RMP-WHT', 'Product', '85.00', '62.00', 'LTR', '32089090', 'Thermoplastic road marking paint'],
+      ['Steel Rebar 16mm', 'STL-16MM', 'Product', '3200.00', '2850.00', 'TON', '72142000', 'Deformed steel reinforcement bars'],
+      ['Asphalt Paving Service', 'SVC-PAVE', 'Service', '18.50', '0.00', 'M2', '998311', 'Machine asphalt paving per sq.m'],
+      ['Site Survey & Setting Out', 'SVC-SURVEY', 'Service', '2500.00', '0.00', 'JOB', '998311', 'Topographic survey and setting out']
     ];
 
     // Convert to CSV

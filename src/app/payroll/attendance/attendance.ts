@@ -7,6 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { EmployeeDetail } from '../employee-detail/employee-detail';
 import { ImportAttendance } from '../import-attendance/import-attendance';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-attendance',
@@ -106,7 +107,8 @@ export class Attendance implements OnInit {
     private modalService: NgbModal,
     private api: Api,
     private http: HttpClient,
-    private toast: ToastService
+    private toast: ToastService,
+    private demo: DemoDataService
   ) { }
 
   ngOnInit(): void {
@@ -156,51 +158,65 @@ export class Attendance implements OnInit {
     this.onMonthSelect(selectedMonthYear);
   }
   attendancereport() {
+    const year = Number(this.selectedMonth?.split('-')[0]);
+    const month = Number(this.selectedMonth?.split('-')[1]);
     let a = {
       // "start_date": this.start_date,
       // "end_date": this.end_date,
       "pagination": true,
       "company_id": this.api.getCompanyId(),
-      "month": Number(this.selectedMonth?.split('-')[1]),
-      "year": Number(this.selectedMonth?.split('-')[0]),
+      "month": month,
+      "year": year,
       "page_number":this.pageNumber,
       "limit":this.pageSize,
       "keyw":this.searchTerm
     }
     // all_employee_attendance/<str:keyw>/
-    this.api.post('/attendance/all-employee-attendance/', a).subscribe((response: any) => {
-      // this.displayedColumns = ['id', 'name',...Object.keys(res.data[0].attendance)];
-      this.pagination = response.pagination_data
-      this.totalData = response.pagination_data.total_data;
-      this.limit = response.pagination_data.limit;
-      this.totalPages = response.pagination_data.total_pages;
-      this.pageNumber = response.pagination_data.page_number;
-      if(this.invoiceMode==='hourly'){
-        // Fix: Properly map and assign attendanceData for hourly mode
-        this.attendanceData = response.data.map((element: any) => {
-          // Clone the element to avoid mutating the original
-          const newElement = { ...element };
-          // Map attendance values to hour option IDs
-          newElement.attendance = Object.fromEntries(
-            Object.entries(element.attendance).map(([date, value]) => {
-              const valueStr = typeof value === 'string' ? value : '';
-              // const hours = parseInt(valueStr.replace("h", ""), 10);
-              const option = this.hourOptions.find(item => item.value == valueStr);              
-              return [date, option ? option.id : ''];
-            })
-          );
-          return newElement;
-
-        });
-        
-      }else{
-        this.attendanceData = response.data;
+    this.api.post('/attendance/all-employee-attendance/', a).subscribe({
+      next: (response: any) => {
+        const apiRows = response?.data || [];
+        const rows = this.demo.attendance(apiRows, year, month);
+        this.pagination = response?.pagination_data || {
+          total_data: rows.length,
+          limit: this.pageSize,
+          total_pages: 1,
+          page_number: 1
+        };
+        this.totalData = this.pagination.total_data || rows.length;
+        this.limit = this.pagination.limit || this.pageSize;
+        this.totalPages = this.pagination.total_pages || 1;
+        this.pageNumber = this.pagination.page_number || 1;
+        if(this.invoiceMode==='hourly'){
+          this.attendanceData = rows.map((element: any) => {
+            const newElement = { ...element };
+            newElement.attendance = Object.fromEntries(
+              Object.entries(element.attendance || {}).map(([date, value]) => {
+                const valueStr = typeof value === 'string' ? value : '';
+                const option = this.hourOptions.find(item => item.value == valueStr);
+                return [date, option ? option.id : ''];
+              })
+            );
+            return newElement;
+          });
+        }else{
+          this.attendanceData = rows;
+        }
+      },
+      error: () => {
+        const rows = this.demo.attendance([], year, month);
+        this.attendanceData = rows;
+        this.totalData = rows.length;
+        this.limit = this.pageSize;
+        this.totalPages = 1;
+        this.pageNumber = 1;
+        this.pagination = {
+          total_data: rows.length,
+          limit: this.pageSize,
+          total_pages: 1,
+          page_number: 1
+        };
       }
-      console.log(this.totalData, 'this.totalData', this.limit, 'this.limit', this.totalPages, 'this.totalPages',
-        this.pageNumber, 'this.pageNumber ', this.nextPage, 'this.nextPage,', this.previousPage, this.pagination, 'this.pagination'
-      );
-
-    })
+    });
   }
 
 

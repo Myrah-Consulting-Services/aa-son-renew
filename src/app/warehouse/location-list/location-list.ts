@@ -8,6 +8,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { LocationForm } from '../location-form/location-form';
 import { Api } from '../../core/services/api';
 import { ToastService } from '../../core/services/toast.service';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-location-list',
@@ -43,7 +44,8 @@ export class LocationList implements OnInit {
   constructor(
     private svc: Api,
     private modalService: NgbModal,
-    private toast: ToastService
+    private toast: ToastService,
+    private demo: DemoDataService
   ) {}
 
   ngOnInit() {
@@ -63,11 +65,11 @@ export class LocationList implements OnInit {
     this.svc.listWarehouses().subscribe({
       next: (res: any) => {
         if (res.status === 200) {
-          this.warehouses = res.data || [];
+          this.warehouses = this.demo.warehouses(res.data || []);
         }
       },
       error: () => {
-        this.toast.show('Error', 'Failed to load warehouses', 'danger');
+        this.warehouses = this.demo.warehouses([]);
       }
     });
   }
@@ -87,7 +89,8 @@ export class LocationList implements OnInit {
     this.svc.post('/warehouses/list-location/', payload).subscribe({
       next: (res: any) => {
         if (res.status === 200) {
-          this.locations = res.data || [];
+          const apiData = res.data || [];
+          this.locations = this.demo.locations(apiData);
           this.filteredLocations = [...this.locations];
 
           if (res.kpis) {
@@ -101,7 +104,7 @@ export class LocationList implements OnInit {
             };
           }
 
-          if (res.paginated_data) {
+          if (res.paginated_data && apiData.length) {
             this.currentPage = res.paginated_data.current_page ?? this.currentPage;
             this.totalPages = res.paginated_data.total_pages ?? 0;
             this.totalData = res.paginated_data.total_data ?? this.locations.length;
@@ -117,8 +120,11 @@ export class LocationList implements OnInit {
         this.loading = false;
       },
       error: () => {
+        this.locations = this.demo.locations([]);
+        this.filteredLocations = [...this.locations];
+        this.totalData = this.locations.length;
+        this.totalPages = 1;
         this.loading = false;
-        this.toast.show('Error', 'Failed to load locations', 'danger');
       }
     });
   }

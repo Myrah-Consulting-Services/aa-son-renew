@@ -62,34 +62,44 @@ export class EmployeeAssignment implements OnInit {
   assignmentForm: FormGroup;
   overrideForm: FormGroup;
 
-  // Sample employees
+  // Sample employees — Nablus Road Contracting (Dubai)
   employees: Employee[] = [
     {
       id: 1,
-      name: 'Ahmed Hassan',
-      employeeId: 'EMP001',
-             department: 'IT',
-       designation: 'Senior Developer',
+      name: 'Omar Al Hashimi',
+      employeeId: 'NRC001',
+             department: 'Projects',
+       designation: 'Project Manager',
        currentStructure: undefined,
        salaryComponents: [],
       isActive: true
     },
     {
       id: 2,
-      name: 'Fatima Al-Zahra',
-      employeeId: 'EMP002',
-             department: 'Sales',
-       designation: 'Sales Manager',
+      name: 'Hassan Mansour',
+      employeeId: 'NRC002',
+             department: 'Site Operations',
+       designation: 'Site Supervisor',
        currentStructure: undefined,
        salaryComponents: [],
       isActive: true
     },
     {
       id: 3,
-      name: 'Mohammed Ali',
-      employeeId: 'EMP003',
-             department: 'Operations',
-       designation: 'Site Supervisor',
+      name: 'Priya Nair',
+      employeeId: 'NRC003',
+             department: 'Estimation',
+       designation: 'Quantity Surveyor',
+       currentStructure: undefined,
+       salaryComponents: [],
+      isActive: true
+    },
+    {
+      id: 4,
+      name: 'Mohammed Yousef',
+      employeeId: 'NRC004',
+             department: 'Plant & Machinery',
+       designation: 'Plant Operator',
        currentStructure: undefined,
        salaryComponents: [],
       isActive: true

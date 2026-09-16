@@ -78,12 +78,14 @@ export class GeneralLedgerReport implements OnInit {
   }
 
   private loadFallbackData() {
-    // Fallback to mock data if API fails
+    // Demo fallback — Nablus Road Contracting (Dubai)
     const allEntries: LedgerEntry[] = [
-      { date: '2024-06-01', account: 'Cash', transaction_type: 'Payment', description: 'Received from Customer A', debit: 5000, credit: null, balance: 5000 },
-      { date: '2024-06-02', account: 'Accounts Receivable', transaction_type: 'Invoice', description: 'Sale to Customer B', debit: 7500, credit: null, balance: 7500 },
-      { date: '2024-06-03', account: 'Cash', transaction_type: 'Expense', description: 'Paid for Office Supplies', debit: null, credit: 500, balance: 4500 },
-      { date: '2024-06-04', account: 'Sales Revenue', transaction_type: 'Invoice', description: 'Sale to Customer B', debit: null, credit: 7500, balance: -7500 },
+      { date: '2026-08-01', account: 'Cash', transaction_type: 'Payment', description: 'Progress payment — Dubai Municipality (Al Khail Rd)', debit: 185000, credit: null, balance: 185000 },
+      { date: '2026-08-05', account: 'Accounts Receivable', transaction_type: 'Invoice', description: 'Invoice NRC-INV-2026-0142 — RTA Dubai resurfacing', debit: 246750, credit: null, balance: 246750 },
+      { date: '2026-08-08', account: 'Cash', transaction_type: 'Expense', description: 'Bitumen purchase — National Asphalt Co.', debit: null, credit: 48500, balance: 136500 },
+      { date: '2026-08-12', account: 'Sales Revenue', transaction_type: 'Invoice', description: 'Asphalt paving — Emaar Community Roads Phase 2', debit: null, credit: 92000, balance: -92000 },
+      { date: '2026-08-20', account: 'Cash', transaction_type: 'Payment', description: 'Received from Emaar Properties PJSC', debit: 92000, credit: null, balance: 228500 },
+      { date: '2026-08-28', account: 'Accounts Receivable', transaction_type: 'Invoice', description: 'Invoice NRC-INV-2026-0158 — Sheikh Zayed Rd patching', debit: 67500, credit: null, balance: 314250 },
     ];
 
     if (this.selectedAccount === 'all') {

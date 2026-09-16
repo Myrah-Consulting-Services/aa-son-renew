@@ -1192,12 +1192,12 @@ export class OutwardForm implements OnInit {
       content: [
         // Company header
         {
-          text: 'AA SONS',
+          text: 'NABLUS',
           style: 'companyLogo',
           alignment: 'center'
         },
         {
-          text: 'AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)',
+          text: 'Nablus Road Contracting',
           style: 'companyName',
           alignment: 'center'
         },

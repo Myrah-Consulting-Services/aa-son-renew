@@ -6,6 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../core/services/toast.service';
 import { CreateInvoice } from '../../Invoices/create-invoice/create-invoice';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 
 interface SalesInvoice {
   id: number;
@@ -90,7 +91,8 @@ export class SalesRegister implements OnInit {
     private fb: FormBuilder,
     private modalService:NgbModal,
     private toast:ToastService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private demo: DemoDataService
   ) {
     this.filterForm = this.fb.group({
       start_date: ['', Validators.required],
@@ -136,22 +138,44 @@ export class SalesRegister implements OnInit {
       next: (response: any) => {
         console.log('Sales Register Response:', response);
         if (response && response.status === 200) {
-          this.salesInvoices = response.data || [];
+          const apiData = response.data || [];
+          this.salesInvoices = this.demo.salesInvoices(apiData);
           this.pagination = response.pagination || {
             current_page: 1,
             total_pages: 1,
             total_data: 0,
             page_size: 10
           };
-          this.initializePaginationIfMissing(response);
+          if (!apiData.length) {
+            this.pagination = {
+              current_page: 1,
+              total_pages: 1,
+              total_data: this.salesInvoices.length,
+              page_size: this.salesInvoices.length || this.pageSize
+            };
+          } else {
+            this.initializePaginationIfMissing(response);
+          }
         } else {
-          this.error = 'Failed to load sales register data';
+          this.salesInvoices = this.demo.salesInvoices([]);
+          this.pagination = {
+            current_page: 1,
+            total_pages: 1,
+            total_data: this.salesInvoices.length,
+            page_size: this.salesInvoices.length || this.pageSize
+          };
         }
         this.loading = false;
       },
       error: (error) => {
         console.error('Error fetching sales register:', error);
-        this.error = 'Error loading sales register data';
+        this.salesInvoices = this.demo.salesInvoices([]);
+        this.pagination = {
+          current_page: 1,
+          total_pages: 1,
+          total_data: this.salesInvoices.length,
+          page_size: this.salesInvoices.length || this.pageSize
+        };
         this.loading = false;
       }
     });

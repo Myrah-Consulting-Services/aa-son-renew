@@ -16,6 +16,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { CreateJv } from '../../jv/create-jv/create-jv';
 import { CreateInvoice } from '../../Invoices/create-invoice/create-invoice';
 import { CreateExpenseComponent } from '../../Expense/create-expense/create-expense';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 @Component({
   selector: 'app-manage-page',
   standalone: true,
@@ -56,7 +57,8 @@ export class ManagePage {
     private api: Api,
     private toast: ToastService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private demo: DemoDataService
   ) {
     this.initForm();
   }
@@ -396,12 +398,12 @@ export class ManagePage {
     this.api.get('/money/list-cash/'+this.api.getUserCompany()+'/').subscribe({
       next: (response: any) => {
         if(response.status === 200){
-          this.cashList = response.data;
+          this.cashList = this.demo.cash(response.data);
         }
       },
       error: (error) => {
         console.error('Error loading cash list:', error);
-        this.toast.show('Error', 'Failed to load cash list', 'danger');
+        this.cashList = this.demo.cash([]);
       }
     });
   }
@@ -462,12 +464,12 @@ export class ManagePage {
     this.api.get('/money/list-bank/'+this.api.getUserCompany()+'/').subscribe({
       next: (response: any) => {
         if(response.status === 200){
-          this.bankList = response.data;
+          this.bankList = this.demo.banks(response.data);
         }
       },
       error: (error) => {
         console.error('Error loading bank list:', error);
-        this.toast.show('Error', 'Failed to load bank list', 'danger');
+        this.bankList = this.demo.banks([]);
       }
     });
   }

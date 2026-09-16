@@ -12,6 +12,7 @@ import { PaymentOut } from '../../manage-money/payment-out/payment-out';
 import { CreateInvoice } from '../../Invoices/create-invoice/create-invoice';
 import { CreateJv } from '../../jv/create-jv/create-jv';
 import { CreateExpenseComponent } from '../../Expense/create-expense/create-expense';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 @Component({
   selector: 'app-ledger-list',
   standalone: true,
@@ -55,7 +56,7 @@ openingBalance: any = null;
 // Make Math available in template
 Math = Math;
 
-constructor(private modalService:NgbModal,private api:Api,private fb:FormBuilder){
+constructor(private modalService:NgbModal,private api:Api,private fb:FormBuilder, private demo: DemoDataService){
   this.ledgerlistForm=this.fb.group({
     start_date:[this.api.getDateRange().start_date,Validators.required],
     end_date:[this.api.getDateRange().end_date,Validators.required],
@@ -138,10 +139,11 @@ getledgerlist(page: number = 1){
   }).subscribe({
     next: (res: any) => {
       if(res.status === 200){
-        this.ledgers = res.data || [];
+        const apiData = res.data || [];
+        this.ledgers = this.demo.ledgers(apiData);
         
         // Handle pagination data
-        if (res.pagination) {
+        if (res.pagination && apiData.length) {
           this.mainTotalData = res.pagination.total_data || 0;
           this.mainTotalPages = res.pagination.total_pages || 1;
           this.mainCurrentPage = res.pagination.current_page || 1;
@@ -150,12 +152,21 @@ getledgerlist(page: number = 1){
           // Calculate next/previous page availability
           this.mainHasNextPage = this.mainCurrentPage < this.mainTotalPages;
           this.mainHasPreviousPage = this.mainCurrentPage > 1;
+        } else {
+          this.mainTotalData = this.ledgers.length;
+          this.mainTotalPages = 1;
+          this.mainCurrentPage = 1;
+          this.mainHasNextPage = false;
+          this.mainHasPreviousPage = false;
         }
       }
       this.isLoadingMainList = false;
     },
     error: (error) => {
       console.error('Error loading ledger list:', error);
+      this.ledgers = this.demo.ledgers([]);
+      this.mainTotalData = this.ledgers.length;
+      this.mainTotalPages = 1;
       this.isLoadingMainList = false;
     }
   })

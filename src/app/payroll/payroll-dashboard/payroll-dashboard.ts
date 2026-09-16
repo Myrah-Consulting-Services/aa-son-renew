@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AddEmployeeComponent } from '../add-employee/add-employee';
 import { Api } from '../../core/services/api';
+import { NABLUS_PAYROLL_DASHBOARD } from '../../core/demo/nablus-road-contracting.data';
 
 @Component({
   selector: 'app-payroll-dashboard',
@@ -48,54 +49,70 @@ export class PayrollDashboard implements OnInit {
     this.api.post('/employee/payroll-dashboard/', { company: this.api.getCompanyId() }).subscribe({
       next: (res: any) => {
         this.loading = false;
-        if (res.status !== 200 || !res.data) {
+        if (res.status !== 200 || !res.data || !res.data.kpis) {
+          this.applyDemoDashboard();
           return;
         }
 
         const data = res.data;
-        this.kpis = data.kpis || null;
-        const leaveRequests = data.leave_request_summary || {};
-        this.leaveRequestStats = leaveRequests.financial_year || data.kpis?.leave_requests || null;
-        this.leaveCategoryStats = leaveRequests.financial_year_by_category?.paid_approved || [];
-        this.payrollTrend = data.payroll_trend || [];
-        this.attendanceData = (data.attendance_overview || []).map((item: any) => ({
-          day: item.day,
-          date: item.date,
-          rate: item.attendance_rate ?? 0,
-        }));
-        this.leaveSummary = (data.leave_balance_summary || []).map((item: any, index: number) => ({
-          type: item.name,
-          used: item.used ?? 0,
-          total: item.total ?? 0,
-          remaining: item.remaining ?? 0,
-          label: item.label,
-          color: this.leaveColors[index % this.leaveColors.length],
-        }));
-        this.recentPayRuns = (data.recent_pay_runs || []).map((run: any) => ({
-          id: run.pay_run_id,
-          payrollRunId: run.payroll_run_id,
-          period: run.period,
-          employees: run.employees,
-          amount: run.amount_formatted || this.formatCurrency(run.amount),
-          status: run.status,
-        }));
-        this.upcomingSchedules = (data.upcoming_schedules || []).map((schedule: any) => ({
-          schedule: schedule.schedule,
-          nextRun: schedule.next_run_formatted || schedule.next_run,
-          employees: schedule.employees,
-        }));
-        this.departmentBreakdown = this.mapDepartmentBreakdown(data.department_breakdown || []);
-        this.activeLoans = (data.active_loans || []).map((loan: any) => ({
-          employee: loan.employee,
-          amount: loan.amount,
-          remaining: loan.remaining,
-          installments: loan.installments,
-        }));
+        // Empty new company → show Nablus demo KPIs for the pitch
+        if (!data.kpis.total_employees) {
+          this.applyDemoDashboard();
+          return;
+        }
+
+        this.applyApiDashboard(data);
       },
       error: () => {
         this.loading = false;
+        this.applyDemoDashboard();
       },
     });
+  }
+
+  private applyApiDashboard(data: any): void {
+    this.kpis = data.kpis || null;
+    const leaveRequests = data.leave_request_summary || {};
+    this.leaveRequestStats = leaveRequests.financial_year || data.kpis?.leave_requests || null;
+    this.leaveCategoryStats = leaveRequests.financial_year_by_category?.paid_approved || [];
+    this.payrollTrend = data.payroll_trend || [];
+    this.attendanceData = (data.attendance_overview || []).map((item: any) => ({
+      day: item.day,
+      date: item.date,
+      rate: item.attendance_rate ?? 0,
+    }));
+    this.leaveSummary = (data.leave_balance_summary || []).map((item: any, index: number) => ({
+      type: item.name,
+      used: item.used ?? 0,
+      total: item.total ?? 0,
+      remaining: item.remaining ?? 0,
+      label: item.label,
+      color: this.leaveColors[index % this.leaveColors.length],
+    }));
+    this.recentPayRuns = (data.recent_pay_runs || []).map((run: any) => ({
+      id: run.pay_run_id,
+      payrollRunId: run.payroll_run_id,
+      period: run.period,
+      employees: run.employees,
+      amount: run.amount_formatted || this.formatCurrency(run.amount),
+      status: run.status,
+    }));
+    this.upcomingSchedules = (data.upcoming_schedules || []).map((schedule: any) => ({
+      schedule: schedule.schedule,
+      nextRun: schedule.next_run_formatted || schedule.next_run,
+      employees: schedule.employees,
+    }));
+    this.departmentBreakdown = this.mapDepartmentBreakdown(data.department_breakdown || []);
+    this.activeLoans = (data.active_loans || []).map((loan: any) => ({
+      employee: loan.employee,
+      amount: loan.amount,
+      remaining: loan.remaining,
+      installments: loan.installments,
+    }));
+  }
+
+  private applyDemoDashboard(): void {
+    this.applyApiDashboard(NABLUS_PAYROLL_DASHBOARD);
   }
 
   private mapDepartmentBreakdown(departments: any[]): any[] {

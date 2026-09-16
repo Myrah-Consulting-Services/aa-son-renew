@@ -2157,7 +2157,7 @@ getcurrencysecond(){
           {
             width: '*', text: [
               'For ',
-              { text: 'AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)', bold: true }
+              { text: 'Nablus Road Contracting', bold: true }
             ], margin: [0, 18, 0, 0], fontSize: 12
           },
           { width: '*', text: 'Received the above goods in good conditions', alignment: 'right', margin: [0, 18, 0, 0], fontSize: 12 }
@@ -2207,21 +2207,21 @@ getcurrencysecond(){
         },
         // Company Name
         {
-          text: 'AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)',
+          text: 'Nablus Road Contracting',
           style: 'companyName',
           alignment: 'center',
           margin: [0, 0, 0, 4]
         },
         // Address and Contact
         {
-          text: 'POST BOX NO. 4713, DUBAI, U.A.E.\nTEL :04-3536699 FAX :04-3536611 Email : raisem@eim.ae',
+          text: 'Warehouse 14, Al Quoz Industrial Area 3, Dubai, U.A.E. | P.O. Box 118820\nTEL : +971 4 338 2140 | Email : info@nablusroad.ae',
           style: 'companyInfo',
           alignment: 'center',
           margin: [0, 0, 0, 2]
         },
         // TRN
         {
-          text: 'TRN : 100033732700003',
+          text: 'TRN : 100456789012345',
           style: 'trn',
           alignment: 'center',
           margin: [0, 0, 0, 10]

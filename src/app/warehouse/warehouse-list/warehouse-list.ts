@@ -7,6 +7,7 @@ import { WarehouseForm } from '../warehouse-form/warehouse-form';
 import { WarehouseDetailModal } from '../warehouse-detail-modal/warehouse-detail-modal';
 import { Api } from '../../core/services/api';
 import { ToastService } from '../../core/services/toast.service';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -40,7 +41,8 @@ export class WarehouseList implements OnInit {
   constructor(
     private svc: Api,
     private modalService: NgbModal,
-    private toast: ToastService
+    private toast: ToastService,
+    private demo: DemoDataService
   ) {}
 
   ngOnInit() {
@@ -77,17 +79,21 @@ export class WarehouseList implements OnInit {
       next: (res: any) => {
         this.loading = false;
         if (res.status === 200 || res.data) {
-          this.warehouses = res.data || [];
+          const apiData = res.data || [];
+          this.warehouses = this.demo.warehouses(apiData);
 
           // Read pagination from paginated_data
           const pagination = res.paginated_data || {};
-          this.currentPage = pagination.current_page ?? 1;
-          this.totalCount  = pagination.total_data   ?? this.warehouses.length;
-          const totalPages = pagination.total_pages  ?? 1;
-          // If API returns page_size as string, parse it
-          const apiPageSize = pagination.page_size;
-          if (apiPageSize && typeof apiPageSize === 'string') {
-            this.pageSize = parseInt(apiPageSize, 10);
+          if (apiData.length) {
+            this.currentPage = pagination.current_page ?? 1;
+            this.totalCount  = pagination.total_data   ?? this.warehouses.length;
+            const apiPageSize = pagination.page_size;
+            if (apiPageSize && typeof apiPageSize === 'string') {
+              this.pageSize = parseInt(apiPageSize, 10);
+            }
+          } else {
+            this.currentPage = 1;
+            this.totalCount = this.warehouses.length;
           }
 
           // KPI counts
@@ -99,7 +105,11 @@ export class WarehouseList implements OnInit {
       error: (err) => {
         this.loading = false;
         console.error('Error loading warehouses:', err);
-        this.toast.show('Error', 'Failed to load warehouses', 'danger');
+        this.warehouses = this.demo.warehouses([]);
+        this.totalCount = this.warehouses.length;
+        this.totalWarehouses = this.totalCount;
+        this.activeCount     = this.warehouses.filter((w: any) => w.is_active === true).length;
+        this.inactiveCount   = this.warehouses.filter((w: any) => w.is_active === false).length;
       }
     });
   }

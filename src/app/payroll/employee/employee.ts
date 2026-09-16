@@ -7,6 +7,7 @@ import { Api } from '../../core/services/api';
 import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../core/services/toast.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-employee',
@@ -32,7 +33,7 @@ export class EmployeeComponent implements OnInit {
   department: any="";
   pageNumber: any;
   designationList: any;
-  constructor(private modalService: NgbModal, private api: Api,private toast: ToastService) {}
+  constructor(private modalService: NgbModal, private api: Api,private toast: ToastService, private demo: DemoDataService) {}
 
   ngOnInit(): void {
   
@@ -40,13 +41,19 @@ export class EmployeeComponent implements OnInit {
     this.getEmployeeList();
   }
   getDesignationList(): void {
-    this.api.get('/employee/list_departments/').subscribe((res:any)=>{
-      if(res.status==200){ this.departments = res.data; }
+    this.api.get('/employee/list_departments/').subscribe({
+      next: (res:any)=>{
+        if(res.status==200){ this.departments = this.demo.departments(res.data); }
+      },
+      error: () => { this.departments = this.demo.departments([]); }
     });
-    this.api.get('/employee/list_designations/').subscribe((res: any) => {
-      if (res.status == 200) {
-        this.designationList = res.data;
-      }
+    this.api.get('/employee/list_designations/').subscribe({
+      next: (res: any) => {
+        if (res.status == 200) {
+          this.designationList = this.demo.designations(res.data);
+        }
+      },
+      error: () => { this.designationList = this.demo.designations([]); }
     });
   }
   getEmployeeList(){
@@ -59,14 +66,22 @@ export class EmployeeComponent implements OnInit {
       designation_id:this.designation,
     
     }
-    this.api.post('/employee/list_employees/',a).subscribe((res:any)=>{
-      console.log(res,'employee list');
-      if(res.status==200){
-        this.employees = res.data;
-        this.pagination=res.pagination
-        this.totalData=this.pagination.count
-      }else{
-        this.employees = [];
+    this.api.post('/employee/list_employees/',a).subscribe({
+      next: (res:any)=>{
+        console.log(res,'employee list');
+        if(res.status==200){
+          const apiData = res.data || [];
+          this.employees = this.demo.employees(apiData);
+          this.pagination=res.pagination
+          this.totalData= apiData.length ? this.pagination?.count : this.employees.length;
+        }else{
+          this.employees = this.demo.employees([]);
+          this.totalData = this.employees.length;
+        }
+      },
+      error: () => {
+        this.employees = this.demo.employees([]);
+        this.totalData = this.employees.length;
       }
     });
   }
@@ -81,10 +96,21 @@ export class EmployeeComponent implements OnInit {
       page_size: this.pageSize, page: this.pageNumber+1, pagination: true,
       "company": this.api.getCompanyId(),
     }
-    this.api.post('/employee/list_employees/',a).subscribe((response:any)=>{
-      if(response.status){
-      this.employees = response.data;
-      this.pagination = response.pagination
+    this.api.post('/employee/list_employees/',a).subscribe({
+      next: (response:any)=>{
+        if(response.status){
+          const apiData = response.data || [];
+          this.employees = this.demo.employees(apiData);
+          this.pagination = response.pagination
+          if (!apiData.length) {
+            this.totalData = this.employees.length;
+          }
+        } else {
+          this.employees = this.demo.employees([]);
+        }
+      },
+      error: () => {
+        this.employees = this.demo.employees([]);
       }
     })  
   }

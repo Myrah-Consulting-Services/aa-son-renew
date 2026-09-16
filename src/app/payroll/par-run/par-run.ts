@@ -5,6 +5,7 @@ import { PayrunDetail } from "../payrun-detail/payrun-detail";
 import { FeaturesRoutingModule } from "../../features/features-routing-module";
 import { Router, RouterLink } from '@angular/router';
 import { Api } from '../../core/services/api';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 @Component({
   selector: 'app-par-run',
@@ -40,7 +41,7 @@ export class ParRun implements OnInit {
   // Modal state
   showSettingsModal = false;
   
-  constructor(private fb: FormBuilder, private api: Api, private router: Router) {
+  constructor(private fb: FormBuilder, private api: Api, private router: Router, private demo: DemoDataService) {
     }
 
   getcurrency() {
@@ -61,25 +62,50 @@ export class ParRun implements OnInit {
   pendingRuns: any[] = [];
 
   getPayrol(): void {
-    this.api.get('/employee/current_month_payroll_run/?'+"company_id="+this.api.getCompanyId()).subscribe((response: any) => {
-      if(response.status == 200){
-        const data = response.data;
-        this.runPayrollData = response.data.payroll_runs?? [];
-        // Prefer backend-curated pending list
-        this.pendingRuns = data.pending_payroll_runs ?? this.runPayrollData.filter(
+    this.api.get('/employee/current_month_payroll_run/?'+"company_id="+this.api.getCompanyId()).subscribe({
+      next: (response: any) => {
+        if(response.status == 200){
+          const data = response.data;
+          const apiRuns = data?.payroll_runs ?? [];
+          this.runPayrollData = this.demo.payRuns(apiRuns);
+          // Prefer backend-curated pending list
+          this.pendingRuns = data.pending_payroll_runs ?? this.runPayrollData.filter(
+            (r: any) => r.is_pending || r.status === '4'
+          );
+          this.kpiSummary = data.kpi_summary ?? {};
+        } else {
+          this.runPayrollData = this.demo.payRuns([]);
+          this.pendingRuns = this.runPayrollData.filter(
+            (r: any) => r.is_pending || r.status === '4'
+          );
+        }
+      },
+      error: () => {
+        this.runPayrollData = this.demo.payRuns([]);
+        this.pendingRuns = this.runPayrollData.filter(
           (r: any) => r.is_pending || r.status === '4'
         );
-        this.kpiSummary = data.kpi_summary ?? {};
       }
     });
   }
   // payroll_history/<int:company_id>/
   getPayrollHistory(): void {
-    this.api.get('/employee/payroll_history/'+this.api.getCompanyId()+'/').subscribe((response: any) => {
-      if(response.status == 200){
-        this.payrollHistory = response.data.filter((item: any) => item.status == "PAID" || item.status == "7");
+    this.api.get('/employee/payroll_history/'+this.api.getCompanyId()+'/').subscribe({
+      next: (response: any) => {
+        if(response.status == 200){
+          const apiData = response.data || [];
+          const paid = apiData.filter((item: any) => item.status == "PAID" || item.status == "7");
+          this.payrollHistory = this.demo.payrollHistory(paid);
+          this.filteredPayrollHistory = [...this.payrollHistory];
+          this.bulkSettlementBatches = apiData.filter((item: any) => item.payroll_type=="Bulk Payroll");
+        } else {
+          this.payrollHistory = this.demo.payrollHistory([]);
+          this.filteredPayrollHistory = [...this.payrollHistory];
+        }
+      },
+      error: () => {
+        this.payrollHistory = this.demo.payrollHistory([]);
         this.filteredPayrollHistory = [...this.payrollHistory];
-        this.bulkSettlementBatches = response.data.filter((item: any) => item.payroll_type=="Bulk Payroll");
       }
     });
   }

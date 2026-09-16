@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CompanyService } from '../../../core/services/company.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CountryList } from '../../../country-list';
+import { NABLUS_COMPANY } from '../../../core/demo/nablus-road-contracting.data';
 
 interface SearchOption {
   id: number;
@@ -76,35 +77,35 @@ export class CreateCompany implements OnInit {
     this.filteredCountries = [...this.countries];
     this.filteredEmirates = [...this.emiratesList];
     this.filteredCurrencies = [...this.currencies];
-    this.setCountryDisplay(1);
-    this.setEmirateDisplay(2);
+    this.setCountryDisplay(NABLUS_COMPANY.country);
+    this.setEmirateDisplay(NABLUS_COMPANY.emirates);
     this.setCurrencyDisplay(1);
   }
 
   initializeForm(): void {
     this.companyForm = this.fb.group({
-      business_name: ['', Validators.required],
-      business_name_arabic: [''],
-      phone_no: ['', Validators.required],
-      alternate_business_no: [''],
-      email: ['', [Validators.required, Validators.email]],
-      alternate_email: [''],
-      address1: [''],
-      address2: [''],
-      po_box: [''],
-      license_number: [''],
-      license_type: [''],
-      issued_by: [''],
-      license_expiry: [''],
-      activity: [''],
-      legal_type: [''],
-      country: [1, Validators.required],
-      emirates: [2],
-      owner_name: [''],
-      owner_nationality: [''],
-      owner_emirates_id: [''],
-      tax_registration_number: [''],
-      vat_registered: [false],
+      business_name: [NABLUS_COMPANY.business_name, Validators.required],
+      business_name_arabic: [NABLUS_COMPANY.business_name_arabic],
+      phone_no: [NABLUS_COMPANY.phone_no, Validators.required],
+      alternate_business_no: [NABLUS_COMPANY.alternate_business_no],
+      email: [NABLUS_COMPANY.email, [Validators.required, Validators.email]],
+      alternate_email: [NABLUS_COMPANY.alternate_email],
+      address1: [NABLUS_COMPANY.address1],
+      address2: [NABLUS_COMPANY.address2],
+      po_box: [NABLUS_COMPANY.po_box],
+      license_number: [NABLUS_COMPANY.license_number],
+      license_type: [NABLUS_COMPANY.license_type],
+      issued_by: [NABLUS_COMPANY.issued_by],
+      license_expiry: [NABLUS_COMPANY.license_expiry],
+      activity: [NABLUS_COMPANY.activity],
+      legal_type: [NABLUS_COMPANY.legal_type],
+      country: [NABLUS_COMPANY.country, Validators.required],
+      emirates: [NABLUS_COMPANY.emirates],
+      owner_name: [NABLUS_COMPANY.owner_name],
+      owner_nationality: [NABLUS_COMPANY.owner_nationality],
+      owner_emirates_id: [NABLUS_COMPANY.owner_emirates_id],
+      tax_registration_number: [NABLUS_COMPANY.tax_registration_number],
+      vat_registered: [NABLUS_COMPANY.vat_registered],
       status: [1],
       business_logo: [''],
       signature: [''],

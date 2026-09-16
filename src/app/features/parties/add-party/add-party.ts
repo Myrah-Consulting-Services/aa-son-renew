@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Api } from '../../../core/services/api';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../../core/services/toast.service';
+import { DemoDataService } from '../../../core/demo/demo-data.service';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 @Component({
@@ -33,7 +34,8 @@ export class AddParty implements OnInit {
   constructor(
     private modalService: NgbModal,
     private api: Api,
-    private toast: ToastService
+    private toast: ToastService,
+    private demo: DemoDataService
   ) {
     // Setup debounced search
     this.searchSubject.pipe(
@@ -79,14 +81,23 @@ export class AddParty implements OnInit {
     this.api.post('/party/list-party/s='+searchTerm+'/', searchParams).subscribe({
       next: (response: any) => {
         if (response && response.status === 200) {
-          this.parties = response.data || [];
-          // this.toast.show('Success', `Found ${this.parties.length} parties`, 'success');
+          const apiData = response.data || [];
+          this.parties = this.demo.parties(apiData);
+          if (!apiData.length) {
+            const term = searchTerm.toLowerCase();
+            this.parties = this.parties.filter((p: any) =>
+              String(p.partyName || '').toLowerCase().includes(term)
+            );
+          }
         }
         this.loading = false;
       },
       error: (error) => {
         console.error('Error searching parties:', error);
-        this.toast.show('Error', 'Failed to search parties', 'danger');
+        const term = searchTerm.toLowerCase();
+        this.parties = this.demo.parties([]).filter((p: any) =>
+          String(p.partyName || '').toLowerCase().includes(term)
+        );
         this.loading = false;
       }
     });
@@ -107,15 +118,13 @@ export class AddParty implements OnInit {
     this.api.post('/party/list-party/s=/', params).subscribe({
       next: (response: any) => {
         if (response && response.status === 200) {
-          this.parties = response.data || [];
-          const typeName = type === 0 ? 'all' : type === 1 ? 'customers' : 'vendors';
-          // this.toast.show('Success', `Loaded ${this.parties.length} ${typeName}`, 'success');
+          this.parties = this.demo.parties(response.data || []);
         }
         this.loading = false;
       },
       error: (error) => {
         console.error('Error fetching party list:', error);
-        this.toast.show('Error', 'Failed to load parties', 'danger');
+        this.parties = this.demo.parties([]);
         this.loading = false;
       }
     });

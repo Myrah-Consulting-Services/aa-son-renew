@@ -9,6 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NgbPanelTitle } from "../../../../node_modules/@ng-bootstrap/ng-bootstrap/accordion/accordion";
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 export interface Item {
   id?: number;
@@ -46,7 +47,8 @@ export class RequisitionList implements OnInit {
     private modalService: NgbModal,
     private toast: ToastService,
     private router: Router,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private demo: DemoDataService
   ) {}
 
   ngOnInit() {
@@ -94,15 +96,31 @@ export class RequisitionList implements OnInit {
     };
     this.svc.post('/invoice/notifications/s=' + payload.search + '/', payload).subscribe((res: any) => {
       if(res.status == 200){
-        this.requisitions = res.data;
+        const apiData = res.data || [];
+        this.requisitions = this.demo.requisitions(apiData);
         this.filteredRequisitions = [...this.requisitions];
-        if (res.paginated_data) {
+        if (res.paginated_data && apiData.length) {
           this.currentPage = res.paginated_data.current_page;
           this.totalPages = res.paginated_data.total_pages;
           this.totalData = res.paginated_data.total_data;
           this.pageSize = res.paginated_data.page_size;
+        } else {
+          this.currentPage = 1;
+          this.totalPages = 1;
+          this.totalData = this.requisitions.length;
         }
+      } else {
+        this.requisitions = this.demo.requisitions([]);
+        this.filteredRequisitions = [...this.requisitions];
+        this.totalData = this.requisitions.length;
+        this.totalPages = 1;
       }
+      this.loading = false;
+    }, () => {
+      this.requisitions = this.demo.requisitions([]);
+      this.filteredRequisitions = [...this.requisitions];
+      this.totalData = this.requisitions.length;
+      this.totalPages = 1;
       this.loading = false;
     });
   }

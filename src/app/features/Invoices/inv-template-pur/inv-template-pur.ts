@@ -99,11 +99,11 @@ export class InvTemplatePur implements OnInit {
                 {
                   colSpan: 7,
                   stack: [
-                    { text: 'AA SONS', fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
-                    { text: 'AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)', fontSize: 14, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
-                    { text: 'POST BOX NO. 4713,DUBAI, U.A.E.', fontSize: 10, alignment: 'center', margin: [0, 0, 0, 0] },
-                    { text: 'TEL :04-3536699 FAX :04-3536611 Email : raisem@eim.ae', fontSize: 10, alignment: 'center', margin: [0, 0, 0, 0] },
-                    { text: 'TRN : 100033732700003', fontSize: 11, bold: true, alignment: 'center', color: '#000', margin: [0, 0, 0, 6] }
+                    { text: 'NABLUS', fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
+                    { text: 'Nablus Road Contracting', fontSize: 14, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
+                    { text: 'Warehouse 14, Al Quoz Industrial Area 3, Dubai, U.A.E. | P.O. Box 118820', fontSize: 10, alignment: 'center', margin: [0, 0, 0, 0] },
+                    { text: 'TEL : +971 4 338 2140 | Email : info@nablusroad.ae', fontSize: 10, alignment: 'center', margin: [0, 0, 0, 0] },
+                    { text: 'TRN : 100456789012345', fontSize: 11, bold: true, alignment: 'center', color: '#000', margin: [0, 0, 0, 6] }
                   ],
                   alignment: 'center',
                   margin: [0, 4, 0, 4]
@@ -274,7 +274,7 @@ export class InvTemplatePur implements OnInit {
               [
                 {
                   stack: [
-                    { text: 'For      AHMAD ABDULRAHMAN & SONS GENERAL TRADING (LLC)', bold: false, fontSize: 12, margin: [0, 8, 0, 8] },
+                    { text: 'For      Nablus Road Contracting', bold: false, fontSize: 12, margin: [0, 8, 0, 8] },
                     {
                       table: {
                         widths: ['33%', '33%', '34%'],

@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Api } from '../../core/services/api';
 import { Department } from '../department/department';
 import { Branch } from '../branch/branch';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 
 interface ILocationPay {
   id: number;
@@ -49,7 +50,7 @@ export class LocationPay implements OnInit, OnDestroy {
   
   @Output() closeModal = new EventEmitter<any>();
   
-  constructor(private fb: FormBuilder, private api: Api) {
+  constructor(private fb: FormBuilder, private api: Api, private demo: DemoDataService) {
     this.locationForm = this.fb.group({
       Location_name: ['', Validators.required],
       company: [this.api.getCompanyId(), Validators.required],
@@ -177,17 +178,27 @@ export class LocationPay implements OnInit, OnDestroy {
 
   // API methods
   getDepartmentList(): void {
-    this.api.get('/employee/list_departments/').subscribe((res: any) => {
-      if (res.status == 200) {
-        this.departmentList = res.data;
+    this.api.get('/employee/list_departments/').subscribe({
+      next: (res: any) => {
+        if (res.status == 200) {
+          this.departmentList = this.demo.departments(res.data);
+        }
+      },
+      error: () => {
+        this.departmentList = this.demo.departments([]);
       }
     });
   }
 
   getBranchList(): void {
-    this.api.get('/employee/list_branches/').subscribe((res: any) => {
-      if (res.status == 200) {
-        this.branchList = res.data;
+    this.api.get('/employee/list_branches/').subscribe({
+      next: (res: any) => {
+        if (res.status == 200) {
+          this.branchList = this.demo.branches(res.data);
+        }
+      },
+      error: () => {
+        this.branchList = this.demo.branches([]);
       }
     });
   }
