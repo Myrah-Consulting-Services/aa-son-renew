@@ -139,7 +139,7 @@ export class CompanySetting implements OnInit {
     { id: 34, code: 'HUF', name: 'Hungarian Forint' },
     { id: 35, code: 'ILS', name: 'Israeli Shekel' },
     { id: 36, code: 'EGP', name: 'Egyptian Pound' },
-    { id: 37, code: 'NGN', name: 'Nigerian Naira' },
+    { id: 37, code: 'AED', name: 'UAE Dirham' },
     { id: 38, code: 'BRL', name: 'Brazilian Real' },
     { id: 39, code: 'MXN', name: 'Mexican Peso' },
     { id: 40, code: 'ARS', name: 'Argentine Peso' },
@@ -381,8 +381,14 @@ export class CompanySetting implements OnInit {
         if (res.data.default_currency) {
           const selectedCurrency = this.currencies.find(c => c.id === res.data.default_currency);
           if (selectedCurrency) {
-            this.currencySearchText = `${selectedCurrency.code} - ${selectedCurrency.name}`;
+            const code = String(selectedCurrency.code).toUpperCase() === 'NGN' ? 'AED' : selectedCurrency.code;
+            this.currencySearchText = `${code} - ${selectedCurrency.name}`;
+            localStorage.setItem('inv_code', JSON.stringify(code));
+          } else {
+            localStorage.setItem('inv_code', JSON.stringify('AED'));
           }
+        } else {
+          localStorage.setItem('inv_code', JSON.stringify('AED'));
         }
 
         // Set the conversion currency search text if curency_conversion exists
@@ -794,10 +800,12 @@ export class CompanySetting implements OnInit {
   }
 
   selectCurrency(currency: any) {
+    const code = currency?.code && String(currency.code).toUpperCase() !== 'NGN' ? currency.code : 'AED';
     this.invoiceForm.patchValue({
-      default_currency: currency.id
+      default_currency: currency.id === 37 ? 1 : currency.id
     });
-    this.currencySearchText = `${currency.code} - ${currency.name}`;
+    this.currencySearchText = `${code} - ${currency.name || 'UAE Dirham'}`;
+    localStorage.setItem('inv_code', JSON.stringify(code));
     this.showDropdown = false;
   }
 

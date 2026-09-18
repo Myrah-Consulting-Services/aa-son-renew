@@ -89,7 +89,7 @@ export class Dashboard {
     { id: 34, code: 'HUF', name: 'HUF - Hungarian Forint' },
     { id: 35, code: 'ILS', name: 'ILS - Israeli Shekel' },
     { id: 36, code: 'EGP', name: 'EGP - Egyptian Pound' },
-    { id: 37, code: 'NGN', name: 'NGN - Nigerian Naira' },
+    { id: 37, code: 'AED', name: 'AED - UAE Dirham' },
     { id: 38, code: 'BRL', name: 'BRL - Brazilian Real' },
     { id: 39, code: 'MXN', name: 'MXN - Mexican Peso' },
     { id: 40, code: 'ARS', name: 'ARS - Argentine Peso' },
@@ -141,14 +141,17 @@ export class Dashboard {
       if(res.status == 200){
         if(res.data.default_currency){
           const c = this.currencies.filter((item:any) => item.id == res.data.default_currency);
-          this.inv_code = c[0].code;
+          this.inv_code = (c[0]?.code && String(c[0].code).toUpperCase() !== 'NGN') ? c[0].code : 'AED';
           localStorage.setItem('inv_code',JSON.stringify(this.inv_code));
 
           console.log(c);
           
           const b = this.currencies.filter((item:any) => item.id == res.data.curency_conversion);
-           const a=b[0].code;
+           const a = (b[0]?.code && String(b[0].code).toUpperCase() !== 'NGN') ? b[0].code : 'USD';
           localStorage.setItem('selected_currency',JSON.stringify(a));
+        } else {
+          this.inv_code = 'AED';
+          localStorage.setItem('inv_code', JSON.stringify('AED'));
         }
        console.log(this.api.getcurrencies());
       }
@@ -156,7 +159,7 @@ export class Dashboard {
   }
   getcurrency(){
    
-    return this.api.getcurrencies();
+    return this.api.getcurrencies() || 'AED';
   }
   getDates(){
     const today = new Date();

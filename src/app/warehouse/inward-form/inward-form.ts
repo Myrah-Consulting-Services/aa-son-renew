@@ -2523,7 +2523,7 @@ getcurrencysecond(){
               [
                 {
                   colSpan: 3, stack: [
-                    { text: [{ text: 'Vendor     : ' + (this.form.get('production')?.value ? (this.form.get('production')?.value === '1' ? 'Factory Lagos' : this.form.get('production')?.value === '2' ? 'Factory Benin' : '') : 'Vendor'), bold: true, fontSize: 9 }, { text: d.party_name, fontSize: 9 }], margin: [0, 0, 0, 1] },
+                    { text: [{ text: 'Vendor     : ' + (this.form.get('production')?.value ? (this.form.get('production')?.value === '1' ? 'Factory Dubai' : this.form.get('production')?.value === '2' ? 'Factory Abu Dhabi' : '') : 'Vendor'), bold: true, fontSize: 9 }, { text: d.party_name, fontSize: 9 }], margin: [0, 0, 0, 1] },
                     { text: [{ text: 'Address    : ', bold: true, fontSize: 9 }, { text: '', fontSize: 9 }], margin: [0, 0, 0, 0] },
                     { text: '', fontSize: 9, margin: [65, 0, 0, 1] },
                     { text: [{ text: 'Tel No     : ', bold: true, fontSize: 9 }, { text: '', fontSize: 9 }], margin: [0, 0, 0, 1] },

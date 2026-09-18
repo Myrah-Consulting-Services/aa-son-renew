@@ -27,6 +27,9 @@ export class BalanceSheet implements OnInit {
   ngOnInit() {
     this.reportDate = new Date().toISOString().split('T')[0];
     this.currencyCode = this.api.getcurrencies() || 'AED';
+    if (String(this.currencyCode).toUpperCase() === 'NGN') {
+      this.currencyCode = 'AED';
+    }
     this.generateReport();
   }
 

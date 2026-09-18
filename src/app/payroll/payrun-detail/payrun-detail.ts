@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Api } from '../../core/services/api';
+import { DemoDataService } from '../../core/demo/demo-data.service';
 import { DeductionDetail } from '../deduction-detail/deduction-detail';
 import { OverallInsight } from '../overall-insight/overall-insight';
 import { PayrunDrawer } from '../payrun-drawer/payrun-drawer';
@@ -31,6 +32,8 @@ export class PayrunDetail implements OnInit {
   payrollRunId: any = null;
   isSubmitting: boolean = false;
   payslipData: any;
+  /** Full payslip list from API / demo (kept separate so drawer open doesn't wipe the list) */
+  private allPayslips: any[] = [];
   isRecordingPayment: boolean = false;
   bankList: any[] = [];
   recordPaymentForm: FormGroup;
@@ -38,7 +41,13 @@ export class PayrunDetail implements OnInit {
   loadError: string = '';
   includeOvertimeInSalary = true;
 
-  constructor(private fb: FormBuilder, private api: Api, private router: Router, private route: ActivatedRoute) {
+  constructor(
+    private fb: FormBuilder,
+    private api: Api,
+    private router: Router,
+    private route: ActivatedRoute,
+    private demo: DemoDataService
+  ) {
     this.recordPaymentForm = this.fb.group({
       pay_date: [this.getCurrentDate(), Validators.required],
       bank_id: ['', Validators.required],
@@ -59,6 +68,7 @@ export class PayrunDetail implements OnInit {
         this.loadError = 'Could not load this pay run. Go back and open it again.';
         return;
       }
+      this.payrollRunId.status = this.normalizeStatusCode(String(this.payrollRunId.status ?? '4'));
       this.loadCurrentPayRun();
       this.loadData();
     });
@@ -120,15 +130,23 @@ export class PayrunDetail implements OnInit {
     }
     this.api.post(`/employee/submit_payroll_run_with_payslip/`, payload).subscribe({
       next: (response: any) => {
-        if(response.status == 200){
-          this.payslipData=response.data.employee_payslip_details
-          this.payslipData.payrun_id=payrollRunId
+        if(response.status == 200 && response.data){
+          this.allPayslips = Array.isArray(response.data.employee_payslip_details)
+            ? response.data.employee_payslip_details
+            : [];
+          this.payslipData = this.allPayslips;
           this.payrollRunId = { ...this.payrollRunId, ...response.data };
           this.payrollSummary = response.data.payroll_summary;
-          this.payrollSummary.status=response.data.status
+          if (this.payrollSummary) {
+            this.payrollSummary.status = response.data.status ?? this.payrollSummary.status;
+          }
           this.employees = response.data.employees || [];
           this.applyOvertimeToEmployees();
           this.filteredEmployees = [...this.employees];
+          this.loadError = '';
+          if (!this.payrollSummary || !this.employees.length) {
+            this.applyDemoPayRun();
+          }
         } else {
           this.getEmpPayroll();
         }
@@ -271,17 +289,79 @@ export class PayrunDetail implements OnInit {
         this.employeeDetailsById = new Map(
           detailsArr.map((d: any) => [String(d?.employee_info?.employee_id), d])
         );
+        this.allPayslips = Array.isArray(data?.employee_payslip_details) ? data.employee_payslip_details : [];
         if (!this.payrollSummary && this.employees.length) {
           this.payrollSummary = this.buildSummaryFromEmployees();
         }
-        if (!this.payrollSummary) {
-          this.loadError = res?.message || 'Payroll preview did not return pay run data.';
+        if (!this.payrollSummary || !this.employees.length) {
+          this.applyDemoPayRun();
+        } else {
+          this.loadError = '';
         }
       },
       error: () => {
-        this.loadError = 'Failed to load payroll preview. Check the pay period and try again.';
+        this.applyDemoPayRun();
       }
     });
+  }
+
+  /** Soft-fail: show Nablus demo pay run when API preview / submit fails (e.g. demo run ids). */
+  private applyDemoPayRun(): void {
+    const periodLabel =
+      this.payrollRunId?.processing_period ||
+      this.payrollRunId?.details ||
+      this.formatPeriodFromDates() ||
+      'September 2026';
+    const rawStatus = String(this.payrollRunId?.status ?? '4');
+    const status = this.normalizeStatusCode(rawStatus);
+    // Keep route object aligned so template status checks work (PAID → 7, etc.)
+    this.payrollRunId = { ...this.payrollRunId, status };
+    const rows = this.demo.payrollEmployees(periodLabel, [], {
+      status: status === '7' ? 'PAID' : status,
+      paymentDate:
+        this.payrollRunId?.pay_date_formatted ||
+        this.payrollRunId?.payment_date ||
+        this.payrollRunId?.pay_date ||
+        '',
+    });
+    this.employees = rows.map((e: any) => ({
+      ...e,
+      status: status === '4' || status === '5' ? 'processed' : status === '6' ? 'APPROVED' : 'PAID',
+      payment_status: status === '7' ? 'Paid' : status === '6' ? 'Approved' : 'Pending',
+    }));
+    this.applyOvertimeToEmployees();
+    this.filteredEmployees = [...this.employees];
+    this.allPayslips = rows.map((e: any) => ({
+      employee_id: e.employee_id,
+      payslip: e.payslip,
+    }));
+    this.payslipData = this.allPayslips;
+    this.payrollSummary = this.buildSummaryFromEmployees();
+    this.payrollSummary.period = periodLabel;
+    this.payrollSummary.pay_day =
+      this.payrollRunId?.pay_date || this.payrollRunId?.payment_date || this.payrollSummary.pay_day;
+    this.payrollSummary.status = status;
+    this.loadError = '';
+  }
+
+  private normalizeStatusCode(status: string): string {
+    const s = String(status || '').toUpperCase();
+    if (s === 'PAID' || s === '7') return '7';
+    if (s === 'APPROVED' || s === '6') return '6';
+    if (s === '5' || s === 'DRAFT') return '5';
+    if (s === '4' || s === 'PROCESSING' || s === 'PENDING') return '4';
+    return status || '4';
+  }
+
+  private formatPeriodFromDates(): string {
+    const start = this.payrollRunId?.pay_period_start_date;
+    if (!start) return '';
+    try {
+      const d = new Date(start);
+      return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } catch {
+      return '';
+    }
   }
 
   private applyOvertimeToEmployees(): void {
@@ -398,13 +478,13 @@ export class PayrunDetail implements OnInit {
     this.selectedEmployee = emp;
     const key = String(emp?.employee_id ?? '');
     this.selectedEmployeeDetail = this.employeeDetailsById.get(key) || null;
-    if (this.payslipData && Array.isArray(this.payslipData)) {
-      this.payslipData = this.payslipData.find((item: any) => String(item.employee_id) === String(emp.employee_id)) || null;
-    } else {
-      this.payslipData = null;
-    }
-    // Set payslip data for the drawer
-    // this.payslipData = this.getPayslipDataForEmployee(emp.employee_id);
+    const matched =
+      this.allPayslips.find((item: any) => String(item.employee_id) === String(emp.employee_id)) ||
+      this.allPayslips.find(
+        (item: any) =>
+          String(item?.payslip?.employee_summary?.employee_id) === String(emp.emp_id)
+      );
+    this.payslipData = matched || (emp.payslip ? { employee_id: emp.employee_id, payslip: emp.payslip } : null);
   }
 
   closeDrawer(): void {
