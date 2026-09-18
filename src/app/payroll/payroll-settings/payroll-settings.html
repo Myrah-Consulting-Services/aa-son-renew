@@ -366,6 +366,20 @@
                       </label>
                     </div>
                   </div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" formControlName="include_overtime_in_salary" id="includeOtInSalary">
+                      <label class="form-check-label" for="includeOtInSalary">
+                        Include overtime in salary (add OT pay to earnings / net pay)
+                      </label>
+                    </div>
+                    <div class="form-text">Hourly rate = monthly salary ÷ (working days × working hours). OT hours × rate × multiplier are added to the pay run.</div>
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn-primary" [disabled]="employeeSettingsForm.invalid">
+                      <i class="bi bi-save me-1"></i>Save Overtime Settings
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

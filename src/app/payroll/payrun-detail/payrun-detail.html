@@ -173,6 +173,7 @@
                   <th>Employee Name</th>
                   <th class="text-center">Paid Days</th>
                   <th *ngIf="payrollRunId.status != '6' && payrollRunId.status != '7'" class="text-end">Gross Pay</th>
+                  <th *ngIf="payrollRunId.status != '6' && payrollRunId.status != '7'" class="text-end">Overtime</th>
                   <th *ngIf="payrollRunId.status == '6' || payrollRunId.status == '7'">Payslip</th>
                   <th *ngIf="payrollRunId.status != '6' && payrollRunId.status != '7'" class="text-end">Deductions</th>
                   <th *ngIf="payrollRunId.status != '6' && payrollRunId.status != '7'" class="text-end">Benefits</th>
@@ -204,6 +205,7 @@
                   </td>
                   <td class="text-center">{{ e.paid_days }}</td>
                   <td *ngIf="payrollRunId.status != '6' && payrollRunId.status != '7'" class="text-end">{{ formatCurrency(e.gross_pay) }}</td>
+                  <td *ngIf="payrollRunId.status != '6' && payrollRunId.status != '7'" class="text-end">{{ formatCurrency(e.overtime_pay || e.overtime || 0) }}</td>
                   <td *ngIf="payrollRunId.status == '6' || payrollRunId.status == '7'">
                     <a href="javascript:void(0)" 
                        class="payslip-link" 
@@ -239,8 +241,9 @@
 </div>
 
 <div *ngIf="!payrollSummary" class="loading-state">
-  <i class="bi bi-hourglass-split"></i>
-  <span>Loading payrun details...</span>
+  <i class="bi" [class.bi-hourglass-split]="!loadError" [class.bi-exclamation-triangle]="!!loadError"></i>
+  <span>{{ loadError || 'Loading payrun details...' }}</span>
+  <button *ngIf="loadError" class="btn-secondary mt-3" (click)="goBack()">Back to Pay Runs</button>
 </div>
 
 <!-- Employee Drawer -->

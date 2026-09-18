@@ -24,6 +24,7 @@ import {
   NABLUS_STOCK,
   NABLUS_WAREHOUSES,
   buildNablusAttendance,
+  buildNablusPayrollEmployees,
   useDemoIfEmpty,
 } from './nablus-lists.data';
 
@@ -123,6 +124,10 @@ export class DemoDataService {
 
   payrollHistory(api?: any[] | null) {
     return useDemoIfEmpty(api, NABLUS_PAYROLL_HISTORY);
+  }
+
+  payrollEmployees(periodLabel: string, api?: any[] | null, options?: { status?: string; paymentDate?: string }) {
+    return useDemoIfEmpty(api, buildNablusPayrollEmployees(periodLabel, options));
   }
 
   attendance(api?: any[] | null, year?: number, month?: number) {

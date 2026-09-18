@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Api } from '../../core/services/api';
 
@@ -8,7 +8,7 @@ import { Api } from '../../core/services/api';
   templateUrl: './overall-insight.html',
   styleUrl: './overall-insight.scss'
 })
-export class OverallInsight {
+export class OverallInsight implements OnInit, OnChanges {
   @Input() periodLabel: string = 'September 2025 Payrun';
   @Input() payrollRunId: any ;
   @Input() employeeBreakdown: any = {};
@@ -44,6 +44,12 @@ export class OverallInsight {
   ngOnInit(): void {
     this.getPayrol();
   }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['payrollRunId'] && !changes['payrollRunId'].firstChange) {
+      this.getPayrol();
+    }
+  }
   getPayrol(): void {
     // this.api.get('/employee/current_month_payroll_run/').subscribe((response: any) => {
       // if(response.status == 200){
@@ -57,6 +63,8 @@ export class OverallInsight {
       company:this.api.getUserCompany(),
       pay_period_start_date:this.payrollRunId?.pay_period_start_date,
       pay_period_end_date:this.payrollRunId?.pay_period_end_date,
+      payroll_run_id: this.payrollRunId?.payrun_id || this.payrollRunId?.payroll_run_id,
+      include_overtime: true
     }
     this.api.post('/employee/payroll_overall_insights/',payload).subscribe((response: any) => {
       if(response.status == 200){

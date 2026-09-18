@@ -35,6 +35,8 @@ export class PayrunDetail implements OnInit {
   bankList: any[] = [];
   recordPaymentForm: FormGroup;
   showRecordPaymentModal: boolean = false;
+  loadError: string = '';
+  includeOvertimeInSalary = true;
 
   constructor(private fb: FormBuilder, private api: Api, private router: Router, private route: ActivatedRoute) {
     this.recordPaymentForm = this.fb.group({
@@ -49,13 +51,31 @@ export class PayrunDetail implements OnInit {
     return this.api.getcurrencies();
   }
   ngOnInit(): void {
-    // Get the payroll run ID from route parameters
+    const storedOt = localStorage.getItem('includeOvertimeInSalary');
+    this.includeOvertimeInSalary = storedOt !== 'false';
     this.route.params.subscribe(params => {
-      this.payrollRunId = JSON.parse(params['data']);
-      console.log(this.payrollRunId,'payrollRunId');
+      this.payrollRunId = this.parseRoutePayRun(params['data']);
+      if (!this.payrollRunId) {
+        this.loadError = 'Could not load this pay run. Go back and open it again.';
+        return;
+      }
       this.loadCurrentPayRun();
       this.loadData();
     });
+  }
+
+  private parseRoutePayRun(raw: any): any {
+    if (!raw) return null;
+    try {
+      const decoded = decodeURIComponent(String(raw));
+      return JSON.parse(decoded);
+    } catch {
+      try {
+        return JSON.parse(String(raw));
+      } catch {
+        return null;
+      }
+    }
   }
   loadData(){
     this.api.get('/employee/employees-missing-data/'+this.api.getUserCompany()+'/').subscribe((res: any) => {
@@ -82,39 +102,38 @@ export class PayrunDetail implements OnInit {
 
   // Get current pay run summary (no hardcoded values)
   loadCurrentPayRun(){
-    // this.api.get('/employee/current_month_payroll_run/').subscribe((res: any) => {
-    //   if(res.status == 200){
-    //   this.runPayrollData = res?.data || res;
-    //   console.log(this.runPayrollData,'runPayrollData');
-      if(this.payrollRunId.status == '4' || this.payrollRunId.status == '5'){
-        this.getEmpPayroll()
-      }
-      // this.payrollRunId=this.payrollRunId.payrun_id;
-      if(this.payrollRunId.status == '6' || this.payrollRunId.status == '7'){
-        this.loadSpecificPayRun(this.payrollRunId);
-      }else{
-        // this.getEmpPayroll();
-      }
-    //   }
-    // });
+    const status = String(this.payrollRunId?.status ?? '');
+    const approvedOrPaid = ['6', '7', 'PAID', 'APPROVED'].includes(status);
+    if (approvedOrPaid) {
+      this.loadSpecificPayRun(this.payrollRunId);
+    } else {
+      this.getEmpPayroll();
+    }
   }
 
   // Load specific payroll run by ID
   loadSpecificPayRun(payrollRunId: any): void {
     let payload={
       "payroll_run_id": payrollRunId.payrun_id || payrollRunId.payroll_run_id,
-      "company_id":this.api.getUserCompany()
+      "company_id":this.api.getUserCompany(),
+      "include_overtime": this.includeOvertimeInSalary
     }
-    this.api.post(`/employee/submit_payroll_run_with_payslip/`, payload).subscribe((response: any) => {
-      if(response.status == 200){
-        this.payslipData=response.data.employee_payslip_details
-        this.payslipData.payrun_id=payrollRunId
-        this.payrollRunId = response.data;
-        this.payrollSummary = response.data.payroll_summary;
-        this.payrollSummary.status=response.data.status
-        this.employees = response.data.employees || [];
-        this.filteredEmployees = [...this.employees];
-      }
+    this.api.post(`/employee/submit_payroll_run_with_payslip/`, payload).subscribe({
+      next: (response: any) => {
+        if(response.status == 200){
+          this.payslipData=response.data.employee_payslip_details
+          this.payslipData.payrun_id=payrollRunId
+          this.payrollRunId = { ...this.payrollRunId, ...response.data };
+          this.payrollSummary = response.data.payroll_summary;
+          this.payrollSummary.status=response.data.status
+          this.employees = response.data.employees || [];
+          this.applyOvertimeToEmployees();
+          this.filteredEmployees = [...this.employees];
+        } else {
+          this.getEmpPayroll();
+        }
+      },
+      error: () => this.getEmpPayroll()
     });
   }
 
@@ -130,6 +149,8 @@ export class PayrunDetail implements OnInit {
     const payload = {
       payroll_run_id: this.payrollSummary?.payrun_id,
       company_id: this.api.getUserCompany(),
+      include_overtime: this.includeOvertimeInSalary,
+      add_overtime_to_salary: this.includeOvertimeInSalary
     };
 
     this.api.post('/employee/submit_payroll_run_with_payslip/', payload).subscribe({
@@ -175,9 +196,30 @@ export class PayrunDetail implements OnInit {
 
   // Additional header actions
   exportPayroll(): void {
-    console.log('Exporting payroll...');
-    // Implement export functionality
-    alert('Export functionality will be implemented');
+    if (!this.employees?.length) {
+      alert('No employee payroll data to export yet.');
+      return;
+    }
+    const headers = ['Employee', 'Employee ID', 'Paid Days', 'Gross Pay', 'Overtime', 'Deductions', 'Benefits', 'Net Pay', 'Status'];
+    const rows = this.employees.map((e: any) => [
+      e.employee_name || '',
+      e.emp_id || e.employee_id || '',
+      e.paid_days ?? '',
+      e.gross_pay ?? 0,
+      e.overtime_pay ?? e.overtime ?? 0,
+      e.deductions ?? 0,
+      e.benefits ?? 0,
+      e.net_pay ?? 0,
+      e.status || ''
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `payroll-report-${this.payrollSummary?.period || 'payrun'}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   printPayroll(): void {
@@ -209,22 +251,88 @@ export class PayrunDetail implements OnInit {
 
   // Preview payroll process for current month/year; parameters can be adjusted by filters/UI
   getEmpPayroll(){
+    const period = this.resolvePayPeriod();
     const payload={
-      pay_date:this.payrollRunId?.pay_date,
-      pay_period_start_date:this.payrollRunId?.pay_period_start_date,
-      pay_period_end_date:this.payrollRunId?.pay_period_end_date,
-      company:this.api.getUserCompany()
+      pay_date: this.payrollRunId?.pay_date || period.end,
+      pay_period_start_date: this.payrollRunId?.pay_period_start_date || period.start,
+      pay_period_end_date: this.payrollRunId?.pay_period_end_date || period.end,
+      company:this.api.getUserCompany(),
+      include_overtime: this.includeOvertimeInSalary,
+      add_overtime_to_salary: this.includeOvertimeInSalary
     }
-    this.api.post('/employee/payroll_process_preview/', payload).subscribe((res: any) => {
-      const data = res?.data || res;
-      this.payrollSummary = data?.payroll_summary || null;
-      this.employees = Array.isArray(data?.employees) ? data.employees : [];
-      this.filteredEmployees = [...this.employees];
-      const detailsArr = Array.isArray(data?.detailed_employee_data) ? data.detailed_employee_data : [];
-      this.employeeDetailsById = new Map(
-        detailsArr.map((d: any) => [String(d?.employee_info?.employee_id), d])
-      );
+    this.api.post('/employee/payroll_process_preview/', payload).subscribe({
+      next: (res: any) => {
+        const data = res?.data || res;
+        this.payrollSummary = data?.payroll_summary || null;
+        this.employees = Array.isArray(data?.employees) ? data.employees : [];
+        this.applyOvertimeToEmployees();
+        this.filteredEmployees = [...this.employees];
+        const detailsArr = Array.isArray(data?.detailed_employee_data) ? data.detailed_employee_data : [];
+        this.employeeDetailsById = new Map(
+          detailsArr.map((d: any) => [String(d?.employee_info?.employee_id), d])
+        );
+        if (!this.payrollSummary && this.employees.length) {
+          this.payrollSummary = this.buildSummaryFromEmployees();
+        }
+        if (!this.payrollSummary) {
+          this.loadError = res?.message || 'Payroll preview did not return pay run data.';
+        }
+      },
+      error: () => {
+        this.loadError = 'Failed to load payroll preview. Check the pay period and try again.';
+      }
     });
+  }
+
+  private applyOvertimeToEmployees(): void {
+    if (!this.includeOvertimeInSalary || !Array.isArray(this.employees)) return;
+    this.employees = this.employees.map((e: any) => {
+      const ot = Number(e.overtime_pay ?? e.overtime ?? e.ot_amount ?? 0);
+      if (!ot) return e;
+      const alreadyIncluded = Number(e.gross_pay || 0) >= Number(e.net_pay || 0) + ot - 0.01
+        && String(e.overtime_included) === 'true';
+      if (alreadyIncluded || e.overtime_added) return e;
+      return {
+        ...e,
+        overtime_pay: ot,
+        overtime_added: true,
+        gross_pay: Number(e.gross_pay || 0) + ot,
+        net_pay: Number(e.net_pay || 0) + ot
+      };
+    });
+    if (this.payrollSummary && this.employees.some((e: any) => e.overtime_added)) {
+      const extraOt = this.employees.reduce((sum: number, e: any) => sum + (e.overtime_added ? Number(e.overtime_pay || 0) : 0), 0);
+      this.payrollSummary = {
+        ...this.payrollSummary,
+        payroll_cost: Number(this.payrollSummary.payroll_cost || 0) + extraOt,
+        total_net_pay: Number(this.payrollSummary.total_net_pay || 0) + extraOt
+      };
+    }
+  }
+
+  private resolvePayPeriod(): { start: string; end: string } {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const iso = (d: Date) => d.toISOString().split('T')[0];
+    return { start: iso(start), end: iso(end) };
+  }
+
+  private buildSummaryFromEmployees(): any {
+    const totalNet = this.employees.reduce((s: number, e: any) => s + Number(e.net_pay || 0), 0);
+    const totalGross = this.employees.reduce((s: number, e: any) => s + Number(e.gross_pay || 0), 0);
+    const totalDed = this.employees.reduce((s: number, e: any) => s + Number(e.deductions || 0), 0);
+    return {
+      payrun_id: this.payrollRunId?.payrun_id || this.payrollRunId?.payroll_run_id,
+      period: this.payrollRunId?.processing_period,
+      base_days: this.payrollRunId?.base_days || 30,
+      pay_day: this.payrollRunId?.pay_date,
+      payroll_cost: totalGross,
+      total_net_pay: totalNet,
+      total_employees: this.employees.length,
+      status: this.payrollRunId?.status,
+      deductions_summary: { total_deductions: totalDed, total_benefit_contribution: 0 }
+    };
   }
  
   setTab(tab: 'employee' | 'deductions' | 'insights'){
