@@ -21,6 +21,7 @@ export class PayrollLayout {
     { label: 'Salary Structure', route: 'salary-structure', icon: 'bi-diagram-3' },
     { label: 'Pay Schedule', route: 'pay-schedule', icon: 'bi-calendar3' },
     { label: 'Pay Run', route: 'par-run', icon: 'bi-play-circle' },
+    { label: 'Payroll Processing', route: 'payroll-processing', icon: 'bi-calculator' },
     { label: 'Loan Management', route: 'loan-management', icon: 'bi-bank' },
     { label: 'Payroll Settings', route: 'payroll-settings', icon: 'bi-gear' },
     { label: 'Final Settlement', route: 'final-settlement', icon: 'bi-file-earmark-check' },

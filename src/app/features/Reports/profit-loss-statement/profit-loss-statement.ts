@@ -29,6 +29,9 @@ export class ProfitLossStatement implements OnInit {
     this.dateFrom = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
     this.dateTo = new Date().toISOString().split('T')[0];
     this.currencyCode = this.api.getcurrencies() || 'AED';
+    if (String(this.currencyCode).toUpperCase() === 'NGN') {
+      this.currencyCode = 'AED';
+    }
     this.generateReport();
   }
 

@@ -181,8 +181,13 @@ export class PayrunDrawer implements OnChanges {
         }));
       }
     }
+
+    const otPay = Number(this.details?.overtime_pay ?? this.employee?.overtime_pay ?? 0);
+    const hasOtLine = existingEarnings.some((e: any) => String(e.name || e.head_name || '').toLowerCase().includes('overtime'));
+    if (otPay > 0 && !hasOtLine) {
+      existingEarnings = [...existingEarnings, { name: 'Overtime Pay', head_name: 'Overtime Pay', value: otPay, calculated_value: otPay }];
+    }
     
-    // Combine existing earnings with temporary earnings
     return [...existingEarnings, ...this.tempEarnings];
   }
 
@@ -655,8 +660,8 @@ export class PayrunDrawer implements OnChanges {
     
     return {
       company: {
-        name: payslipData.company_info?.company_name || 'Esarwa Softwares',
-        address: payslipData.company_info?.address || '88 Awolowo Road, Ikoyi, Lagos',
+        name: payslipData.company_info?.company_name || 'Nablus Road Contracting',
+        address: payslipData.company_info?.address || 'Dubai, United Arab Emirates',
         payslipMonth: payslipData.company_info?.payslip_month || 'September 2025'
       },
       employee: {

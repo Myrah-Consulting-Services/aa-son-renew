@@ -84,17 +84,37 @@ export class Api {
   }
   getcurrencies(){
     const currencies = localStorage.getItem('inv_code');
-    if(currencies){
-      return JSON.parse(currencies);
+    if (currencies) {
+      try {
+        const code = JSON.parse(currencies);
+        if (code && String(code).toUpperCase() !== 'NGN') {
+          return code;
+        }
+      } catch {
+        if (currencies && currencies.toUpperCase() !== 'NGN' && currencies !== 'null') {
+          return currencies.replace(/^"|"$/g, '');
+        }
+      }
     }
-    return null;
+    localStorage.setItem('inv_code', JSON.stringify('AED'));
+    return 'AED';
   }
   getcurrenciesecond(){
     const currencies = localStorage.getItem('selected_currency');
-    if(currencies){
-      return JSON.parse(currencies);
+    if (currencies) {
+      try {
+        const code = JSON.parse(currencies);
+        if (code && String(code).toUpperCase() !== 'NGN') {
+          return code;
+        }
+      } catch {
+        if (currencies && currencies.toUpperCase() !== 'NGN' && currencies !== 'null') {
+          return currencies.replace(/^"|"$/g, '');
+        }
+      }
     }
-    return null;
+    localStorage.setItem('selected_currency', JSON.stringify('USD'));
+    return 'USD';
   }
 
   post<T>(path: string, body: any = {}): Observable<T> {

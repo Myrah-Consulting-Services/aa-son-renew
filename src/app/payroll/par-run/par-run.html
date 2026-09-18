@@ -120,7 +120,7 @@
         </div>
       </div>
 
-      <!-- Regular Payroll Runs -->
+      <!-- Regular Payroll Runs (month-wise employees) -->
       <div *ngIf="selectedFilter === 'all' || selectedFilter === 'regular'" class="payroll-runs-section">
         <div *ngFor="let item of runPayrollData">
           <div class="payroll-run-card" *ngIf="item?.status != '7'">
@@ -145,19 +145,71 @@
                 <div class="label">NO. OF EMPLOYEES</div>
                 <div class="value">{{ item?.no_of_employees }}({{ item?.skipped_employees_count }} Skipped)</div>
               </div>
-              <button class="btn-primary" (click)="openPayRunDetail(item)">
-                <span *ngIf="item?.status === '4'">Create Payrun</span>
-                <span *ngIf="item?.status === '5'">View Details & Approved</span>
-                <span *ngIf="item?.status === '6'">Record Payment</span>
-              </button>
+              <div class="run-actions">
+                <button class="btn-secondary" type="button" (click)="toggleRunEmployees(item, $event)">
+                  <i class="bi" [class.bi-chevron-down]="expandedRunKey !== runKey(item)" [class.bi-chevron-up]="expandedRunKey === runKey(item)"></i>
+                  {{ expandedRunKey === runKey(item) ? 'Hide Employees' : 'View Employees' }}
+                </button>
+                <button class="btn-primary" (click)="openPayRunDetail(item)">
+                  <span *ngIf="item?.status === '4'">Create Payrun</span>
+                  <span *ngIf="item?.status === '5'">View Details & Approved</span>
+                  <span *ngIf="item?.status === '6'">Record Payment</span>
+                </button>
+              </div>
             </div>
             <div class="alert alert-info" *ngIf="item?.status_info && item?.status == '5'">
               <i class="bi bi-info-circle me-2"></i>
               <span>{{ item?.status_info }}</span>
             </div>
+
+            <!-- Month-wise employee list -->
+            <div class="employee-month-panel" *ngIf="expandedRunKey === runKey(item)">
+              <div class="employee-month-header">
+                <h6><i class="bi bi-people me-2"></i>Employees — {{ item?.processing_period }}</h6>
+              </div>
+              <div class="table-body" *ngIf="!isLoadingEmployees(item, 'run')">
+                <table class="compact-table employee-month-table">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Designation</th>
+                      <th class="text-center">Paid Days</th>
+                      <th class="text-end">Gross</th>
+                      <th class="text-end">Net Pay</th>
+                      <th class="text-center">Payslip</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let emp of getEmployees(item, 'run')">
+                      <td>
+                        <div class="employee-cell">
+                          <span class="employee-name">{{ emp.employee_name }}</span>
+                          <span class="employee-id">ID: {{ emp.emp_id }}</span>
+                        </div>
+                      </td>
+                      <td>{{ emp.designation || '—' }}</td>
+                      <td class="text-center">{{ emp.paid_days }}</td>
+                      <td class="text-end">{{ getcurrency() }} {{ formatMoney(emp.gross_pay) }}</td>
+                      <td class="text-end fw-bold">{{ getcurrency() }} {{ formatMoney(emp.net_pay) }}</td>
+                      <td class="text-center">
+                        <button type="button" class="btn-payslip" (click)="openPayslip(item, emp, 'run', $event)" title="View payslip PDF">
+                          <i class="bi bi-file-earmark-pdf"></i> View PDF
+                        </button>
+                      </td>
+                    </tr>
+                    <tr *ngIf="getEmployees(item, 'run').length === 0">
+                      <td colspan="6" class="empty-state"><p>No employees found for this month.</p></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="loading-inline" *ngIf="isLoadingEmployees(item, 'run')">
+                <i class="bi bi-hourglass-split"></i> Loading employees…
+              </div>
+            </div>
           </div>
         </div>
-        <div *ngIf="runPayrollData?.status === '7'" class="empty-state">
+        <div *ngIf="!hasVisiblePayRuns" class="empty-state">
           <i class="bi bi-inbox"></i>
           <p>You have no outstanding pay runs.</p>
         </div>
@@ -210,39 +262,97 @@
         <div class="table-container">
           <div class="table-header">
             <h3 class="table-title">
-              <i class="bi bi-table me-2"></i>Payroll History
+              <i class="bi bi-table me-2"></i>Payroll History — All Employees
             </h3>
           </div>
           <div class="table-body">
-            <table class="compact-table">
+            <table class="compact-table history-expand-table">
               <thead>
                 <tr>
+                  <th width="40"></th>
                   <th>PAYMENT DATE</th>
                   <th>PAYROLL TYPE</th>
                   <th>DETAILS</th>
                   <th>STATUS</th>
+                  <th class="text-center">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let item of filteredPayrollHistory" 
-                    [routerLink]="['../pay-run-detail']" 
-                    class="clickable-row">
-                  <td>{{ item?.payment_date }}</td>
-                  <td>{{ item?.payroll_type }}</td>
-                  <td>{{ item?.details }}</td>
-                  <td>
-                    <span class="badge" [ngClass]="{
-                      'completed': item?.status === 'PAID' || item?.status === '6', 
-                      'pending': item?.status === 'PENDING',
-                      'inactive': item?.status === 'UNPAID',
-                      'info': item?.status === 'APPROVED'
-                    }">
-                      {{ item?.status }}
-                    </span>
-                  </td>
-                </tr>
+                <ng-container *ngFor="let item of filteredPayrollHistory">
+                  <tr class="clickable-row history-parent-row">
+                    <td>
+                      <button type="button" class="btn-expand" (click)="toggleHistoryEmployees(item, $event)" [attr.title]="expandedHistoryKey === historyKey(item) ? 'Collapse' : 'Show employees'">
+                        <i class="bi" [class.bi-chevron-right]="expandedHistoryKey !== historyKey(item)" [class.bi-chevron-down]="expandedHistoryKey === historyKey(item)"></i>
+                      </button>
+                    </td>
+                    <td (click)="toggleHistoryEmployees(item, $event)">{{ item?.payment_date }}</td>
+                    <td (click)="toggleHistoryEmployees(item, $event)">{{ item?.payroll_type }}</td>
+                    <td (click)="toggleHistoryEmployees(item, $event)">{{ item?.details }}</td>
+                    <td (click)="toggleHistoryEmployees(item, $event)">
+                      <span class="badge" [ngClass]="{
+                        'completed': item?.status === 'PAID' || item?.status === '6' || item?.status === '7',
+                        'pending': item?.status === 'PENDING',
+                        'inactive': item?.status === 'UNPAID',
+                        'info': item?.status === 'APPROVED'
+                      }">
+                        {{ item?.status }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <button type="button" class="btn-link-sm" (click)="openPayRunDetail(item)">Open run</button>
+                    </td>
+                  </tr>
+                  <tr class="history-employees-row" *ngIf="expandedHistoryKey === historyKey(item)">
+                    <td colspan="6">
+                      <div class="employee-month-panel nested">
+                        <div class="employee-month-header">
+                          <h6><i class="bi bi-people me-2"></i>Employee payroll — {{ item?.details || item?.processing_period }}</h6>
+                        </div>
+                        <div *ngIf="isLoadingEmployees(item, 'history')" class="loading-inline">
+                          <i class="bi bi-hourglass-split"></i> Loading employee history…
+                        </div>
+                        <table class="compact-table employee-month-table" *ngIf="!isLoadingEmployees(item, 'history')">
+                          <thead>
+                            <tr>
+                              <th>Employee</th>
+                              <th>Designation</th>
+                              <th class="text-center">Paid Days</th>
+                              <th class="text-end">Gross</th>
+                              <th class="text-end">Net Pay</th>
+                              <th>Payment</th>
+                              <th class="text-center">Payroll PDF</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let emp of getEmployees(item, 'history')">
+                              <td>
+                                <div class="employee-cell">
+                                  <span class="employee-name">{{ emp.employee_name }}</span>
+                                  <span class="employee-id">ID: {{ emp.emp_id }}</span>
+                                </div>
+                              </td>
+                              <td>{{ emp.designation || '—' }}</td>
+                              <td class="text-center">{{ emp.paid_days }}</td>
+                              <td class="text-end">{{ getcurrency() }} {{ formatMoney(emp.gross_pay) }}</td>
+                              <td class="text-end fw-bold">{{ getcurrency() }} {{ formatMoney(emp.net_pay) }}</td>
+                              <td>{{ emp.payment_mode || '—' }}</td>
+                              <td class="text-center">
+                                <button type="button" class="btn-payslip" (click)="openPayslip(item, emp, 'history', $event)">
+                                  <i class="bi bi-file-earmark-pdf"></i> View PDF
+                                </button>
+                              </td>
+                            </tr>
+                            <tr *ngIf="getEmployees(item, 'history').length === 0">
+                              <td colspan="7" class="empty-state"><p>No employee payroll records for this period.</p></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
                 <tr *ngIf="filteredPayrollHistory.length === 0">
-                  <td colspan="4" class="empty-state">
+                  <td colspan="6" class="empty-state">
                     <i class="bi bi-inbox"></i>
                     <p>No payroll history found</p>
                   </td>
@@ -281,35 +391,36 @@
 </div>
 
 <!-- Pay Slip Modal -->
-<div class="modal fade" id="paySlipModal" tabindex="-1" aria-labelledby="paySlipModalLabel" aria-hidden="true">
+<div class="modal fade" [class.show]="showPayslipModal" [style.display]="showPayslipModal ? 'block' : 'none'" tabindex="-1" aria-labelledby="paySlipModalLabel" [attr.aria-hidden]="!showPayslipModal">
   <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
+    <div class="modal-content" *ngIf="paySlipData as ps">
       <div class="modal-header">
-        <h5 class="modal-title" id="paySlipModalLabel">Salary Pay Slip</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="paySlipModalLabel">Salary Pay Slip — {{ ps.employee?.name }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePayslipModal()" aria-label="Close"></button>
       </div>
       <div class="modal-body payslip-body">
         <div class="row mb-4 align-items-center">
-          <div class="col-md-8" *ngIf="paySlipData as ps">
+          <div class="col-md-8">
             <h4 class="company-name mb-1">{{ ps?.companyName }}</h4>
             <div class="company-address small text-muted">{{ ps?.companyAddress }}</div>
             <div class="payslip-subheader mt-2">Payslip for {{ ps?.payslipMonth }}</div>
           </div>
-          <div class="col-md-4 text-end" *ngIf="paySlipData as ps">
+          <div class="col-md-4 text-end" *ngIf="ps?.logoUrl">
             <img [src]="ps?.logoUrl" alt="Company Logo" class="company-logo" style="max-height: 60px;">
           </div>
         </div>
         <div class="row mb-4">
-          <div class="col-md-6" *ngIf="paySlipData as ps">
+          <div class="col-md-6">
             <div class="mb-2"><strong>Employee Name:</strong> {{ ps.employee?.name }}</div>
             <div class="mb-2"><strong>Employee No:</strong> {{ ps.employee?.employeeNo }}</div>
             <div class="mb-2"><strong>Designation:</strong> {{ ps.employee?.designation }}</div>
             <div class="mb-2"><strong>Bank Account No:</strong> {{ ps.employee?.bankAccountNo }}</div>
             <div class="mb-2"><strong>WPS Number:</strong> {{ ps.employee?.wpsNumber }}</div>
           </div>
-          <div class="col-md-6" *ngIf="paySlipData as ps">
+          <div class="col-md-6">
             <div class="mb-2"><strong>Date of Joining:</strong> {{ ps.employee?.joiningDate }}</div>
             <div class="mb-2"><strong>Paid Days:</strong> {{ ps.employee?.paidDays }}</div>
+            <div class="mb-2" *ngIf="ps._paymentDate"><strong>Payment Date:</strong> {{ ps._paymentDate }}</div>
           </div>
         </div>
         <div class="row mb-4">
@@ -318,7 +429,7 @@
               <div class="card-header bg-light fw-bold">Earnings</div>
               <div class="card-body p-2">
                 <table class="table table-sm mb-0">
-                  <tbody *ngIf="paySlipData as ps">
+                  <tbody>
                     <tr *ngFor="let item of ps.earnings">
                       <td>{{ item.component }}</td>
                       <td class="text-end">{{ getcurrency() }} {{ item.amount | number:'1.2-2' }}</td>
@@ -339,10 +450,13 @@
               <div class="card-header bg-light fw-bold">Deductions</div>
               <div class="card-body p-2">
                 <table class="table table-sm mb-0">
-                  <tbody *ngIf="paySlipData as ps">
+                  <tbody>
                     <tr *ngFor="let item of ps.deductions">
                       <td>{{ item.component }}</td>
                       <td class="text-end">{{ getcurrency() }} {{ item.amount | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr *ngIf="!ps.deductions?.length">
+                      <td colspan="2" class="text-muted">No deductions</td>
                     </tr>
                   </tbody>
                   <tfoot>
@@ -360,10 +474,13 @@
               <div class="card-header bg-light fw-bold">Reimbursements</div>
               <div class="card-body p-2">
                 <table class="table table-sm mb-0">
-                  <tbody *ngIf="paySlipData as ps">
+                  <tbody>
                     <tr *ngFor="let item of ps.reimbursements">
                       <td>{{ item.component }}</td>
                       <td class="text-end">{{ getcurrency() }} {{ item.amount | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr *ngIf="!ps.reimbursements?.length">
+                      <td colspan="2" class="text-muted">None</td>
                     </tr>
                   </tbody>
                   <tfoot>
@@ -382,7 +499,7 @@
             <div class="card bg-success bg-opacity-10 border-success">
               <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between">
                 <div class="fs-5 fw-bold text-success">Net Payable: {{ getcurrency() }} {{ netPayable | number:'1.2-2' }}</div>
-                <div class="text-muted small ms-md-4" *ngIf="paySlipData as ps">({{ ps.netPayableInWords }})</div>
+                <div class="text-muted small ms-md-4">({{ ps.netPayableInWords }})</div>
               </div>
             </div>
           </div>
@@ -402,6 +519,12 @@
             </div>
           </div>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePayslipModal()">Close</button>
+        <button type="button" class="btn btn-primary" (click)="downloadPayslipPdf()">
+          <i class="bi bi-download me-1"></i> Download / Print PDF
+        </button>
       </div>
     </div>
   </div>
@@ -449,6 +572,16 @@
                 Enable this to allow the final settlement date to be 14 days after the employee's last working day. This restriction is set up to comply with the labor law timelines. Ensure compliance before proceeding.
               </div>
             </div>
+
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="includeOtSalary" [(ngModel)]="settings.includeOvertimeInSalary">
+              <label class="form-check-label fw-semibold" for="includeOtSalary">
+                Include overtime pay in salary / net pay
+              </label>
+              <div class="form-text text-muted mt-2">
+                When enabled, approved overtime hours are converted using payroll overtime multipliers and added to employee earnings in the pay run.
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -461,4 +594,4 @@
 </div>
 
 <!-- Modal Backdrop -->
-<div class="modal-backdrop fade show" *ngIf="showSettingsModal"></div>
+<div class="modal-backdrop fade show" *ngIf="showPayslipModal || showSettingsModal"></div>

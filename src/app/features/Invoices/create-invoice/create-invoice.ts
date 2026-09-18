@@ -71,7 +71,7 @@ export class CreateInvoice implements OnInit, OnDestroy {
     { id: 34, code: 'HUF', name: 'HUF - Hungarian Forint' },
     { id: 35, code: 'ILS', name: 'ILS - Israeli Shekel' },
     { id: 36, code: 'EGP', name: 'EGP - Egyptian Pound' },
-    { id: 37, code: 'NGN', name: 'NGN - Nigerian Naira' },
+    { id: 37, code: 'AED', name: 'AED - UAE Dirham' },
     { id: 38, code: 'BRL', name: 'BRL - Brazilian Real' },
     { id: 39, code: 'MXN', name: 'MXN - Mexican Peso' },
     { id: 40, code: 'ARS', name: 'ARS - Argentine Peso' },
@@ -2929,12 +2929,10 @@ export class CreateInvoice implements OnInit, OnDestroy {
     return Number(usdAmount).toFixed(2);
   }
   getcurrency(){
-   
-    return this.api.getcurrencies();
+    return this.api.getcurrencies() || 'AED';
   }
   getcurrencysecond(){
-   
-    return this.api.getcurrenciesecond();
+    return this.api.getcurrenciesecond() || 'USD';
   }
 
   getAEDAmount(): string {

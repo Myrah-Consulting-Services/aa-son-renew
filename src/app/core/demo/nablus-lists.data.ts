@@ -860,30 +860,144 @@ export const NABLUS_LEAVE_REQUESTS = [
 
 export const NABLUS_PAY_RUNS = [
   {
+    payrun_id: 90001,
+    payroll_run_id: 90001,
     processing_period: 'September 2026',
-    status: 'Processed',
+    status: '4',
+    is_pending: true,
+    type: 'regular',
     employees_net_pay: 286400,
+    pay_date: '2026-09-28',
     pay_date_formatted: '28 Sep 2026',
+    pay_period_start_date: '2026-09-01',
+    pay_period_end_date: '2026-09-30',
     no_of_employees: 48,
     skipped_employees_count: 0,
-    status_info: 'Ready for WPS',
+    status_info: 'Ready to process. Overtime is included in net pay.',
   },
 ];
 
 export const NABLUS_PAYROLL_HISTORY = [
   {
+    payrun_id: 90000,
+    payroll_run_id: 90000,
     payment_date: '2026-08-28',
     payroll_type: 'Monthly',
     details: 'August 2026 — Site & Office Staff',
-    status: 'Paid',
+    status: 'PAID',
+    pay_date: '2026-08-28',
+    pay_period_start_date: '2026-08-01',
+    pay_period_end_date: '2026-08-31',
+    processing_period: 'August 2026',
   },
   {
+    payrun_id: 89999,
+    payroll_run_id: 89999,
     payment_date: '2026-07-28',
     payroll_type: 'Monthly',
     details: 'July 2026 — Site & Office Staff',
-    status: 'Paid',
+    status: 'PAID',
+    pay_date: '2026-07-28',
+    pay_period_start_date: '2026-07-01',
+    pay_period_end_date: '2026-07-31',
+    processing_period: 'July 2026',
   },
 ];
+
+const DEMO_SALARY_BASE: Record<string, number> = {
+  NRC001: 24000,
+  NRC002: 9500,
+  NRC003: 12000,
+  NRC004: 6500,
+  NRC005: 11000,
+  NRC006: 5800,
+  NRC007: 8500,
+  NRC008: 7200,
+  NRC009: 9000,
+  NRC010: 6200,
+};
+
+/** Demo month-wise employee payroll rows + payslip payload for Pay Run / History. */
+export function buildNablusPayrollEmployees(
+  periodLabel: string,
+  options?: { status?: string; paymentDate?: string }
+): any[] {
+  const status = options?.status || 'PAID';
+  const paymentDate = options?.paymentDate || '';
+  return NABLUS_HR_EMPLOYEES.map((emp, idx) => {
+    const basic = DEMO_SALARY_BASE[emp.emp_id] || 7000;
+    const hra = Math.round(basic * 0.35);
+    const transport = 800;
+    const site = idx % 2 === 0 ? 1200 : 600;
+    const overtime = idx % 3 === 0 ? 450 : 0;
+    const gross = basic + hra + transport + site + overtime;
+    const deductions = Math.round(gross * 0.05);
+    const benefits = Math.round(basic * 0.05);
+    const net = gross - deductions;
+    const name = `${emp.first_name} ${emp.last_name}`;
+    return {
+      employee_id: emp.id,
+      emp_id: emp.emp_id,
+      employee_name: name,
+      designation: emp.designation_name,
+      department: emp.department_name,
+      joining_date: emp.joining_date,
+      paid_days: 30,
+      lop_days: 0,
+      gross_pay: gross,
+      overtime_pay: overtime,
+      overtime,
+      deductions,
+      benefits,
+      net_pay: net,
+      payment_mode: 'Bank Transfer',
+      payment_status: status === 'PAID' || status === '7' ? 'Paid' : 'Pending',
+      status,
+      payslip: {
+        company_info: {
+          company_name: 'Nablus Road Contracting',
+          address: 'Dubai, United Arab Emirates',
+          payslip_month: periodLabel,
+        },
+        employee_summary: {
+          employee_name: name,
+          designation: emp.designation_name,
+          employee_id: emp.emp_id,
+          mol_id: '',
+          date_of_joining: emp.joining_date,
+          pay_period: periodLabel,
+          pay_date: paymentDate,
+          bank_account: '••••••••',
+        },
+        pay_summary: {
+          paid_days: 30,
+          lop_days: 0,
+          total_net_pay: net,
+        },
+        earnings: {
+          items: [
+            { component: 'Basic', amount: basic },
+            { component: 'HRA', amount: hra },
+            { component: 'Transport Allowance', amount: transport },
+            { component: 'Site Allowance', amount: site },
+            ...(overtime ? [{ component: 'Overtime', amount: overtime }] : []),
+          ],
+          gross_earnings: gross,
+        },
+        deductions: {
+          items: [{ component: 'Other Deductions', amount: deductions }],
+          total_deductions: deductions,
+        },
+        net_pay: {
+          gross_earnings: gross,
+          total_deductions: deductions,
+          net_pay: net,
+          amount_in_words: '',
+        },
+      },
+    };
+  });
+}
 
 /** Build attendance grid rows for a given YYYY-MM month. */
 export function buildNablusAttendance(year: number, month: number): any[] {

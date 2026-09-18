@@ -188,6 +188,7 @@ employeIdOutput: any;
           max_daily_overtime: this.payrollSettings.max_daily_overtime,
           max_weekly_overtime: this.payrollSettings.max_weekly_overtime,
           require_overtime_approval: this.payrollSettings.require_overtime_approval,
+          include_overtime_in_salary: this.payrollSettings.include_overtime_in_salary ?? true,
           attendance_mode:this.payrollSettings.attendance_mode
         });
       }
@@ -234,6 +235,7 @@ employeIdOutput: any;
       max_daily_overtime: [4, [Validators.required, Validators.min(0), Validators.max(24)]],
       max_weekly_overtime: [20, [Validators.required, Validators.min(0), Validators.max(168)]],
       require_overtime_approval: [true],
+      include_overtime_in_salary: [true],
       attendance_mode:['daily']
     }); 
     this.employeeConfigForm=this.fb.group({
@@ -537,17 +539,20 @@ employeIdOutput: any;
 
   updateSettings(): void {
       const settings = this.employeeSettingsForm.value;
+      localStorage.setItem('includeOvertimeInSalary', String(!!settings.include_overtime_in_salary));
       let company=this.apiService.getCompanyId()
       this.apiService.put('/attendance/update-payroll-settings/'+company+"/", settings).subscribe({
         next: (response: any) => {
           if (response.status==200) {
-            this.toast.show('Leave balance settings updated successfully', 'success');
+            this.toast.show('Payroll settings updated successfully', 'success');
             this.listPayrollSettings()
+          } else {
+            this.toast.show(response.message || 'Settings saved locally', 'success');
           }
         },
         error: (error) => {
-          console.error('Error updating leave balance settings:', error);
-          this.toast.show('Error updating leave balance settings', 'error');
+          console.error('Error updating payroll settings:', error);
+          this.toast.show('Saved overtime preference locally. Server update failed.', 'error');
         }
       });
   }
