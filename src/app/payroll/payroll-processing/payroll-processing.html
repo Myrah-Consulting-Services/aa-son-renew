@@ -27,8 +27,8 @@
                 <label for="month" class="form-label">Month</label>
                 <select class="form-select" formControlName="month" (change)="onPeriodChange()" required>
                   <option value="">Select Month</option>
-                  <option *ngFor="let month of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="month">
-                    {{ month | date:'MMMM':'':'' }}
+                  <option *ngFor="let m of months" [ngValue]="m.value">
+                    {{ m.label }}
                   </option>
                 </select>
                 <div class="invalid-feedback" *ngIf="payrollForm.get('month')?.hasError('required')">

@@ -13,6 +13,7 @@ import { EmployeeDetail } from '../employee-detail/employee-detail';
 import { TerminateProcess } from '../terminate-process/terminate-process';
 import { SalaryHistory } from '../salary-history/salary-history';
 import { CreateLoanComponent } from '../create-loan/create-loan';
+import { Camp, CampAssignment, CampService } from '../camp-management/camp.service';
 
 @Component({
   selector: 'app-employee-view-details',
@@ -38,7 +39,12 @@ export class EmployeeViewDetails {
   selectedMonth: any;
   companyInfo: any = null;
 
-  
+  /** Camp accommodation */
+  currentCampAssignment: CampAssignment | null = null;
+  currentCamp: Camp | null = null;
+  showCampAssignModal = false;
+  campOptions: Camp[] = [];
+  selectedCampId = '';
  
   types: any;
   id: any | null;
@@ -55,7 +61,8 @@ export class EmployeeViewDetails {
   for_emit: any;
   payslipData: any;
   constructor(private route:ActivatedRoute, private router: Router, private modalService: NgbModal, private api: Api, private fb: FormBuilder,
-    private toast:ToastService
+    private toast:ToastService,
+    private campService: CampService
   ) {}
 
   getcurrency() {
@@ -67,6 +74,7 @@ export class EmployeeViewDetails {
     this.api.get(`/employee/get_employee/${this.id}`).subscribe((res: any) => {
       this.employee = res.data;
       console.log(this.employee,'employee');
+      this.refreshCampAssignment();
     });
     const navigation = this.router.getCurrentNavigation();
     this.activeTab = navigation?.extras?.state?.['tab'] || 'overview';
@@ -1180,5 +1188,76 @@ export class EmployeeViewDetails {
     });
 
     return rows;
+  }
+
+  refreshCampAssignment(): void {
+    if (!this.employee) {
+      this.currentCampAssignment = null;
+      this.currentCamp = null;
+      return;
+    }
+    const keys = [
+      String(this.employee.id || ''),
+      String(this.employee.emp_id || ''),
+      String(this.id || ''),
+    ].filter(Boolean);
+    let found: CampAssignment | null = null;
+    for (const k of keys) {
+      found = this.campService.getAssignmentByEmployee(k);
+      if (found) break;
+    }
+    this.currentCampAssignment = found;
+    this.currentCamp = found ? this.campService.getCamp(found.campId) : null;
+  }
+
+  openCampAssignModal(): void {
+    this.campOptions = this.campService
+      .getCamps()
+      .filter((c) => c.status === 'active' && this.campService.getAvailableSlots(c.id) > 0);
+    this.selectedCampId = this.campOptions[0]?.id || '';
+    this.showCampAssignModal = true;
+  }
+
+  closeCampAssignModal(): void {
+    this.showCampAssignModal = false;
+  }
+
+  campSlotsLabel(camp: Camp): string {
+    return `${this.campService.getAvailableSlots(camp.id)} / ${camp.capacity} free`;
+  }
+
+  assignEmployeeToCamp(): void {
+    if (!this.employee || !this.selectedCampId) {
+      this.toast.show('Select a camp', 'error');
+      return;
+    }
+    try {
+      this.campService.assignEmployee({
+        campId: this.selectedCampId,
+        employeeId: String(this.employee.id || this.id),
+        empCode: this.employee.emp_id || String(this.employee.id || this.id),
+        employeeName: `${this.employee.first_name || ''} ${this.employee.last_name || ''}`.trim(),
+        designation: this.employee.designation_name || 'Staff',
+      });
+      this.toast.show('Employee assigned to camp', 'success');
+      this.closeCampAssignModal();
+      this.refreshCampAssignment();
+    } catch (e: any) {
+      this.toast.show(e?.message || 'Assign failed', 'error');
+    }
+  }
+
+  removeEmployeeFromCamp(): void {
+    if (!this.currentCampAssignment) return;
+    if (!confirm(`Remove this employee from "${this.currentCamp?.name}"?`)) return;
+    this.campService.removeAssignment(this.currentCampAssignment.id);
+    this.toast.show('Employee removed from camp', 'success');
+    this.refreshCampAssignment();
+  }
+
+  goToCamp(): void {
+    if (this.currentCamp) {
+      this.router.navigate(['/payroll/camp-management', this.currentCamp.id]);
+    }
   }
 }

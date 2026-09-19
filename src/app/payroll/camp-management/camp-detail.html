@@ -1,0 +1,82 @@
+<div class="camp-detail-page" *ngIf="camp as c">
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#">Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item"><a routerLink="/payroll/camp-management">Camp Management</a></li>
+        <li class="breadcrumb-item active">{{ c.name }}</li>
+      </ol>
+    </nav>
+  </section>
+
+  <section class="page-header">
+    <div class="header-left">
+      <button type="button" class="btn-back" (click)="goBack()"><i class="bi bi-arrow-left"></i></button>
+      <div>
+        <h1 class="page-title">{{ c.name }}</h1>
+        <div class="page-sub">
+          <span><i class="bi bi-geo-alt me-1"></i>{{ c.location || '—' }}</span>
+          <span class="sep">·</span>
+          <span>{{ occupied }} / {{ c.capacity }} occupied</span>
+          <span class="sep">·</span>
+          <span class="slots">{{ available }} slots free</span>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="btn-primary" (click)="showAssignPanel = !showAssignPanel" [disabled]="available <= 0 && !showAssignPanel">
+      <i class="bi bi-person-plus me-1"></i> Add Employee
+    </button>
+  </section>
+
+  <div class="detail-layout">
+    <div class="residents-panel">
+      <div class="panel-title">Employees in this camp</div>
+      <table class="compact-table" *ngIf="assignments.length; else emptyResidents">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Designation</th>
+            <th>Assigned</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of assignments">
+            <td>
+              <div class="emp-name">{{ a.employeeName }}</div>
+              <div class="emp-code">{{ a.empCode }}</div>
+            </td>
+            <td>{{ a.designation }}</td>
+            <td>{{ a.assignedAt | date:'dd MMM yyyy' }}</td>
+            <td class="text-end">
+              <button type="button" class="btn-remove" (click)="remove(a)">Remove</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #emptyResidents>
+        <div class="empty-state">No employees assigned yet. Add employees within capacity.</div>
+      </ng-template>
+    </div>
+
+    <aside class="assign-panel" *ngIf="showAssignPanel">
+      <div class="panel-title">Assign employee</div>
+      <p class="hint">An employee can only belong to one camp at a time.</p>
+      <input type="text" class="form-control form-control-sm mb-2" placeholder="Search employee..." [(ngModel)]="searchEmp">
+      <div class="avail-list" *ngIf="available > 0; else fullCamp">
+        <div class="avail-item" *ngFor="let e of availableEmployees">
+          <div>
+            <div class="emp-name">{{ empLabel(e) }}</div>
+            <div class="emp-code">{{ empCode(e) }} · {{ empDesig(e) }}</div>
+          </div>
+          <button type="button" class="btn-assign" (click)="assign(e)">Add</button>
+        </div>
+        <div class="empty-state small" *ngIf="!availableEmployees.length">No unassigned employees match.</div>
+      </div>
+      <ng-template #fullCamp>
+        <div class="empty-state">Camp is at full capacity.</div>
+      </ng-template>
+    </aside>
+  </div>
+</div>

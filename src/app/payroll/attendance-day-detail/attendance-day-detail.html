@@ -1,0 +1,90 @@
+<div class="day-detail-page">
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#">Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item"><a routerLink="/payroll/attendance">Attendance</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Day Detail</li>
+      </ol>
+    </nav>
+  </section>
+
+  <section class="page-header">
+    <div class="header-left">
+      <button type="button" class="btn-back" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="page-title">Field Attendance — {{ employeeName }}</h1>
+        <div class="page-sub">
+          <span class="desig">{{ designation }}</span>
+          <span class="sep">·</span>
+          <span>{{ formatDayDetailDate(dayDate) }}</span>
+          <span class="badge-present">Present</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="day-detail-layout">
+    <aside class="day-timeline-panel">
+      <div class="timeline-title">
+        <i class="bi bi-clock-history me-2"></i>Daily Routing — Login to Logout
+      </div>
+      <div class="login-logout-summary" *ngIf="dayDetailTrail.length">
+        <div class="ll-chip login">
+          <span class="ll-label">Logged In</span>
+          <span class="ll-time">{{ dayDetailLoginTime || '—' }}</span>
+        </div>
+        <div class="ll-arrow"><i class="bi bi-arrow-right"></i></div>
+        <div class="ll-chip logout">
+          <span class="ll-label">Logged Out</span>
+          <span class="ll-time">{{ dayDetailLogoutTime || '—' }}</span>
+        </div>
+      </div>
+      <ul class="day-timeline">
+        <li *ngFor="let point of dayDetailTrail; let i = index"
+            class="timeline-item"
+            [class.active]="i === dayDetailSelectedIndex"
+            [class.login-item]="point.eventType === 'login'"
+            [class.logout-item]="point.eventType === 'logout'"
+            (click)="selectTrailPoint(i)">
+          <div class="time-badge"
+               [class.login]="point.eventType === 'login'"
+               [class.logout]="point.eventType === 'logout'">
+            {{ point.time }}
+          </div>
+          <div class="timeline-body">
+            <div class="event-row">
+              <span class="event-tag login" *ngIf="point.eventType === 'login'">Logged In</span>
+              <span class="event-tag logout" *ngIf="point.eventType === 'logout'">Logged Out</span>
+              <span class="event-tag checkin" *ngIf="point.eventType === 'checkin'">Check-in</span>
+            </div>
+            <div class="loc-name">{{ point.location }}</div>
+            <div class="loc-meta">
+              <span class="area-chip">{{ point.area }}</span>
+              <span class="activity">{{ point.activity }}</span>
+            </div>
+            <div class="coords">{{ point.lat }}, {{ point.lng }}</div>
+          </div>
+        </li>
+      </ul>
+      <div class="timeline-empty" *ngIf="!dayDetailTrail.length">
+        No location pings recorded for this day.
+      </div>
+    </aside>
+
+    <div class="day-map-panel">
+      <div class="map-toolbar">
+        <i class="bi bi-geo-alt-fill me-1"></i>
+        Dubai Google Map — location pins (click pin for details)
+      </div>
+      <div id="attendance-day-map" class="attendance-day-map"></div>
+      <div class="map-legend">
+        <span><i class="bi bi-geo-alt-fill"></i> Location pin</span>
+        <span>Click pin or timeline to view time &amp; details</span>
+      </div>
+    </div>
+  </section>
+</div>

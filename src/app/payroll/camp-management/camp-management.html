@@ -1,0 +1,147 @@
+<div class="camp-mgmt-container">
+  <section class="breadcrumb-section">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#">Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Payroll</a></li>
+        <li class="breadcrumb-item active">Camp Management</li>
+      </ol>
+    </nav>
+  </section>
+
+  <section class="header-section">
+    <div class="camp-header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="camp-logo"><i class="bi bi-buildings"></i></span>
+        <div>
+          <h1 class="header-title">Camp Management</h1>
+          <p class="header-subtitle">Manage labour camps, capacity and employee accommodation</p>
+        </div>
+      </div>
+      <button type="button" class="btn-primary" (click)="openCreate()">
+        <i class="bi bi-plus-lg me-1"></i> Add Camp
+      </button>
+    </div>
+  </section>
+
+  <section class="kpi-section">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-buildings"></i></div>
+        <div class="stat-content">
+          <h3>Total Camps</h3>
+          <p class="stat-number">{{ camps.length }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-people"></i></div>
+        <div class="stat-content">
+          <h3>Occupied Beds</h3>
+          <p class="stat-number">{{ totalOccupied }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-door-open"></i></div>
+        <div class="stat-content">
+          <h3>Total Capacity</h3>
+          <p class="stat-number">{{ totalCapacity }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-check2-circle"></i></div>
+        <div class="stat-content">
+          <h3>Available Slots</h3>
+          <p class="stat-number">{{ totalCapacity - totalOccupied }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="main-content-section">
+    <div class="filters-bar mb-3">
+      <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" class="form-control form-control-sm" placeholder="Search camps..." [(ngModel)]="search">
+      </div>
+    </div>
+
+    <div class="camp-grid">
+      <div class="camp-card" *ngFor="let camp of filteredCamps" (click)="openCamp(camp)">
+        <div class="camp-card-top">
+          <div>
+            <h3 class="camp-name">{{ camp.name }}</h3>
+            <div class="camp-loc"><i class="bi bi-geo-alt me-1"></i>{{ camp.location || '—' }}</div>
+          </div>
+          <span class="status-pill" [class.active]="camp.status === 'active'" [class.inactive]="camp.status !== 'active'">
+            {{ camp.status }}
+          </span>
+        </div>
+        <div class="capacity-block">
+          <div class="cap-row">
+            <span>Occupancy</span>
+            <strong>{{ occupied(camp.id) }} / {{ camp.capacity }}</strong>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" [style.width.%]="occupancyPct(camp)"
+                 [class.full]="available(camp.id) === 0"></div>
+          </div>
+          <div class="cap-meta">
+            <span>{{ available(camp.id) }} slots free</span>
+          </div>
+        </div>
+        <p class="camp-desc" *ngIf="camp.description">{{ camp.description }}</p>
+        <div class="camp-actions" (click)="$event.stopPropagation()">
+          <button type="button" class="btn-link" (click)="openCamp(camp)">Manage employees</button>
+          <button type="button" class="btn-icon" title="Edit" (click)="openEdit(camp)"><i class="bi bi-pencil"></i></button>
+          <button type="button" class="btn-icon danger" title="Delete" (click)="deleteCamp(camp)"><i class="bi bi-trash"></i></button>
+        </div>
+      </div>
+      <div class="empty-camps" *ngIf="!filteredCamps.length">
+        <i class="bi bi-inbox"></i>
+        <p>No camps found. Add your first camp to start assigning employees.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Add / Edit Camp Modal -->
+<div class="modal fade" [class.show]="showForm" [style.display]="showForm ? 'block' : 'none'" *ngIf="showForm" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editingId ? 'Edit Camp' : 'Add Camp' }}</h5>
+        <button type="button" class="btn-close" (click)="cancelForm()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Camp Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="form.name" placeholder="e.g. Al Quoz Labour Camp">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Location</label>
+          <input type="text" class="form-control" [(ngModel)]="form.location" placeholder="Dubai area / site">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Capacity (beds) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="form.capacity" min="1">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="form.description"></textarea>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Status</label>
+          <select class="form-select" [(ngModel)]="form.status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="saveCamp()">{{ editingId ? 'Update' : 'Create' }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showForm"></div>

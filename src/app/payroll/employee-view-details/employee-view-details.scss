@@ -670,3 +670,29 @@ $warm-dark: #1f2937;
     }
   }
 }
+
+.camp-assigned-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #eae6fb;
+  color: $warm-orange;
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  .camp-chip-text { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .chip-link {
+    border: none; background: transparent; color: $warm-orange;
+    text-decoration: underline; font-size: 0.75rem; cursor: pointer; font-weight: 700;
+  }
+
+  .chip-remove {
+    border: none; background: transparent; color: #dc2626; cursor: pointer; padding: 0 0.15rem;
+  }
+}
+
+.modal.show { z-index: 1055; }
+.modal-backdrop.show { z-index: 1050; }

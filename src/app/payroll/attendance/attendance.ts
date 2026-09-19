@@ -8,6 +8,7 @@ import { HttpClient } from '@angular/common/http';
 import { EmployeeDetail } from '../employee-detail/employee-detail';
 import { ImportAttendance } from '../import-attendance/import-attendance';
 import { DemoDataService } from '../../core/demo/demo-data.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-attendance',
@@ -72,6 +73,10 @@ export class Attendance implements OnInit {
   Math = Math
   // Invoice/attendance mode
   invoiceMode: any;
+  /** Designation filter */
+  selectedDesignation = '';
+  designationOptions: string[] = [];
+  private allAttendanceRows: any[] = [];
   hourOptions: any[] = [
     // Daily attendance options
     { id: '', value: '-', display: '-'},
@@ -108,7 +113,8 @@ export class Attendance implements OnInit {
     private api: Api,
     private http: HttpClient,
     private toast: ToastService,
-    private demo: DemoDataService
+    private demo: DemoDataService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -187,7 +193,7 @@ export class Attendance implements OnInit {
         this.totalPages = this.pagination.total_pages || 1;
         this.pageNumber = this.pagination.page_number || 1;
         if(this.invoiceMode==='hourly'){
-          this.attendanceData = rows.map((element: any) => {
+          this.allAttendanceRows = rows.map((element: any) => {
             const newElement = { ...element };
             newElement.attendance = Object.fromEntries(
               Object.entries(element.attendance || {}).map(([date, value]) => {
@@ -199,12 +205,16 @@ export class Attendance implements OnInit {
             return newElement;
           });
         }else{
-          this.attendanceData = rows;
+          this.allAttendanceRows = rows;
         }
+        this.refreshDesignationOptions();
+        this.applyAttendanceFilters();
       },
       error: () => {
         const rows = this.demo.attendance([], year, month);
-        this.attendanceData = rows;
+        this.allAttendanceRows = rows;
+        this.refreshDesignationOptions();
+        this.applyAttendanceFilters();
         this.totalData = rows.length;
         this.limit = this.pageSize;
         this.totalPages = 1;
@@ -961,6 +971,67 @@ export class Attendance implements OnInit {
           break;
       }
     });
+  }
+
+  isPresentStatus(status: any): boolean {
+    if (status == null || status === '' || status === '-') return false;
+    const s = String(status);
+    if (s === 'P' || s === '1') return true;
+    // Hourly mode may store option ids (11–22) or hour labels
+    const asNum = Number(s);
+    if (!Number.isNaN(asNum) && asNum >= 11 && asNum <= 22) return true;
+    if (/^\d+h$/i.test(s)) return true;
+    return false;
+  }
+
+  getEmployeeDesignation(employee: any): string {
+    return (
+      employee?.designation ||
+      employee?.designation_name ||
+      employee?.job_title ||
+      'Staff'
+    );
+  }
+
+  openPresentDayDetail(employee: any, dateKey: string, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+    if (!this.isPresentStatus(employee?.attendance?.[dateKey])) return;
+
+    const empKey = String(
+      employee?.employee_id || employee?.emp_id || employee?.employee_name || 'NRC001'
+    );
+    this.router.navigate(['/payroll/attendance/day-detail'], {
+      queryParams: {
+        employeeId: empKey,
+        name: employee?.employee_name || 'Employee',
+        designation: this.getEmployeeDesignation(employee),
+        date: dateKey,
+      },
+    });
+  }
+
+  private refreshDesignationOptions(): void {
+    const set = new Set<string>();
+    (this.allAttendanceRows || []).forEach((e: any) => {
+      const d = this.getEmployeeDesignation(e);
+      if (d) set.add(d);
+    });
+    this.designationOptions = Array.from(set).sort((a, b) => a.localeCompare(b));
+  }
+
+  applyAttendanceFilters(): void {
+    let rows = [...(this.allAttendanceRows || [])];
+    if (this.selectedDesignation) {
+      rows = rows.filter(
+        (e) => this.getEmployeeDesignation(e) === this.selectedDesignation
+      );
+    }
+    this.attendanceData = rows;
+  }
+
+  onDesignationFilterChange(): void {
+    this.applyAttendanceFilters();
   }
 }
 

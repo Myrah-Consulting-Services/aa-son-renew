@@ -25,7 +25,7 @@ export class PaySchedule implements OnInit {
   dateMin = '';
   dateMax = '';
   firstPayrollMonthLabel = '';
- 
+  isEditingSchedule = false; 
 
   constructor(private fb: FormBuilder,private api:Api) {
     this.scheduleForm = this.fb.group({
@@ -108,17 +108,72 @@ export class PaySchedule implements OnInit {
     if (this.scheduleForm.valid) {
       const payload = this.buildPayload();
       console.log('Pay Schedule Submitted:', payload);
-      this.api.post('/employee/create_schedules/', payload).subscribe((response: any) => {
-        if(response.status==200){
-          // this.toast.show('Pay schedule created successfully', 'success');
+      const scheduleId = this.schedule?.id;
+      const req$ = scheduleId
+        ? this.api.put('/employee/update_schedules/' + scheduleId + '/', { ...payload, id: scheduleId })
+        : this.api.post('/employee/create_schedules/', payload);
+      req$.subscribe((response: any) => {
+        if (response.status == 200) {
+          this.isEditingSchedule = false;
           this.getSchedule();
         }
-      })
-      // Here you would typically save the data and update the main view
-      // /employee/update_schedules/2/
+      });
     } else {
       console.log('Form is invalid.');
       this.scheduleForm.markAllAsTouched();
+    }
+  }
+
+  openEditSchedule(event?: Event): void {
+    if (event) { event.preventDefault(); }
+    this.patchFormFromSchedule();
+    this.isEditingSchedule = true;
+  }
+
+  cancelEditSchedule(): void {
+    this.isEditingSchedule = false;
+  }
+
+  private patchFormFromSchedule(): void {
+    if (!this.schedule) return;
+    const week: Record<string, boolean> = {
+      Sun: false, Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false
+    };
+    const codeToShort: Record<string, string> = {
+      SUN: 'Sun', MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat'
+    };
+    (this.schedule.work_week || []).forEach((c: string) => {
+      const key = codeToShort[c] || c;
+      if (key in week) week[key] = true;
+    });
+
+    let firstMonth = '';
+    if (this.schedule.first_payroll_month) {
+      const d = new Date(this.schedule.first_payroll_month);
+      firstMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+    const payOn = String(this.schedule.pay_on ?? '3');
+    const salaryBasis = String(this.schedule.salary_basis ?? '2');
+
+    this.scheduleForm.patchValue({
+      work_week: week,
+      salary_basis: salaryBasis,
+      org_working_days: this.schedule.org_working_days ?? 30,
+      pay_on: payOn === '4' || payOn === '2' ? '4' : '3',
+      fixed_day: this.schedule.fixed_day || 7,
+      first_payroll_month: firstMonth,
+      first_pay_date: this.schedule.first_pay_date || ''
+    });
+
+    if (this.scheduleForm.get('pay_on')?.value === '4') {
+      this.scheduleForm.get('fixed_day')?.enable();
+    } else {
+      this.scheduleForm.get('fixed_day')?.disable();
+    }
+    if (this.scheduleForm.get('salary_basis')?.value === '2') {
+      this.scheduleForm.get('org_working_days')?.enable();
+    } else {
+      this.scheduleForm.get('org_working_days')?.disable();
     }
   }
 

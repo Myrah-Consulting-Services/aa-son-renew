@@ -137,6 +137,19 @@
                  (input)="attendancereport()">
         </div>
 
+        <!-- Designation filter -->
+        <div class="filter-item">
+          <label class="filter-label">
+            <i class="bi bi-briefcase me-1"></i>Designation
+          </label>
+          <select class="form-select form-select-sm designation-filter"
+                  [(ngModel)]="selectedDesignation"
+                  (change)="onDesignationFilterChange()">
+            <option value="">All Designations</option>
+            <option *ngFor="let d of designationOptions" [value]="d">{{ d }}</option>
+          </select>
+        </div>
+
         <!-- Actions -->
         <div class="filter-item" *ngIf="isAttendanceEnabled">
           <button class="btn-primary btn-sm" (click)="saveAttendance()">
@@ -211,6 +224,7 @@
                   <td class="employee-info-cell sticky-col">
                     <div class="employee-details" title="View Detail" (click)="employedetail(employeeModal,employee)">
                       <div class="employee-name">{{ employee.employee_name }}</div>
+                      <div class="employee-designation">{{ getEmployeeDesignation(employee) }}</div>
                       <div class="employee-meta">
                         <!-- <span class="employee-id">phone: {{ employee.phone_number }}</span> -->
                         <!-- <span class="employee-dept">{{ employee.department?.name || 'N/A' }}</span> -->
@@ -229,17 +243,38 @@
                           </select>
                         </ng-container>
                         <ng-template #normalDaySelect>
-                          <select class="custom-select" 
-                                  (change)="onAttendanceChange(employee,day.originalDate, $event)" 
-                                  [(ngModel)]="employee.attendance[day.originalDate]" 
-                                  [disabled]="!isAttendanceEnabled" 
-                                  [ngClass]="getAttendanceBadgeClass(employee.attendance[day.originalDate])">
-                            <ng-container>
-                              <option *ngFor="let status of attendanceStatuses" [value]="status.value">
-                                {{ status.display }}
-                              </option>
-                            </ng-container>
-                          </select>
+                          <div class="att-cell-wrap"
+                               *ngIf="!isAttendanceEnabled && isPresentStatus(employee.attendance[day.originalDate]); else daySelectEdit">
+                            <button type="button"
+                                    class="present-view-btn"
+                                    [ngClass]="getAttendanceBadgeClass(employee.attendance[day.originalDate])"
+                                    title="View field locations for this day"
+                                    (click)="openPresentDayDetail(employee, day.originalDate, $event)">
+                              P
+                            </button>
+                          </div>
+                          <ng-template #daySelectEdit>
+                            <div class="att-cell-wrap">
+                              <select class="custom-select" 
+                                      (change)="onAttendanceChange(employee,day.originalDate, $event)" 
+                                      [(ngModel)]="employee.attendance[day.originalDate]" 
+                                      [disabled]="!isAttendanceEnabled" 
+                                      [ngClass]="getAttendanceBadgeClass(employee.attendance[day.originalDate])">
+                                <ng-container>
+                                  <option *ngFor="let status of attendanceStatuses" [value]="status.value">
+                                    {{ status.display }}
+                                  </option>
+                                </ng-container>
+                              </select>
+                              <button type="button"
+                                      class="att-loc-btn"
+                                      *ngIf="isPresentStatus(employee.attendance[day.originalDate])"
+                                      title="View locations"
+                                      (click)="openPresentDayDetail(employee, day.originalDate, $event)">
+                                <i class="bi bi-geo-alt-fill"></i>
+                              </button>
+                            </div>
+                          </ng-template>
                         </ng-template>
                       </ng-container>
                       <ng-template #hourlyTpl>
@@ -252,16 +287,25 @@
                           </select>
                         </ng-container>
                         <ng-template #normalHourSelect>
-                          <select
-                            class="custom-select"
-                            [ngClass]="getAttendanceBadgeClass(employee.attendance[day.originalDate])"
-                            (change)="onHoursChange(employee, day.originalDate, $event)"
-                            [disabled]="!isAttendanceEnabled"
-                            [(ngModel)]="employee.attendance[day.originalDate]">
-                            <option *ngFor="let hr of hourOptions" [value]="hr.id">
-                              {{ hr.value }}
-                            </option>
-                          </select>
+                          <div class="att-cell-wrap">
+                            <select
+                              class="custom-select"
+                              [ngClass]="getAttendanceBadgeClass(employee.attendance[day.originalDate])"
+                              (change)="onHoursChange(employee, day.originalDate, $event)"
+                              [disabled]="!isAttendanceEnabled"
+                              [(ngModel)]="employee.attendance[day.originalDate]">
+                              <option *ngFor="let hr of hourOptions" [value]="hr.id">
+                                {{ hr.value }}
+                              </option>
+                            </select>
+                            <button type="button"
+                                    class="att-loc-btn"
+                                    *ngIf="isPresentStatus(employee.attendance[day.originalDate])"
+                                    title="View locations"
+                                    (click)="openPresentDayDetail(employee, day.originalDate, $event)">
+                              <i class="bi bi-geo-alt-fill"></i>
+                            </button>
+                          </div>
                         </ng-template>
                       </ng-template>
                     </td>

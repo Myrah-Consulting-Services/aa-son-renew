@@ -1002,18 +1002,13 @@ export function buildNablusPayrollEmployees(
 /** Build attendance grid rows for a given YYYY-MM month. */
 export function buildNablusAttendance(year: number, month: number): any[] {
   const daysInMonth = new Date(year, month, 0).getDate();
-  const staff = [
-    { employee_id: 'NRC001', employee_name: 'Omar Al Hashimi' },
-    { employee_id: 'NRC002', employee_name: 'Hassan Mansour' },
-    { employee_id: 'NRC003', employee_name: 'Priya Nair' },
-    { employee_id: 'NRC004', employee_name: 'Mohammed Yousef' },
-    { employee_id: 'NRC005', employee_name: 'Suresh Kumar' },
-    { employee_id: 'NRC006', employee_name: 'Anwar Hussain' },
-    { employee_id: 'NRC007', employee_name: 'Layla Hassan' },
-    { employee_id: 'NRC009', employee_name: 'Fatima Al Nuaimi' },
-    { employee_id: 'NRC010', employee_name: 'Carlos Mendoza' },
-    { employee_id: 'NRC008', employee_name: 'Ravi Menon' },
-  ];
+  const staff = NABLUS_HR_EMPLOYEES.map((e) => ({
+    employee_id: e.emp_id,
+    employee_name: `${e.first_name} ${e.last_name}`,
+    designation: e.designation_name,
+    department: e.department_name,
+    id: e.id,
+  }));
 
   return staff.map((emp, idx) => {
     const attendance: Record<string, string> = {};
@@ -1059,6 +1054,62 @@ export function buildNablusAttendance(year: number, month: number): any[] {
       totalHalfDay: 0,
     };
   });
+}
+
+/** Dubai field-work check-in points for attendance day detail (demo). */
+export const NABLUS_DUBAI_FIELD_SITES = [
+  { name: 'Head Office — Al Barsha', lat: 25.1125, lng: 55.2005, area: 'Al Barsha' },
+  { name: 'Al Quoz Site Yard', lat: 25.1402, lng: 55.2418, area: 'Al Quoz' },
+  { name: 'Sheikh Zayed Road — Stretch A', lat: 25.1180, lng: 55.1980, area: 'SZR' },
+  { name: 'Business Bay Junction Works', lat: 25.1860, lng: 55.2650, area: 'Business Bay' },
+  { name: 'Jebel Ali Free Zone Gate 4', lat: 24.9857, lng: 55.0702, area: 'JAFZA' },
+  { name: 'Dubai Investment Park — Plot 12', lat: 24.9810, lng: 55.1620, area: 'DIP' },
+  { name: 'Al Maktoum Airport Road Site', lat: 24.9205, lng: 55.1810, area: 'DWCA' },
+  { name: 'Marina Promenade Works', lat: 25.0805, lng: 55.1410, area: 'Marina' },
+  { name: 'Ras Al Khor Truck Yard', lat: 25.1800, lng: 55.3400, area: 'Ras Al Khor' },
+  { name: 'Nad Al Sheba Asphalt Plant', lat: 25.1400, lng: 55.3100, area: 'Nad Al Sheba' },
+];
+
+const FIELD_ACTIVITIES = [
+  'Site inspection / measurement',
+  'Material delivery verify',
+  'Plant & machinery check',
+  'Supervisor briefing',
+  'Asphalt laying supervision',
+  'Safety walkthrough',
+];
+
+/** Deterministic day location trail for an employee on a date (Dubai field work). */
+export function buildNablusDayLocationTrail(employeeId: string, dateKey: string): any[] {
+  const seed = Array.from(`${employeeId}-${dateKey}`).reduce((s, ch) => s + ch.charCodeAt(0), 0);
+  const count = 4 + (seed % 3); // 4–6 points
+  const startHour = 7 + (seed % 2);
+  const trail: any[] = [];
+  for (let i = 0; i < count; i++) {
+    const site = NABLUS_DUBAI_FIELD_SITES[(seed + i * 3) % NABLUS_DUBAI_FIELD_SITES.length];
+    const hour = startHour + i * 1 + ((seed + i) % 2);
+    const minute = (seed * (i + 1) * 7) % 60;
+    const jitterLat = ((seed + i * 13) % 20 - 10) * 0.00015;
+    const jitterLng = ((seed + i * 17) % 20 - 10) * 0.00015;
+    const isFirst = i === 0;
+    const isLast = i === count - 1;
+    const eventType = isFirst ? 'login' : isLast ? 'logout' : 'checkin';
+    const activity = isFirst
+      ? 'Logged in — daily routing started'
+      : isLast
+        ? 'Logged out — daily routing ended'
+        : FIELD_ACTIVITIES[(seed + i) % FIELD_ACTIVITIES.length];
+    trail.push({
+      time: `${String(Math.min(hour, 18)).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+      location: site.name,
+      area: site.area,
+      activity,
+      eventType,
+      lat: +(site.lat + jitterLat).toFixed(6),
+      lng: +(site.lng + jitterLng).toFixed(6),
+    });
+  }
+  return trail.sort((a, b) => a.time.localeCompare(b.time));
 }
 
 /** Helper: use demo rows when API list is empty/missing. */

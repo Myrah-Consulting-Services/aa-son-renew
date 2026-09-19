@@ -1,0 +1,120 @@
+$warm-orange: #41299b;
+$warm-gray: #6b7280;
+$warm-dark: #1f2937;
+
+.camp-mgmt-container { padding: 0.75rem; }
+
+.breadcrumb-section {
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  .breadcrumb { margin: 0; background: transparent; font-size: .875rem; }
+}
+
+.header-section {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.camp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.camp-logo {
+  width: 42px; height: 42px; border-radius: 10px;
+  background: #eae6fb; color: $warm-orange;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+
+.header-title { margin: 0; font-size: 1.25rem; font-weight: 700; color: $warm-dark; }
+.header-subtitle { margin: 0; font-size: .85rem; color: $warm-gray; }
+
+.btn-primary {
+  border: none; background: $warm-orange; color: #fff;
+  padding: .5rem .9rem; border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+
+.kpi-section { margin-bottom: .75rem; }
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem;
+}
+.stat-card {
+  background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 10px;
+  padding: .9rem; display: flex; gap: .75rem; align-items: center;
+  .stat-icon {
+    width: 40px; height: 40px; border-radius: 10px; background: #eae6fb; color: $warm-orange;
+    display: flex; align-items: center; justify-content: center;
+  }
+  h3 { margin: 0; font-size: .75rem; color: $warm-gray; font-weight: 600; }
+  .stat-number { margin: 0; font-size: 1.35rem; font-weight: 700; color: $warm-dark; }
+}
+
+.filters-bar .search-wrap {
+  position: relative; max-width: 280px;
+  i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: $warm-gray; }
+  input { padding-left: 2rem; }
+}
+
+.camp-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;
+}
+
+.camp-card {
+  background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 12px;
+  padding: 1rem; cursor: pointer; transition: box-shadow .15s ease, border-color .15s ease;
+  &:hover { border-color: rgba(65,41,155,.35); box-shadow: 0 4px 14px rgba(65,41,155,.12); }
+}
+
+.camp-card-top { display: flex; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
+.camp-name { margin: 0; font-size: 1rem; font-weight: 700; color: $warm-dark; }
+.camp-loc { font-size: .78rem; color: $warm-gray; margin-top: .2rem; }
+
+.status-pill {
+  text-transform: capitalize; font-size: .65rem; font-weight: 700;
+  padding: .2rem .5rem; border-radius: 999px; height: fit-content;
+  &.active { background: #d1fae5; color: #065f46; }
+  &.inactive { background: #f3f4f6; color: #6b7280; }
+}
+
+.capacity-block {
+  .cap-row { display: flex; justify-content: space-between; font-size: .8rem; margin-bottom: .35rem; }
+  .progress { height: 8px; background: #eee; border-radius: 999px; overflow: hidden; }
+  .progress-bar { height: 100%; background: $warm-orange; border-radius: 999px; &.full { background: #dc2626; } }
+  .cap-meta { margin-top: .35rem; font-size: .72rem; color: $warm-gray; }
+}
+
+.camp-desc { font-size: .78rem; color: $warm-gray; margin: .75rem 0 .5rem; }
+
+.camp-actions {
+  display: flex; align-items: center; gap: .35rem; margin-top: .5rem;
+  .btn-link {
+    border: none; background: transparent; color: $warm-orange; font-size: .8rem; font-weight: 600; cursor: pointer;
+  }
+  .btn-icon {
+    border: 1px solid rgba(0,0,0,.1); background: #fff; border-radius: 6px; width: 30px; height: 30px;
+    cursor: pointer; color: $warm-dark;
+    &.danger { color: #dc2626; }
+  }
+}
+
+.empty-camps {
+  grid-column: 1 / -1; text-align: center; padding: 2.5rem; color: $warm-gray;
+  i { font-size: 2rem; display: block; margin-bottom: .5rem; }
+}
+
+.modal.show { z-index: 1055; }
+.modal-backdrop.show { z-index: 1050; }
+
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}

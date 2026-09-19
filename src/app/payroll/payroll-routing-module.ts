@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { PayrollLayout } from './payroll-layout/payroll-layout';
 import { PayrollDashboard } from './payroll-dashboard/payroll-dashboard';
 import { Attendance } from './attendance/attendance';
+import { AttendanceDayDetail } from './attendance-day-detail/attendance-day-detail';
 import { Career } from './career/career';
 import { Document } from './document/document';
 import { EmployeeComponent } from './employee/employee';
@@ -22,6 +23,8 @@ import { PayrollSettingsComponent } from './payroll-settings/payroll-settings';
 import { GratuityComponent } from './gratuity/gratuity.component';
 import { FinalSettlementComponent } from './final-settlement/final-settlement.component';
 import { EosbAccrualDashboardComponent } from './eosb-accrual-dashboard/eosb-accrual-dashboard.component';
+import { CampManagement } from './camp-management/camp-management';
+import { CampDetail } from './camp-management/camp-detail';
 import { EmployeeViewDetails } from './employee-view-details/employee-view-details';
 import { ReviseSalary } from './revise-salary/revise-salary';
 import { SocialSecurityRoutingModule } from './social-security/social-security-routing-module';
@@ -46,6 +49,10 @@ const routes: Routes = [
       {
         path: 'attendance',
         component: Attendance
+      },
+      {
+        path: 'attendance/day-detail',
+        component: AttendanceDayDetail
       },
       {
         path: 'leavemanagement',
@@ -126,6 +133,14 @@ const routes: Routes = [
       {
         path: 'eosb-accrual-dashboard',
         component: EosbAccrualDashboardComponent
+      },
+      {
+        path: 'camp-management',
+        component: CampManagement
+      },
+      {
+        path: 'camp-management/:id',
+        component: CampDetail
       },
       {
         path: 'pay-run-detail/:data',

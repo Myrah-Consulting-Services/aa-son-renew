@@ -25,6 +25,7 @@ import {
   NABLUS_WAREHOUSES,
   buildNablusAttendance,
   buildNablusPayrollEmployees,
+  buildNablusDayLocationTrail,
   useDemoIfEmpty,
 } from './nablus-lists.data';
 
@@ -133,6 +134,26 @@ export class DemoDataService {
   attendance(api?: any[] | null, year?: number, month?: number) {
     const y = year || new Date().getFullYear();
     const m = month || new Date().getMonth() + 1;
-    return useDemoIfEmpty(api, buildNablusAttendance(y, m));
+    const rows = useDemoIfEmpty(api, buildNablusAttendance(y, m));
+    return rows.map((r: any) => this.enrichAttendanceRow(r));
+  }
+
+  dayLocationTrail(employeeId: string, dateKey: string) {
+    return buildNablusDayLocationTrail(employeeId || 'NRC001', dateKey);
+  }
+
+  private enrichAttendanceRow(row: any): any {
+    if (row?.designation) return row;
+    const match = NABLUS_HR_EMPLOYEES.find(
+      (e) =>
+        e.emp_id === row?.employee_id ||
+        e.emp_id === row?.emp_id ||
+        `${e.first_name} ${e.last_name}` === row?.employee_name
+    );
+    return {
+      ...row,
+      designation: row?.designation || row?.designation_name || match?.designation_name || 'Staff',
+      department: row?.department || row?.department_name || match?.department_name || '',
+    };
   }
 }

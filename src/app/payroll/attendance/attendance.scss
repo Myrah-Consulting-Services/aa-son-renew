@@ -602,9 +602,21 @@ $warm-dark: #1f2937;
             .employee-name {
               font-weight: 600;
               color: $warm-dark;
-              margin-bottom: 0.25rem;
+              margin-bottom: 0.15rem;
               text-decoration: underline;
               font-size: 0.8rem;
+            }
+
+            .employee-designation {
+              font-size: 0.68rem;
+              font-weight: 500;
+              color: $warm-orange;
+              line-height: 1.2;
+              margin-bottom: 0.15rem;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 170px;
             }
             
             .employee-meta {
@@ -1009,4 +1021,352 @@ $warm-dark: #1f2937;
 ::ng-deep .my-class .modal-dialog { 
   max-width: 90%;
   width: 90%;
+}
+
+.att-cell-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  position: relative;
+}
+
+.present-view-btn {
+  border: none;
+  border-radius: 4px;
+  min-width: 28px;
+  height: 26px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #d1fae5;
+  color: #065f46;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+  &:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.35);
+  }
+}
+
+.att-loc-btn {
+  border: none;
+  background: transparent;
+  color: $warm-orange;
+  padding: 0 2px;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: darken($warm-orange, 8%);
+  }
+}
+
+.day-detail-modal.show {
+  z-index: 1060;
+}
+
+.day-detail-content {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.day-detail-header {
+  background: linear-gradient(135deg, #41299b 0%, #2d1b6e 100%);
+  color: #fff;
+  border-bottom: none;
+
+  .modal-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  .day-detail-sub {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    opacity: 0.92;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+
+    .desig {
+      font-weight: 600;
+    }
+
+    .sep {
+      opacity: 0.6;
+    }
+
+    .badge-present {
+      background: #10b981;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+  }
+}
+
+.day-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) 1fr;
+  min-height: 480px;
+  background: #f8f7fc;
+}
+
+.day-timeline-panel {
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  max-height: 560px;
+  overflow: hidden;
+
+  .timeline-title {
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: $warm-dark;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .login-logout-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    background: #f8f7fc;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+    .ll-chip {
+      flex: 1;
+      border-radius: 8px;
+      padding: 0.4rem 0.55rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+
+      .ll-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        opacity: 0.85;
+      }
+
+      .ll-time {
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      &.login {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      &.logout {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+    }
+
+    .ll-arrow {
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+  }
+
+  .day-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 0.65rem;
+    padding: 0.65rem 0.55rem;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      background: #f3f0ff;
+    }
+
+    &.active {
+      background: #eae6fb;
+      border-color: rgba(65, 41, 155, 0.25);
+    }
+
+    &.login-item.active {
+      background: #ecfdf5;
+      border-color: rgba(5, 150, 105, 0.35);
+    }
+
+    &.logout-item.active {
+      background: #fef2f2;
+      border-color: rgba(220, 38, 38, 0.3);
+    }
+
+    .time-badge {
+      flex-shrink: 0;
+      min-width: 52px;
+      height: fit-content;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: #41299b;
+      background: #efeaff;
+      border-radius: 6px;
+      padding: 0.3rem 0.35rem;
+
+      &.login {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      &.logout {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+    }
+
+    .timeline-body {
+      min-width: 0;
+
+      .event-row {
+        margin-bottom: 0.2rem;
+      }
+
+      .event-tag {
+        display: inline-block;
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 0.1rem 0.4rem;
+        border-radius: 999px;
+
+        &.login {
+          background: #059669;
+          color: #fff;
+        }
+
+        &.logout {
+          background: #dc2626;
+          color: #fff;
+        }
+
+        &.checkin {
+          background: #41299b;
+          color: #fff;
+        }
+      }
+
+      .loc-name {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: $warm-dark;
+        line-height: 1.25;
+      }
+
+      .loc-meta {
+        margin-top: 0.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+      }
+
+      .area-chip {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #065f46;
+        background: #d1fae5;
+        padding: 0.1rem 0.4rem;
+        border-radius: 999px;
+      }
+
+      .activity {
+        font-size: 0.7rem;
+        color: $warm-gray;
+      }
+
+      .coords {
+        margin-top: 0.2rem;
+        font-size: 0.65rem;
+        color: #9ca3af;
+        font-family: ui-monospace, monospace;
+      }
+    }
+  }
+
+  .timeline-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: $warm-gray;
+    font-size: 0.85rem;
+  }
+}
+
+.day-map-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+
+  .map-toolbar {
+    padding: 0.55rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: $warm-gray;
+    background: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .attendance-day-map {
+    flex: 1;
+    min-height: 400px;
+    background: #e5e7eb;
+  }
+
+  .map-legend {
+    display: flex;
+    gap: 1rem;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.72rem;
+    color: $warm-gray;
+    background: #fff;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+    .leg-login i { color: #059669; margin-right: 0.25rem; }
+    .leg-pin i { color: #41299b; margin-right: 0.25rem; }
+    .leg-logout i { color: #dc2626; margin-right: 0.25rem; }
+  }
+}
+
+.designation-filter {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+@media (max-width: 900px) {
+  .day-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .day-timeline-panel {
+    max-height: 260px;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
 }

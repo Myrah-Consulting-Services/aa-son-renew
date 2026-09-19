@@ -26,6 +26,7 @@ export class PayrollLayout {
     { label: 'Payroll Settings', route: 'payroll-settings', icon: 'bi-gear' },
     { label: 'Final Settlement', route: 'final-settlement', icon: 'bi-file-earmark-check' },
     { label: 'EOSB Accrual', route: 'eosb-accrual-dashboard', icon: 'bi-graph-up' },
+    { label: 'Camp Management', route: 'camp-management', icon: 'bi-buildings' },
   ];
 
   toggleLayout(): void {
