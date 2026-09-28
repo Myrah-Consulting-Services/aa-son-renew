@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, TemplateRef, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, TemplateRef, OnChanges, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -11,7 +11,7 @@ import { Api } from '../../core/services/api';
   templateUrl: './payrun-drawer.html',
   styleUrl: './payrun-drawer.scss'
 })
-export class PayrunDrawer implements OnChanges {
+export class PayrunDrawer implements OnChanges, OnInit {
   @Input() employee: any = null; // summary row (id, name, gross, net, etc.)
   // @Input() detail: any = null; 
   @Input() payrollSummary: any = null; // detailed data (earnings, deductions, benefits, totals)
@@ -19,8 +19,10 @@ export class PayrunDrawer implements OnChanges {
   @Output() drawerClosed = new EventEmitter<void>();
   
   ngOnChanges(): void {
-    // Handle changes to payslip data input
-
+    if (this.employee) {
+      this.applyLocalPayslip();
+      this.loadData();
+    }
   }
   fetchPayScheduleData: any;
   particularEmp:any
@@ -33,19 +35,63 @@ export class PayrunDrawer implements OnChanges {
     return this.api.getcurrencies();
   }
   ngOnInit(): void {
-    // this.get_payscheduleDataApi()
-    console.log(this.employee, this.payslipData);
-    this.loadData()
-
+    this.applyLocalPayslip();
+    this.loadData();
   }
   loadData(){
-    this.api.get('/employee/payroll_run_details/'+this.payrollSummary.payrun_id+'/'+this.employee.employee_id+'/').subscribe((res:any)=>{
-      if(res.status==200){
-        this.details = res;
-        console.log(this.details,'details');
-        
+    const runId = this.payrollSummary?.payrun_id || this.payrollSummary?.payroll_run_id;
+    const empId = this.employee?.employee_id ?? this.employee?.id;
+    if (!runId || empId == null) {
+      this.applyLocalPayslip();
+      return;
+    }
+    this.api.get('/employee/payroll_run_details/' + runId + '/' + empId + '/').subscribe((res: any) => {
+      if (res.status == 200) {
+        const payload = res.data && (res.data.net_pay != null || res.data.earnings) ? res.data : res;
+        this.details = payload;
+        if (!Number(this.details?.net_pay) && !this.details?.earnings?.length) {
+          this.applyLocalPayslip();
+        }
+      } else {
+        this.applyLocalPayslip();
       }
-    })
+    });
+  }
+
+  private applyLocalPayslip(): void {
+    const slip = this.payslipData?.payslip || this.employee?.payslip;
+    const earningsItems = slip?.earnings?.items || [];
+    const deductionItems = slip?.deductions?.items || [];
+    this.details = {
+      ...(this.details || {}),
+      employee_name: this.employee?.employee_name,
+      emp_id: this.employee?.emp_id,
+      employee_id: this.employee?.employee_id,
+      net_pay: Number(this.employee?.net_pay || slip?.net_pay?.net_pay || 0),
+      gross_pay: Number(this.employee?.gross_pay || slip?.earnings?.gross_earnings || 0),
+      overtime_pay: Number(this.employee?.overtime_pay || 0),
+      payable_days: Number(this.employee?.paid_days || slip?.pay_summary?.paid_days || 30),
+      actual_payable_days: Number(this.employee?.paid_days || slip?.pay_summary?.paid_days || 30),
+      lop_days: Number(this.employee?.lop_days || slip?.pay_summary?.lop_days || 0),
+      payroll_run_status: String(this.employee?.status || this.payrollSummary?.status || '4'),
+      earnings: earningsItems.map((i: any) => ({
+        head_type_name_display: i.component,
+        name: i.component,
+        head_name: i.component,
+        value: Number(i.amount || 0),
+        calculated_value: Number(i.amount || 0),
+        calculation_type_name: 'Fixed',
+      })),
+      deductions: deductionItems.map((i: any) => ({
+        head_type_name_display: i.component,
+        name: i.component,
+        head_name: i.component,
+        value: Number(i.amount || 0),
+        calculated_value: Number(i.amount || 0),
+      })),
+      benefits: this.details?.benefits || [],
+      totals: { net_pay: Number(this.employee?.net_pay || 0) },
+    };
   }
   
   // get_payscheduleDataApi() {
@@ -155,11 +201,18 @@ export class PayrunDrawer implements OnChanges {
     const actualDays = this.actualPayableDays;
     
     if (baseDays > 0 && actualDays > 0 && actualDays !== baseDays) {
-      // Calculate proportional net pay based on actual payable days
-      const baseNetPay = Number(this.details?.net_pay) || 0;
+      const baseNetPay = Number(
+        this.details?.net_pay ?? this.employee?.net_pay ?? this.payslipData?.payslip?.net_pay?.net_pay ?? 0
+      );
       return (baseNetPay * actualDays) / baseDays;
     }
-    return Number(this.details?.net_pay) || 0;
+    return Number(
+      this.details?.net_pay ??
+      this.details?.totals?.net_pay ??
+      this.employee?.net_pay ??
+      this.payslipData?.payslip?.net_pay?.net_pay ??
+      0
+    );
   }
 
   get calculatedEarnings(): any[] {
@@ -172,12 +225,12 @@ export class PayrunDrawer implements OnChanges {
       if (baseDays > 0 && actualDays > 0 && actualDays !== baseDays) {
         existingEarnings = this.details.earnings.map((earning: any) => ({
           ...earning,
-          calculated_value: (earning.value * actualDays) / baseDays
+          calculated_value: (Number(earning.value ?? earning.calculated_value ?? earning.amount ?? 0) * actualDays) / baseDays
         }));
       } else {
         existingEarnings = this.details.earnings.map((earning: any) => ({
           ...earning,
-          calculated_value: earning.value
+          calculated_value: Number(earning.value ?? earning.calculated_value ?? earning.amount ?? 0)
         }));
       }
     }
@@ -201,12 +254,12 @@ export class PayrunDrawer implements OnChanges {
       if (baseDays > 0 && actualDays > 0 && actualDays !== baseDays) {
         existingDeductions = this.details.deductions.map((deduction: any) => ({
           ...deduction,
-          calculated_value: (deduction.value * actualDays) / baseDays
+          calculated_value: (Number(deduction.value ?? deduction.calculated_value ?? deduction.amount ?? 0) * actualDays) / baseDays
         }));
       } else {
         existingDeductions = this.details.deductions.map((deduction: any) => ({
           ...deduction,
-          calculated_value: deduction.value
+          calculated_value: Number(deduction.value ?? deduction.calculated_value ?? deduction.amount ?? 0)
         }));
       }
     }

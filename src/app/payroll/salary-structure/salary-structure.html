@@ -239,18 +239,17 @@
                         </div>
                       </td>
                       <td>
-                        <div class="input-group">
-                          <!-- Show "Fixed" as text when calculation type is Fixed -->
-                          <span class="form-control-plaintext border rounded p-2" *ngIf="row.get('calculation_type')?.value == 1">Fixed</span>
-                          
-                          <!-- Show calculation value input and calculation type as text for other types -->
-                          <div class="d-flex" *ngIf="row.get('calculation_type')?.value != 1">
-                            <input type="text" class="form-control" formControlName="calculation_value" style="width: 60px;" (input)="onCalculationValueChange(i)">
-                            <span class="form-control-plaintext border rounded p-2" style="min-width: 80px; text-align: center; border-left: none; border-top-left-radius: 0; border-bottom-left-radius: 0;">
-                              <span *ngIf="row.get('calculation_type')?.value == 2">% of Basic</span>
-                              <span *ngIf="row.get('calculation_type')?.value == 3">% of CTC</span>
-                            </span>
-                          </div>
+                        <div class="d-flex gap-1 align-items-center">
+                          <select class="form-select form-select-sm" formControlName="calculation_type" (change)="onCalculationValueChange(i)">
+                            <option [ngValue]="1">Fixed</option>
+                            <option [ngValue]="2">% of Basic</option>
+                            <option [ngValue]="3">% of CTC</option>
+                          </select>
+                          <input type="text" class="form-control form-control-sm" style="width: 70px;"
+                                 formControlName="calculation_value"
+                                 *ngIf="row.get('calculation_type')?.value != 1"
+                                 (input)="onCalculationValueChange(i)"
+                                 placeholder="%">
                         </div>
                       </td>
                       <td><input type="text" class="form-control" formControlName="monthly_value" (input)="onMonthlyAmountChange(i)"></td>
@@ -285,6 +284,104 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Deductions Section -->
+            <div class="col-12 mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-danger fw-bold mb-0">Deductions</h6>
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="addDeductionsRow()">
+                  <i class="bi bi-plus me-1"></i>Add Row
+                </button>
+              </div>
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 25%;">Component</th>
+                    <th style="width: 25%;">Calculation Type</th>
+                    <th style="width: 25%;">Monthly Amount</th>
+                    <th style="width: 25%;">Annual Amount</th>
+                  </tr>
+                </thead>
+                <tbody formArrayName="deductions" *ngIf="showModal">
+                  <tr *ngFor="let row of deductionsArray.controls; let i = index" [formGroupName]="i">
+                    <td>
+                      <div class="position-relative">
+                        <input type="text" class="form-control" placeholder="Deduction name" formControlName="head_name"
+                          (focus)="onHeadsFocus('deductions', i)">
+                        <div class="dropdown-menu show position-absolute w-100"
+                             *ngIf="showDeductionsDropdown[i] && (filteredDeductions[i]?.length || 0) > 0"
+                             style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                          <div class="dropdown-item" *ngFor="let head of filteredDeductions[i]"
+                               (mousedown)="selectHeadRow('deductions', i, head)" style="cursor: pointer;">
+                            {{ head.head_name }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <select class="form-select form-select-sm" formControlName="calculation_type">
+                        <option [ngValue]="1">Fixed</option>
+                        <option [ngValue]="2">Percentage</option>
+                      </select>
+                    </td>
+                    <td><input type="text" class="form-control" formControlName="monthly_value" (input)="onMonthlyAmountChangeRow('deductions', i)"></td>
+                    <td class="d-flex gap-2">
+                      <input type="text" class="form-control" formControlName="annual_value">
+                      <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeDeductionsRow(i)"><i class="bi bi-trash"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Reimbursements Section -->
+            <div class="col-12 mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-primary fw-bold mb-0">Reimbursements</h6>
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="addReimbursementsRow()">
+                  <i class="bi bi-plus me-1"></i>Add Row
+                </button>
+              </div>
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 25%;">Component</th>
+                    <th style="width: 25%;">Calculation Type</th>
+                    <th style="width: 25%;">Monthly Amount</th>
+                    <th style="width: 25%;">Annual Amount</th>
+                  </tr>
+                </thead>
+                <tbody formArrayName="reimbursements" *ngIf="showModal">
+                  <tr *ngFor="let row of reimbursementsArray.controls; let i = index" [formGroupName]="i">
+                    <td>
+                      <div class="position-relative">
+                        <input type="text" class="form-control" placeholder="Reimbursement name" formControlName="head_name"
+                          (focus)="onHeadsFocus('reimbursements', i)">
+                        <div class="dropdown-menu show position-absolute w-100"
+                             *ngIf="showReimbursementsDropdown[i] && (filteredReimbursements[i]?.length || 0) > 0"
+                             style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                          <div class="dropdown-item" *ngFor="let head of filteredReimbursements[i]"
+                               (mousedown)="selectHeadRow('reimbursements', i, head)" style="cursor: pointer;">
+                            {{ head.head_name }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <select class="form-select form-select-sm" formControlName="calculation_type">
+                        <option [ngValue]="1">Fixed</option>
+                        <option [ngValue]="2">Percentage</option>
+                      </select>
+                    </td>
+                    <td><input type="text" class="form-control" formControlName="monthly_value" (input)="onMonthlyAmountChangeRow('reimbursements', i)"></td>
+                    <td class="d-flex gap-2">
+                      <input type="text" class="form-control" formControlName="annual_value">
+                      <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeReimbursementsRow(i)"><i class="bi bi-trash"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
           </div>

@@ -22,16 +22,26 @@
           <p class="header-subtitle">Track and manage employee attendance for payroll processing</p>
         </div>
       </div>
-      <div class="period-selector">
-        <label class="form-label fw-bold">Accounting Period</label>
-        <div class="input-group">
-          <input type="month" 
-                 class="form-control form-control-sm" 
-                 [(ngModel)]="selectedMonth"
-                 (change)="setMonthAndYear(selectedMonth, null)">
-          <span class="input-group-text">
-            <i class="bi bi-calendar"></i>
-          </span>
+      <div class="period-selector d-flex flex-wrap gap-2 align-items-end">
+        <div>
+          <label class="form-label fw-bold">Accounting Period</label>
+          <div class="input-group">
+            <input type="month" 
+                   class="form-control form-control-sm" 
+                   [(ngModel)]="selectedMonth"
+                   (change)="setMonthAndYear(selectedMonth, null)">
+            <span class="input-group-text">
+              <i class="bi bi-calendar"></i>
+            </span>
+          </div>
+        </div>
+        <div>
+          <label class="form-label fw-bold">From</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="rangeStart" (change)="applyDateRange()">
+        </div>
+        <div>
+          <label class="form-label fw-bold">To</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="rangeEnd" (change)="applyDateRange()">
         </div>
       </div>
     </div>

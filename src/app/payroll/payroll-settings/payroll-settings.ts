@@ -130,6 +130,7 @@ employeIdOutput: any;
     this.listPayrollSettings();
     this.onFinancialYearChange();
     this.getEmployeeSettings();
+    this.listLeaveTypes();
     this.setActiveTab('shifts')
   }
   onFinancialYearChange() {
@@ -195,6 +196,48 @@ employeIdOutput: any;
     });
   }
 
+  listLeaveTypes(): void {
+    this.apiService.get('/attendance/list-attendance-types/').subscribe({
+      next: (res: any) => {
+        if (res.status == 200) {
+          this.leaveTypes = (res.data || [])
+            .filter((row: any) => row.is_leave !== false)
+            .map((row: any) => ({
+              ...row,
+              name: row.name || row.title,
+              code: row.code,
+              active: row.active !== false,
+              type: row.type,
+              defaultDays: row.defaultDays || row.default_days || 0,
+            }));
+        }
+      },
+      error: () => { this.leaveTypes = []; }
+    });
+  }
+
+  saveLeaveType(): void {
+    if (this.createLeaveTypeForm.invalid) {
+      this.createLeaveTypeForm.markAllAsTouched();
+      return;
+    }
+    const value = this.createLeaveTypeForm.value;
+    const payload = {
+      ...value,
+      title: value.title || value.name,
+      is_leave: true,
+    };
+    this.apiService.post('/attendance/create-attendance-type/', payload).subscribe({
+      next: (res: any) => {
+        if (res.status == 200) {
+          this.toast.show('Leave type saved', 'success');
+          this.listLeaveTypes();
+          this.modal.dismissAll();
+        }
+      }
+    });
+  }
+
   initializeForms(): void {
     // Create Shift Form
     this.createShiftForm = this.fb.group({
@@ -247,6 +290,18 @@ employeIdOutput: any;
         }),
         
     })
+    this.createLeaveTypeForm = this.fb.group({
+      id: [''],
+      name: ['', Validators.required],
+      title: [''],
+      code: [''],
+      type: [''],
+      description: [''],
+      defaultDays: [0],
+      carryForward: [false],
+      allowEncashment: [false],
+      active: [true],
+    });
     // Ensure at least one custom field control exists for the UI
     if (this.customFields?.length === 0) {
       this.customFields.push(this.document_number());

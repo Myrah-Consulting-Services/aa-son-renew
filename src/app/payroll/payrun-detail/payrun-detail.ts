@@ -470,9 +470,7 @@ export class PayrunDetail implements OnInit {
   get totalDeductions(): string { return this.formatCurrency(this.payrollSummary?.deductions_summary?.total_deductions); }
  
   openEmployeeDrawer(emp: any){
-    this.selectedEmployee = emp;
-    const key = String(emp?.employee_id ?? '');
-    this.selectedEmployeeDetail = this.employeeDetailsById.get(key) || null;
+    this.openPayslipDrawer(emp);
   }
   openPayslipDrawer(emp: any){
     this.selectedEmployee = emp;

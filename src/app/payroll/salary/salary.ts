@@ -485,6 +485,8 @@ export class Salary implements OnInit {
       this.isSubmitting = true;
       const formData = this.salaryForm.getRawValue();
       formData.formula=this.formula
+      formData.company = this.api.getCompanyId();
+      formData.company_id = this.api.getCompanyId();
       console.log('Payroll Head Form Data:', formData);
 
       // Here you would typically save to your backend

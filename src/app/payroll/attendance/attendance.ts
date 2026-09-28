@@ -53,6 +53,8 @@ export class Attendance implements OnInit {
   ];
   months: { value: string; display: string; }[] | undefined;
   selectedMonth: string | undefined;
+  rangeStart: string = '';
+  rangeEnd: string = '';
   // Modal data
   modalRef: any = null;
   for_emit: any = null;
@@ -331,19 +333,32 @@ export class Attendance implements OnInit {
     const endDate = `${year}-${(month).toString().padStart(2, '0')}-${a.toString().padStart(2, '0')}`
     this.start_date = startDate;
     this.end_date = endDate;
+    this.rangeStart = startDate;
+    this.rangeEnd = endDate;
 
     // Generating days in the month for display
-    this.daysInMonth = this.getFormattedDaysInMonth(year, month);
-    this.displayedColumns = ['name', ...this.daysInMonth.map(day => day.displayDate), 'totalPresent', 'totalAbsent', 'totalWeekOff', 'totalLate', 'totalCausalLeave'
-      , 'totalSickLeave', 'totalCompensatoryOff', 'totalHalfDay'
-    ];
-    // console.log(this.displayedColumns,"check1");
-
+    this.applyDateRange();
     setTimeout(() => {
       this.attendancereport()
     }, 500);
-
   }
+
+  applyDateRange() {
+    if (!this.selectedMonth) return;
+    const [year, month] = this.selectedMonth.split('-');
+    const allDays = this.getFormattedDaysInMonth(Number(year), Number(month));
+    const from = this.rangeStart || this.start_date;
+    const to = this.rangeEnd || this.end_date;
+    this.daysInMonth = allDays.filter((day: any) => {
+      if (from && day.originalDate < from) return false;
+      if (to && day.originalDate > to) return false;
+      return true;
+    });
+    this.displayedColumns = ['name', ...this.daysInMonth.map(day => day.displayDate), 'totalPresent', 'totalAbsent', 'totalWeekOff', 'totalLate', 'totalCausalLeave'
+      , 'totalSickLeave', 'totalCompensatoryOff', 'totalHalfDay'
+    ];
+  }
+
   ensureDefaultAttendance(employee: any, originalDate: string) {
     // If the value is null or undefined, set it to the default ('-')
     if (employee.attendance[originalDate] == null || employee.attendance[originalDate] === '') {

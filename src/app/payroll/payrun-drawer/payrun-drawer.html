@@ -24,7 +24,7 @@
   <div class="payslip-details">
     <div class="detail-row">
       <span class="label">Payable Days</span>
-      <span class="value">{{ payslipData?.payslip?.pay_summary?.paid_days || 0 }}</span>
+      <span class="value">{{ payslipData?.payslip?.pay_summary?.paid_days || details?.payable_days || paidDays || 0 }}</span>
     </div>
 
     <div class="detail-row" *ngIf="details?.lop_days > 0 || totalLopDays > 0 || showLopInput">

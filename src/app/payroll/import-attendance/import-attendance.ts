@@ -29,7 +29,7 @@ export class ImportAttendance {
   ) {
     this.attendanceForm = this.fb.group({
       file: [null],
-      company_id:[]
+      company_id: [this.api.getCompanyId()]
     });   
   }
   ngOnInit() {
@@ -75,6 +75,11 @@ export class ImportAttendance {
     // this.resGet=false
     const formData = new FormData();
     formData.append('file', this.attendanceForm.get('file')?.value);
+    const companyId = this.attendanceForm.get('company_id')?.value || this.api.getCompanyId();
+    if (companyId != null && companyId !== '') {
+      formData.append('company_id', String(companyId));
+      formData.append('company', String(companyId));
+    }
 
     this.api.uplaoadImg('/attendance/import-attendance/', formData).subscribe((res: any) => {
       // do something, if upload success

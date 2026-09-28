@@ -27,11 +27,19 @@ export class SalaryStructure implements OnInit {
   componentForm: FormGroup;
   components: SalaryStructureComponent[] = [];
   earning: any[] = [];
+  deductionHeads: any[] = [];
+  reimbursementHeads: any[] = [];
   
   // Search and select properties for earnings
   showEarningsDropdown: boolean[] = [];
   filteredEarnings: any[][] = [];
   earningsSearchTerms: string[] = [];
+  showDeductionsDropdown: boolean[] = [];
+  filteredDeductions: any[][] = [];
+  deductionsSearchTerms: string[] = [];
+  showReimbursementsDropdown: boolean[] = [];
+  filteredReimbursements: any[][] = [];
+  reimbursementsSearchTerms: string[] = [];
   
   isDataLoaded: boolean = false;
   
@@ -53,7 +61,9 @@ export class SalaryStructure implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: ['', Validators.required],
       active: [true],
-      earnings: this.fb.array([])
+      earnings: this.fb.array([]),
+      deductions: this.fb.array([]),
+      reimbursements: this.fb.array([])
     });
 
     this.componentForm = this.fb.group({
@@ -78,6 +88,14 @@ export class SalaryStructure implements OnInit {
     return this.salaryStructureForm.get('earnings') as FormArray;
   }
 
+  get deductionsArray(): FormArray {
+    return this.salaryStructureForm.get('deductions') as FormArray;
+  }
+
+  get reimbursementsArray(): FormArray {
+    return this.salaryStructureForm.get('reimbursements') as FormArray;
+  }
+
   getPayrollheads(){
     const companyId = this.api.getCompanyId();
     if (!companyId) {
@@ -89,17 +107,27 @@ export class SalaryStructure implements OnInit {
         console.log('API Response:', res);
         
         if (res.status === 200 && res.data) {
-          // Extract all heads from all categories and filter only earnings
           this.earning = [];
+          this.deductionHeads = [];
+          this.reimbursementHeads = [];
           res.data.forEach((category: any) => {
             if (category.heads && Array.isArray(category.heads)) {
               category.heads.forEach((head: any) => {
-                // Only include heads that are earnings (head_type_name === "Earning")
-                if (head.head_type_name === "Earning") {
-                  this.earning.push({
-                    ...head,
-                    category_name: category.category_name
-                  });
+                const item = { ...head, category_name: category.category_name };
+                if (head.head_type_name === 'Deduction' || category.category_name === 'Deduction') {
+                  this.deductionHeads.push(item);
+                } else if (
+                  head.head_type_name === 'Reimbursement' ||
+                  category.category_name === 'Reimbursement' ||
+                  /reimburse/i.test(head.head_name || '')
+                ) {
+                  this.reimbursementHeads.push(item);
+                } else if (head.head_type_name === 'Earning' || category.category_name === 'Earning') {
+                  this.earning.push(item);
+                } else if (head.head_type_name === 'Benefits' || category.category_name === 'Benefits') {
+                  this.reimbursementHeads.push(item);
+                } else {
+                  this.earning.push(item);
                 }
               });
             }
@@ -132,6 +160,8 @@ export class SalaryStructure implements OnInit {
     
     // Clear earnings FormArray
     this.earningsArray.clear();
+    this.deductionsArray.clear();
+    this.reimbursementsArray.clear();
     
     // Reset the form
     this.salaryStructureForm.patchValue({
@@ -177,6 +207,89 @@ export class SalaryStructure implements OnInit {
     this.setupCalculationSubscriptions(newIndex);
     
     console.log('Earnings row added successfully at index:', newIndex);
+  }
+
+  addDeductionsRow() {
+    this.deductionsArray.push(this.fb.group({
+      id: [''],
+      head_id: [''],
+      head_name: ['', Validators.required],
+      head_type: [2],
+      calculation_type: [1],
+      calculation_type_name: ['Fixed'],
+      calculation_value: ['0'],
+      monthly_value: ['0'],
+      annual_value: ['0']
+    }));
+    const i = this.deductionsArray.length - 1;
+    this.showDeductionsDropdown[i] = false;
+    this.deductionsSearchTerms[i] = '';
+    this.filteredDeductions[i] = [...this.deductionHeads];
+  }
+
+  removeDeductionsRow(index: number) {
+    this.deductionsArray.removeAt(index);
+    this.showDeductionsDropdown.splice(index, 1);
+    this.deductionsSearchTerms.splice(index, 1);
+    this.filteredDeductions.splice(index, 1);
+  }
+
+  addReimbursementsRow() {
+    this.reimbursementsArray.push(this.fb.group({
+      id: [''],
+      head_id: [''],
+      head_name: ['', Validators.required],
+      head_type: [4],
+      calculation_type: [1],
+      calculation_type_name: ['Fixed'],
+      calculation_value: ['0'],
+      monthly_value: ['0'],
+      annual_value: ['0']
+    }));
+    const i = this.reimbursementsArray.length - 1;
+    this.showReimbursementsDropdown[i] = false;
+    this.reimbursementsSearchTerms[i] = '';
+    this.filteredReimbursements[i] = [...this.reimbursementHeads];
+  }
+
+  removeReimbursementsRow(index: number) {
+    this.reimbursementsArray.removeAt(index);
+    this.showReimbursementsDropdown.splice(index, 1);
+    this.reimbursementsSearchTerms.splice(index, 1);
+    this.filteredReimbursements.splice(index, 1);
+  }
+
+  onHeadsFocus(kind: 'deductions' | 'reimbursements', index: number) {
+    if (kind === 'deductions') {
+      this.showDeductionsDropdown[index] = true;
+      this.filteredDeductions[index] = [...this.deductionHeads];
+    } else {
+      this.showReimbursementsDropdown[index] = true;
+      this.filteredReimbursements[index] = [...this.reimbursementHeads];
+    }
+  }
+
+  selectHeadRow(kind: 'deductions' | 'reimbursements', index: number, head: any) {
+    const row = kind === 'deductions' ? this.deductionsArray.at(index) : this.reimbursementsArray.at(index);
+    row.patchValue({
+      id: head.id,
+      head_id: head.id,
+      head_name: head.head_name,
+      head_type: head.head_type,
+      calculation_type: head.calculation_type || 1,
+      calculation_type_name: head.calculation_type_name || 'Fixed',
+      calculation_value: head.calculation_value || 0,
+      monthly_value: head.monthly_value || 0,
+      annual_value: head.annual_value || (Number(head.monthly_value || 0) * 12)
+    });
+    if (kind === 'deductions') this.showDeductionsDropdown[index] = false;
+    else this.showReimbursementsDropdown[index] = false;
+  }
+
+  onMonthlyAmountChangeRow(kind: 'deductions' | 'reimbursements', index: number) {
+    const row = kind === 'deductions' ? this.deductionsArray.at(index) : this.reimbursementsArray.at(index);
+    const monthly = parseFloat(row.get('monthly_value')?.value || '0');
+    row.patchValue({ annual_value: (monthly * 12).toFixed(2) }, { emitEvent: false });
   }
 
   // Method to remove row from Earnings section
@@ -230,37 +343,29 @@ export class SalaryStructure implements OnInit {
     console.log(this.salaryStructureForm.value);
     if (this.salaryStructureForm.valid) {
       const raw = this.salaryStructureForm.value;
-      const activeIds = new Set(this.earning.map((h: any) => Number(h.id)));
-      const skipped: string[] = [];
-      const earnings = (raw.earnings || [])
-        .map((e: any) => {
+      const allHeads = [...this.earning, ...this.deductionHeads, ...this.reimbursementHeads];
+      const mapHeads = (rows: any[], pool: any[]) => {
+        const ids = new Set(pool.map((h: any) => Number(h.id)));
+        return (rows || []).map((e: any) => {
           let headId = e.id != null && e.id !== '' ? Number(e.id) : null;
-          if (headId == null || !activeIds.has(headId)) {
-            const byName = this.earning.find(
-              (h: any) =>
-                (h.head_name || '').toLowerCase() === (e.head_name || '').toLowerCase()
+          if (headId == null || !ids.has(headId)) {
+            const byName = pool.find(
+              (h: any) => (h.head_name || '').toLowerCase() === (e.head_name || '').toLowerCase()
             );
-            headId = byName ? Number(byName.id) : null;
-          }
-          if (headId == null || !activeIds.has(headId)) {
-            skipped.push(e.head_name || 'Unknown');
-            return null;
+            headId = byName ? Number(byName.id) : e.head_id || e.id || null;
           }
           return { ...e, id: headId, head_id: headId };
-        })
-        .filter((e: any) => e != null);
-      if (skipped.length) {
-        this.showToastMessage(
-          `Removed inactive payroll heads: ${skipped.join(', ')}`,
-          'warning'
-        );
-      }
+        }).filter((e: any) => e.head_name);
+      };
+      const earnings = mapHeads(raw.earnings, this.earning.length ? this.earning : allHeads);
+      const deductions = mapHeads(raw.deductions, this.deductionHeads.length ? this.deductionHeads : allHeads);
+      const reimbursements = mapHeads(raw.reimbursements, this.reimbursementHeads.length ? this.reimbursementHeads : allHeads);
       const companyId = this.api.getCompanyId();
       if (!companyId) {
         this.showToastMessage('Company is required. Please log in again.', 'error');
         return;
       }
-      const formData = { ...raw, earnings, company: companyId };
+      const formData = { ...raw, earnings, deductions, reimbursements, company: companyId, company_id: companyId };
       
       console.log('Salary Structure Payload:', formData);
       
@@ -427,6 +532,8 @@ export class SalaryStructure implements OnInit {
     
     // Clear earnings FormArray
     this.earningsArray.clear();
+    this.deductionsArray.clear();
+    this.reimbursementsArray.clear();
     
     // Load payroll heads first
     this.getPayrollheads();
@@ -505,6 +612,34 @@ export class SalaryStructure implements OnInit {
     }
     
     console.log('Form arrays populated with structure data:', structure);
+    (structure.deductions || []).forEach((item: any) => {
+      this.deductionsArray.push(this.fb.group({
+        id: [item.head_id || item.id],
+        head_id: [item.head_id || item.id],
+        head_name: [item.head_name || ''],
+        calculation_value: [item.calculation_value || '0'],
+        calculation_type: [item.calculation_type || 1],
+        calculation_type_name: [item.calculation_type_name || 'Fixed'],
+        monthly_value: [item.monthly_value || '0'],
+        annual_value: [item.annual_value || '0'],
+        head_type: [item.head_type || 2],
+        head_type_name: [item.head_type_name || 'Deduction'],
+      }));
+    });
+    (structure.reimbursements || []).forEach((item: any) => {
+      this.reimbursementsArray.push(this.fb.group({
+        id: [item.head_id || item.id],
+        head_id: [item.head_id || item.id],
+        head_name: [item.head_name || ''],
+        calculation_value: [item.calculation_value || '0'],
+        calculation_type: [item.calculation_type || 1],
+        calculation_type_name: [item.calculation_type_name || 'Fixed'],
+        monthly_value: [item.monthly_value || '0'],
+        annual_value: [item.annual_value || '0'],
+        head_type: [item.head_type || 4],
+        head_type_name: [item.head_type_name || 'Reimbursement'],
+      }));
+    });
   }
 
   // Delete salary structure
@@ -544,7 +679,9 @@ export class SalaryStructure implements OnInit {
   // Get total number of components
   getTotalComponents(structure: any): number {
     const earnings = structure.earnings?.length || 0;
-    return earnings;
+    const deductions = structure.deductions?.length || 0;
+    const reimbursements = structure.reimbursements?.length || 0;
+    return earnings + deductions + reimbursements;
   }
 
   // Calculate total annual amount from earnings
