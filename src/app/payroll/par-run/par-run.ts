@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormsModule } from '@angular/forms';
 import { PayrunDetail } from "../payrun-detail/payrun-detail";
@@ -45,6 +45,18 @@ export class ParRun implements OnInit {
   /** Cache: payrun key → payslip details array from API */
   payslipByRun: Record<string, any[]> = {};
   loadingEmployees: Record<string, boolean> = {};
+  private employeeLoadPromises: Record<string, Promise<any[]>> = {};
+
+  /** employee_id → selected, keyed by run/history key */
+  selectedByRun: Record<string, Record<string, boolean>> = {};
+  exportingExcel: Record<string, boolean> = {};
+
+  showExportModal = false;
+  exportScope: 'all' | 'selected' = 'all';
+  exportMonthSearch = '';
+  showExportMonthDropdown = false;
+  exportMonthActiveIndex = 0;
+  selectedExportOption: { key: string; label: string; item: any; mode: 'run' | 'history' } | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -151,7 +163,7 @@ export class ParRun implements OnInit {
       return;
     }
     this.expandedRunKey = key;
-    this.loadEmployeesForPeriod(item, 'run');
+    void this.loadEmployeesForPeriod(item, 'run');
   }
 
   toggleHistoryEmployees(item: any, event?: Event): void {
@@ -162,13 +174,15 @@ export class ParRun implements OnInit {
       return;
     }
     this.expandedHistoryKey = key;
-    this.loadEmployeesForPeriod(item, 'history');
+    void this.loadEmployeesForPeriod(item, 'history');
   }
 
-  private loadEmployeesForPeriod(item: any, mode: 'run' | 'history'): void {
+  private loadEmployeesForPeriod(item: any, mode: 'run' | 'history'): Promise<any[]> {
     const key = mode === 'run' ? this.runKey(item) : this.historyKey(item);
     const cache = mode === 'run' ? this.runEmployees : this.historyEmployees;
-    if (cache[key]?.length) return;
+    if (cache[key]?.length) return Promise.resolve(cache[key]);
+    const pendingLoad = this.employeeLoadPromises[key];
+    if (pendingLoad !== undefined) return pendingLoad;
 
     const runId = item?.payrun_id || item?.payroll_run_id;
     const period = this.periodLabel(item);
@@ -176,66 +190,70 @@ export class ParRun implements OnInit {
     const isPaidOrApproved = ['6', '7', 'PAID', 'APPROVED'].includes(status);
 
     this.loadingEmployees[key] = true;
-
-    const applyRows = (rows: any[], payslips?: any[]) => {
-      const normalized = (rows || []).map((e: any) => ({
-        ...e,
-        employee_id: e.employee_id ?? e.id,
-        emp_id: e.emp_id || e.employee_code || e.employee_no,
-        employee_name: e.employee_name || `${e.first_name || ''} ${e.last_name || ''}`.trim(),
-        designation: e.designation || e.designation_name || e.job_title || '',
-        paid_days: e.paid_days ?? e.payable_days ?? 30,
-        gross_pay: e.gross_pay ?? e.gross ?? 0,
-        net_pay: e.net_pay ?? e.net ?? 0,
-        overtime_pay: e.overtime_pay ?? e.overtime ?? 0,
-        deductions: e.deductions ?? e.total_deductions ?? 0,
-        payment_mode: e.payment_mode || e.payment_method || 'Bank Transfer',
-        status: e.status || status,
-      }));
-      const demoRows = this.demo.payrollEmployees(period, normalized, {
-        status: isPaidOrApproved ? 'PAID' : status || '4',
-        paymentDate: item?.payment_date || item?.pay_date || item?.pay_date_formatted || '',
-      });
-      cache[key] = demoRows;
-      if (payslips?.length) {
-        this.payslipByRun[key] = payslips;
-      } else {
-        this.payslipByRun[key] = demoRows.map((e: any) => ({
-          employee_id: e.employee_id,
-          payslip: e.payslip || this.buildFallbackPayslip(e, period, item),
+    this.employeeLoadPromises[key] = new Promise((resolve) => {
+      const applyRows = (rows: any[], payslips?: any[]) => {
+        const normalized = (rows || []).map((e: any) => ({
+          ...e,
+          employee_id: e.employee_id ?? e.id,
+          emp_id: e.emp_id || e.employee_code || e.employee_no,
+          employee_name: e.employee_name || `${e.first_name || ''} ${e.last_name || ''}`.trim(),
+          designation: e.designation || e.designation_name || e.job_title || '',
+          paid_days: e.paid_days ?? e.payable_days ?? 30,
+          gross_pay: e.gross_pay ?? e.gross ?? 0,
+          net_pay: e.net_pay ?? e.net ?? 0,
+          overtime_pay: e.overtime_pay ?? e.overtime ?? 0,
+          deductions: e.deductions ?? e.total_deductions ?? 0,
+          payment_mode: e.payment_mode || e.payment_method || 'Bank Transfer',
+          status: e.status || status,
         }));
-      }
-      this.loadingEmployees[key] = false;
-    };
-
-    if (!runId) {
-      applyRows([]);
-      return;
-    }
-
-    const payload = {
-      payroll_run_id: runId,
-      company_id: this.api.getUserCompany(),
-      include_overtime: !!this.settings.includeOvertimeInSalary,
-      add_overtime_to_salary: !!this.settings.includeOvertimeInSalary,
-    };
-
-    const endpoint = isPaidOrApproved
-      ? '/employee/submit_payroll_run_with_payslip/'
-      : '/employee/payroll_process_preview/';
-
-    this.api.post(endpoint, payload).subscribe({
-      next: (response: any) => {
-        if (response?.status == 200 && response?.data) {
-          const employees = response.data.employees || response.data.employee_payroll_details || [];
-          const payslips = response.data.employee_payslip_details || [];
-          applyRows(Array.isArray(employees) ? employees : [], Array.isArray(payslips) ? payslips : []);
+        const demoRows = this.demo.payrollEmployees(period, normalized, {
+          status: isPaidOrApproved ? 'PAID' : status || '4',
+          paymentDate: item?.payment_date || item?.pay_date || item?.pay_date_formatted || '',
+        });
+        cache[key] = demoRows;
+        if (payslips?.length) {
+          this.payslipByRun[key] = payslips;
         } else {
-          applyRows([]);
+          this.payslipByRun[key] = demoRows.map((e: any) => ({
+            employee_id: e.employee_id,
+            payslip: e.payslip || this.buildFallbackPayslip(e, period, item),
+          }));
         }
-      },
-      error: () => applyRows([]),
+        this.loadingEmployees[key] = false;
+        delete this.employeeLoadPromises[key];
+        resolve(demoRows);
+      };
+
+      if (!runId) {
+        applyRows([]);
+        return;
+      }
+
+      const payload = {
+        payroll_run_id: runId,
+        company_id: this.api.getUserCompany(),
+        include_overtime: !!this.settings.includeOvertimeInSalary,
+        add_overtime_to_salary: !!this.settings.includeOvertimeInSalary,
+      };
+
+      const endpoint = isPaidOrApproved
+        ? '/employee/submit_payroll_run_with_payslip/'
+        : '/employee/payroll_process_preview/';
+
+      this.api.post(endpoint, payload).subscribe({
+        next: (response: any) => {
+          if (response?.status == 200 && response?.data) {
+            const employees = response.data.employees || response.data.employee_payroll_details || [];
+            const payslips = response.data.employee_payslip_details || [];
+            applyRows(Array.isArray(employees) ? employees : [], Array.isArray(payslips) ? payslips : []);
+          } else {
+            applyRows([]);
+          }
+        },
+        error: () => applyRows([]),
+      });
     });
+    return this.employeeLoadPromises[key];
   }
 
   private buildFallbackPayslip(emp: any, period: string, runItem: any): any {
@@ -514,5 +532,412 @@ export class ParRun implements OnInit {
 
   formatMoney(value: any): string {
     return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  empSelectKey(emp: any): string {
+    return String(emp?.employee_id ?? emp?.emp_id ?? emp?.id ?? emp?.employee_name ?? '');
+  }
+
+  private selectionKey(item: any, mode: 'run' | 'history'): string {
+    return mode === 'run' ? this.runKey(item) : this.historyKey(item);
+  }
+
+  isEmployeeSelected(item: any, emp: any, mode: 'run' | 'history'): boolean {
+    return !!this.selectedByRun[this.selectionKey(item, mode)]?.[this.empSelectKey(emp)];
+  }
+
+  toggleEmployeeSelection(item: any, emp: any, mode: 'run' | 'history', event: Event): void {
+    event.stopPropagation();
+    const runKey = this.selectionKey(item, mode);
+    const empKey = this.empSelectKey(emp);
+    if (!this.selectedByRun[runKey]) this.selectedByRun[runKey] = {};
+    this.selectedByRun[runKey][empKey] = (event.target as HTMLInputElement).checked;
+  }
+
+  selectedCount(item: any, mode: 'run' | 'history'): number {
+    const map = this.selectedByRun[this.selectionKey(item, mode)] || {};
+    return Object.values(map).filter(Boolean).length;
+  }
+
+  isAllEmployeesSelected(item: any, mode: 'run' | 'history'): boolean {
+    const employees = this.getEmployees(item, mode);
+    if (!employees.length) return false;
+    return employees.every((emp) => this.isEmployeeSelected(item, emp, mode));
+  }
+
+  toggleSelectAll(item: any, mode: 'run' | 'history', event: Event): void {
+    event.stopPropagation();
+    const checked = (event.target as HTMLInputElement).checked;
+    const runKey = this.selectionKey(item, mode);
+    const next: Record<string, boolean> = {};
+    this.getEmployees(item, mode).forEach((emp) => {
+      next[this.empSelectKey(emp)] = checked;
+    });
+    this.selectedByRun[runKey] = next;
+  }
+
+  isExporting(item: any, mode: 'run' | 'history'): boolean {
+    return !!this.exportingExcel[this.selectionKey(item, mode)];
+  }
+
+  get exportMonthOptions(): { key: string; label: string; item: any; mode: 'run' | 'history' }[] {
+    const runs = (Array.isArray(this.runPayrollData) ? this.runPayrollData : [])
+      .filter((r: any) => String(r?.status) !== '7')
+      .map((r: any) => ({
+        key: `run-${this.runKey(r)}`,
+        label: this.periodLabel(r),
+        item: r,
+        mode: 'run' as const,
+      }));
+    const history = (this.filteredPayrollHistory || []).map((r: any) => ({
+      key: `hist-${this.historyKey(r)}`,
+      label: `${r?.details || r?.processing_period || r?.payment_date || 'Pay run'} (History)`,
+      item: r,
+      mode: 'history' as const,
+    }));
+    return [...runs, ...history];
+  }
+
+  get filteredExportMonthOptions() {
+    const q = this.exportMonthSearch.trim().toLowerCase();
+    const options = this.exportMonthOptions;
+    if (!q) return options;
+    return options.filter((o) => o.label.toLowerCase().includes(q));
+  }
+
+  openExportModal(): void {
+    this.showExportModal = true;
+    this.exportScope = 'all';
+    this.showExportMonthDropdown = false;
+    this.exportMonthSearch = '';
+    if (!this.selectedExportOption) {
+      this.selectedExportOption = this.exportMonthOptions[0] || null;
+      if (this.selectedExportOption) {
+        this.exportMonthSearch = this.selectedExportOption.label;
+      }
+    } else {
+      this.exportMonthSearch = this.selectedExportOption.label;
+    }
+  }
+
+  closeExportModal(): void {
+    this.showExportModal = false;
+    this.showExportMonthDropdown = false;
+  }
+
+  openExportMonthDropdown(): void {
+    this.showExportMonthDropdown = true;
+    this.exportMonthActiveIndex = Math.max(
+      0,
+      this.filteredExportMonthOptions.findIndex((o) => o.key === this.selectedExportOption?.key)
+    );
+  }
+
+  onExportMonthSearch(event: Event): void {
+    this.exportMonthSearch = (event.target as HTMLInputElement).value;
+    this.showExportMonthDropdown = true;
+    this.exportMonthActiveIndex = this.filteredExportMonthOptions.length ? 0 : -1;
+    this.selectedExportOption = null;
+  }
+
+  onExportMonthKeydown(event: KeyboardEvent): void {
+    const options = this.filteredExportMonthOptions;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.showExportMonthDropdown = true;
+      this.exportMonthActiveIndex = Math.min(this.exportMonthActiveIndex + 1, options.length - 1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.exportMonthActiveIndex = Math.max(this.exportMonthActiveIndex - 1, 0);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const opt = options[this.exportMonthActiveIndex];
+      if (opt) this.selectExportMonth(opt);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.showExportMonthDropdown = false;
+    }
+  }
+
+  selectExportMonth(option: { key: string; label: string; item: any; mode: 'run' | 'history' }): void {
+    this.selectedExportOption = option;
+    this.exportMonthSearch = option.label;
+    this.showExportMonthDropdown = false;
+    this.exportScope = 'all';
+  }
+
+  clearExportMonth(): void {
+    this.selectedExportOption = null;
+    this.exportMonthSearch = '';
+    this.showExportMonthDropdown = true;
+    this.exportMonthActiveIndex = 0;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.searchable-select')) {
+      this.showExportMonthDropdown = false;
+    }
+  }
+
+  modalSelectedCount(): number {
+    if (!this.selectedExportOption) return 0;
+    return this.selectedCount(this.selectedExportOption.item, this.selectedExportOption.mode);
+  }
+
+  async confirmExportExcel(): Promise<void> {
+    if (!this.selectedExportOption) {
+      alert('Select a pay run month first.');
+      return;
+    }
+    await this.downloadPayRunExcel(
+      this.selectedExportOption.item,
+      this.selectedExportOption.mode,
+      this.exportScope
+    );
+  }
+
+  async downloadPayRunExcel(item: any, mode: 'run' | 'history', scope: 'all' | 'selected'): Promise<void> {
+    const key = this.selectionKey(item, mode);
+    if (this.exportingExcel[key]) return;
+    this.exportingExcel[key] = true;
+    try {
+      const employees = await this.loadEmployeesForPeriod(item, mode);
+      if (!employees.length) {
+        alert('No employee payroll data found for this month.');
+        return;
+      }
+      const selectedMap = this.selectedByRun[key] || {};
+      const rows =
+        scope === 'selected'
+          ? employees.filter((emp) => selectedMap[this.empSelectKey(emp)])
+          : employees;
+      if (!rows.length) {
+        alert(scope === 'selected' ? 'Select at least one employee to download.' : 'No employees to export.');
+        return;
+      }
+      this.buildAndDownloadExcel(item, mode, rows);
+      this.closeExportModal();
+    } finally {
+      this.exportingExcel[key] = false;
+    }
+  }
+
+  private getPayslipForEmployee(item: any, emp: any, mode: 'run' | 'history'): any {
+    const key = this.selectionKey(item, mode);
+    const payslips = this.payslipByRun[key] || [];
+    const matched =
+      payslips.find((p: any) => String(p.employee_id) === String(emp.employee_id)) ||
+      payslips.find((p: any) => String(p?.payslip?.employee_summary?.employee_id) === String(emp.emp_id));
+    return matched?.payslip || emp.payslip || this.buildFallbackPayslip(emp, this.periodLabel(item), item);
+  }
+
+  private slipItems(group: any): { component: string; amount: number }[] {
+    return (group?.items || []).map((i: any) => ({
+      component: String(i.component || i.name || i.head_name || 'Item'),
+      amount: Number(i.amount ?? i.value ?? 0),
+    }));
+  }
+
+  private buildAndDownloadExcel(item: any, mode: 'run' | 'history', employees: any[]): void {
+    const period = this.periodLabel(item);
+    const paymentDate = item?.payment_date || item?.pay_date_formatted || item?.pay_date || '';
+    const currency = this.getcurrency() || 'AED';
+    const detailed = employees.map((emp) => {
+      const slip = this.getPayslipForEmployee(item, emp, mode);
+      const earnings = this.slipItems(slip?.earnings);
+      const deductions = this.slipItems(slip?.deductions);
+      const reimbursements = this.slipItems(slip?.reimbursements);
+      if (!earnings.length) {
+        earnings.push({ component: 'Gross Pay', amount: Number(emp.gross_pay || 0) });
+        if (emp.overtime_pay || emp.overtime) {
+          earnings.push({ component: 'Overtime', amount: Number(emp.overtime_pay || emp.overtime || 0) });
+        }
+      }
+      if (!deductions.length && Number(emp.deductions || 0)) {
+        deductions.push({ component: 'Deductions', amount: Number(emp.deductions || 0) });
+      }
+      return { emp, slip, earnings, deductions, reimbursements };
+    });
+
+    const earningCols = Array.from(new Set(detailed.flatMap((d) => d.earnings.map((e) => e.component))));
+    const deductionCols = Array.from(new Set(detailed.flatMap((d) => d.deductions.map((e) => e.component))));
+    const reimburseCols = Array.from(new Set(detailed.flatMap((d) => d.reimbursements.map((e) => e.component))));
+
+    const header = [
+      'Employee Name',
+      'Employee ID',
+      'Designation',
+      'Department',
+      'Joining Date',
+      'Paid Days',
+      'LOP Days',
+      ...earningCols.map((c) => `Earning: ${c}`),
+      'Gross Pay',
+      'Overtime',
+      ...deductionCols.map((c) => `Deduction: ${c}`),
+      'Total Deductions',
+      ...reimburseCols.map((c) => `Reimbursement: ${c}`),
+      'Benefits',
+      'Net Pay',
+      'Payment Mode',
+      'Status',
+      'Payment Date',
+      'Pay Period',
+    ];
+
+    const amountOf = (items: { component: string; amount: number }[], name: string) =>
+      items.filter((i) => i.component === name).reduce((s, i) => s + i.amount, 0);
+
+    const registerRows = detailed.map(({ emp, slip, earnings, deductions, reimbursements }) => {
+      const summary = slip?.employee_summary || {};
+      const paySummary = slip?.pay_summary || {};
+      const gross = Number(slip?.earnings?.gross_earnings ?? emp.gross_pay ?? 0);
+      const ot = Number(emp.overtime_pay ?? emp.overtime ?? 0);
+      const totalDed = Number(slip?.deductions?.total_deductions ?? emp.deductions ?? 0);
+      const net = Number(slip?.net_pay?.net_pay ?? emp.net_pay ?? 0);
+      return [
+        { t: 's', v: summary.employee_name || emp.employee_name || '' },
+        { t: 's', v: summary.employee_id || emp.emp_id || '' },
+        { t: 's', v: summary.designation || emp.designation || '' },
+        { t: 's', v: emp.department || emp.department_name || '' },
+        { t: 's', v: summary.date_of_joining || emp.joining_date || '' },
+        { t: 'n', v: paySummary.paid_days ?? emp.paid_days ?? 0 },
+        { t: 'n', v: paySummary.lop_days ?? emp.lop_days ?? 0 },
+        ...earningCols.map((c) => ({ t: 'n', v: amountOf(earnings, c) })),
+        { t: 'n', v: gross },
+        { t: 'n', v: ot },
+        ...deductionCols.map((c) => ({ t: 'n', v: amountOf(deductions, c) })),
+        { t: 'n', v: totalDed },
+        ...reimburseCols.map((c) => ({ t: 'n', v: amountOf(reimbursements, c) })),
+        { t: 'n', v: Number(emp.benefits || 0) },
+        { t: 'n', v: net },
+        { t: 's', v: emp.payment_mode || '' },
+        { t: 's', v: emp.payment_status || emp.status || '' },
+        { t: 's', v: paymentDate },
+        { t: 's', v: period },
+      ];
+    });
+
+    const lineHeader = [
+      'Employee Name',
+      'Employee ID',
+      'Type',
+      'Component',
+      'Amount',
+      'Pay Period',
+    ];
+    const lineRows: { t: string; v: any }[][] = [];
+    detailed.forEach(({ emp, earnings, deductions, reimbursements }) => {
+      const pushLines = (type: string, items: { component: string; amount: number }[]) => {
+        items.forEach((i) => {
+          lineRows.push([
+            { t: 's', v: emp.employee_name || '' },
+            { t: 's', v: emp.emp_id || '' },
+            { t: 's', v: type },
+            { t: 's', v: i.component },
+            { t: 'n', v: i.amount },
+            { t: 's', v: period },
+          ]);
+        });
+      };
+      pushLines('Earning', earnings);
+      pushLines('Deduction', deductions);
+      pushLines('Reimbursement', reimbursements);
+    });
+
+    const xml = this.buildSpreadsheetXml(
+      period,
+      currency,
+      employees.length,
+      header,
+      registerRows,
+      lineHeader,
+      lineRows
+    );
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safePeriod = String(period).replace(/[^\w\-]+/g, '_');
+    a.download = `Pay_Run_${safePeriod}_${employees.length}_employees.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private xmlEscape(value: any): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  private excelCell(cell: { t: string; v: any }): string {
+    if (cell.t === 'n') {
+      const n = Number(cell.v || 0);
+      return `<Cell ss:StyleID="Money"><Data ss:Type="Number">${Number.isFinite(n) ? n : 0}</Data></Cell>`;
+    }
+    return `<Cell><Data ss:Type="String">${this.xmlEscape(cell.v)}</Data></Cell>`;
+  }
+
+  private excelRow(cells: { t: string; v: any }[]): string {
+    return `<Row>${cells.map((c) => this.excelCell(c)).join('')}</Row>`;
+  }
+
+  private excelHeaderRow(headers: string[]): string {
+    return `<Row>${headers
+      .map((h) => `<Cell ss:StyleID="Header"><Data ss:Type="String">${this.xmlEscape(h)}</Data></Cell>`)
+      .join('')}</Row>`;
+  }
+
+  private buildSpreadsheetXml(
+    period: string,
+    currency: string,
+    empCount: number,
+    registerHeader: string[],
+    registerRows: { t: string; v: any }[][],
+    lineHeader: string[],
+    lineRows: { t: string; v: any }[][]
+  ): string {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Styles>
+    <Style ss:ID="Header">
+      <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#41299B" ss:Pattern="Solid"/>
+      <Alignment ss:WrapText="1" ss:Vertical="Center"/>
+    </Style>
+    <Style ss:ID="Money">
+      <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="Title">
+      <Font ss:Bold="1" ss:Size="14" ss:Color="#41299B"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Pay Register">
+    <Table>
+      <Row><Cell ss:StyleID="Title" ss:MergeAcross="6"><Data ss:Type="String">Pay Run — ${this.xmlEscape(period)}</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Currency: ${this.xmlEscape(currency)}  |  Employees: ${empCount}  |  Generated: ${this.xmlEscape(new Date().toLocaleString())}</Data></Cell></Row>
+      <Row></Row>
+      ${this.excelHeaderRow(registerHeader)}
+      ${registerRows.map((r) => this.excelRow(r)).join('\n')}
+    </Table>
+  </Worksheet>
+  <Worksheet ss:Name="Line Details">
+    <Table>
+      <Row><Cell ss:StyleID="Title" ss:MergeAcross="4"><Data ss:Type="String">Earnings, deductions &amp; reimbursements — ${this.xmlEscape(period)}</Data></Cell></Row>
+      <Row></Row>
+      ${this.excelHeaderRow(lineHeader)}
+      ${lineRows.map((r) => this.excelRow(r)).join('\n')}
+    </Table>
+  </Worksheet>
+</Workbook>`;
   }
 }

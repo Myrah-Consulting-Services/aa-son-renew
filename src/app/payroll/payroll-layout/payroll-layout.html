@@ -2,29 +2,63 @@
   <!-- Tab Layout (Default) -->
   <div class="payroll-tabs-container" *ngIf="!isSidebarMode">
     <div class="tabs-header">
-      <div class="d-flex flex-wrap gap-2">
-        <a
-          *ngFor="let item of navItems"
-          [routerLink]="item.route"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="payroll-tab-link px-3 py-2 rounded text-decoration-none"
-          [title]="item.label"
-        >
-          <i *ngIf="item.icon" [class]="'bi me-1 ' + item.icon"></i>
-          {{ item.label }}
-        </a>
-      </div>
+      <nav class="tabs-nav" aria-label="Payroll">
+        <ng-container *ngFor="let item of navItems">
+          <div
+            *ngIf="item.children?.length; else tabLink"
+            class="nav-dropdown"
+            [class.open]="openGroup === item.label"
+          >
+            <button
+              type="button"
+              class="payroll-tab-link"
+              [class.active]="isGroupActive(item)"
+              [attr.aria-expanded]="openGroup === item.label"
+              aria-haspopup="true"
+              (click)="toggleGroup(item.label, $event)"
+            >
+              <i [class]="'bi ' + item.icon"></i>
+              <span>{{ item.label }}</span>
+              <i class="bi bi-chevron-down caret"></i>
+            </button>
+            <div class="nav-dropdown-menu" *ngIf="openGroup === item.label" (click)="$event.stopPropagation()">
+              <a
+                *ngFor="let child of item.children"
+                [routerLink]="child.route"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="nav-dropdown-item"
+                (click)="closeGroup()"
+              >
+                <i [class]="'bi ' + child.icon"></i>
+                <span>{{ child.label }}</span>
+              </a>
+            </div>
+          </div>
+          <ng-template #tabLink>
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="payroll-tab-link"
+              [title]="item.label"
+            >
+              <i [class]="'bi ' + item.icon"></i>
+              <span>{{ item.label }}</span>
+            </a>
+          </ng-template>
+        </ng-container>
+      </nav>
       <div class="layout-toggle">
         <span class="toggle-label">
-          <i class="bi bi-list-ul me-1"></i>Sidebar
+          <i class="bi bi-list-ul"></i>Sidebar
         </span>
         <label class="switch">
           <input type="checkbox" [checked]="isSidebarMode" (change)="toggleLayout()">
           <span class="slider"></span>
         </label>
         <span class="toggle-label">
-          <i class="bi bi-tabs me-1"></i>Tabs
+          <i class="bi bi-tabs"></i>Tabs
         </span>
       </div>
     </div>
@@ -35,36 +69,30 @@
     <div class="payroll-sidebar">
       <div class="sidebar-header">
         <h5 class="sidebar-title">
-          <i class="bi bi-wallet2 me-2"></i>Payroll
+          <i class="bi bi-wallet2"></i>Payroll
         </h5>
+        <div class="layout-toggle">
+          <span class="toggle-label">Sidebar</span>
+          <label class="switch">
+            <input type="checkbox" [checked]="isSidebarMode" (change)="toggleLayout()">
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">Tabs</span>
+        </div>
       </div>
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" aria-label="Payroll">
         <a
-          *ngFor="let item of navItems"
+          *ngFor="let item of flatNavItems"
           [routerLink]="item.route"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
           class="sidebar-nav-item"
           [title]="item.label"
         >
-          <i *ngIf="item.icon" [class]="'bi me-2 ' + item.icon"></i>
+          <i [class]="'bi ' + item.icon"></i>
           <span>{{ item.label }}</span>
         </a>
       </nav>
-      <div class="sidebar-footer">
-        <div class="layout-toggle">
-          <span class="toggle-label">
-            <i class="bi bi-list-ul me-1"></i>Sidebar
-          </span>
-          <label class="switch">
-            <input type="checkbox" [checked]="isSidebarMode" (change)="toggleLayout()">
-            <span class="slider"></span>
-          </label>
-          <span class="toggle-label">
-            <i class="bi bi-tabs me-1"></i>Tabs
-          </span>
-        </div>
-      </div>
     </div>
     <div class="payroll-content-wrapper">
       <router-outlet></router-outlet>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Api } from '../../core/services/api';
 import { CommonModule } from '@angular/common';
@@ -14,6 +14,27 @@ import { TerminateProcess } from '../terminate-process/terminate-process';
 import { SalaryHistory } from '../salary-history/salary-history';
 import { CreateLoanComponent } from '../create-loan/create-loan';
 import { Camp, CampAssignment, CampService } from '../camp-management/camp.service';
+import {
+  EmployeeWorkforceService,
+  IdentityOverlay,
+  Project,
+  ProjectSite,
+  SiteAllocation,
+  SiteTransfer,
+} from './employee-workforce.service';
+
+type DocStatus = 'valid' | 'expiring' | 'urgent' | 'expired' | 'missing';
+
+export interface TrackedDocument {
+  key: string;
+  label: string;
+  number: string;
+  expiry: string | null;
+  daysLeft: number | null;
+  status: DocStatus;
+  statusLabel: string;
+  icon: string;
+}
 
 @Component({
   selector: 'app-employee-view-details',
@@ -26,6 +47,7 @@ export class EmployeeViewDetails {
   attendance: any[] = [];
   tabs = [
     { key: 'overview', label: 'Overview' },
+    { key: 'ids-sites', label: 'IDs & Sites' },
     { key: 'salary', label: 'Salary Details' },
     { key: 'attendance', label: 'Attendance' },
     { key: 'payslips', label: 'Payslips' },
@@ -35,7 +57,7 @@ export class EmployeeViewDetails {
   activeTab = 'overview';
   selectedEmployee: any;
   loanLedgers: any;
-  documentList: any;
+  documentList: any[] = [];
   selectedMonth: any;
   companyInfo: any = null;
 
@@ -45,6 +67,24 @@ export class EmployeeViewDetails {
   showCampAssignModal = false;
   campOptions: Camp[] = [];
   selectedCampId = '';
+
+  identityOverlay: IdentityOverlay | null = null;
+  trackedDocuments: TrackedDocument[] = [];
+  expiryAlerts: TrackedDocument[] = [];
+  allocation: SiteAllocation | null = null;
+  allocationProject: Project | null = null;
+  allocationSite: ProjectSite | null = null;
+  transfers: SiteTransfer[] = [];
+  showTransferModal = false;
+  transferProjectId = '';
+  transferSiteId = '';
+  transferDate = '';
+  transferReason = '';
+  projectQuery = '';
+  siteQuery = '';
+  openTransferField: 'project' | 'site' | null = null;
+  projectHighlight = 0;
+  siteHighlight = 0;
  
   types: any;
   id: any | null;
@@ -52,9 +92,9 @@ export class EmployeeViewDetails {
   benefitsModalRef: any;
   airTravelModalRef: any;
   salaryObject: any;
-  deductions: any;
-  benefits: any;
-  airDeductions: any;
+  deductions: any[] = [];
+  benefits: any[] = [];
+  airDeductions: any[] = [];
   benefitData: any;
   deductionData: any;
   airData: any;
@@ -62,7 +102,8 @@ export class EmployeeViewDetails {
   payslipData: any;
   constructor(private route:ActivatedRoute, private router: Router, private modalService: NgbModal, private api: Api, private fb: FormBuilder,
     private toast:ToastService,
-    private campService: CampService
+    private campService: CampService,
+    private workforce: EmployeeWorkforceService,
   ) {}
 
   getcurrency() {
@@ -75,6 +116,7 @@ export class EmployeeViewDetails {
       this.employee = res.data;
       console.log(this.employee,'employee');
       this.refreshCampAssignment();
+      this.refreshWorkforce();
     });
     const navigation = this.router.getCurrentNavigation();
     this.activeTab = navigation?.extras?.state?.['tab'] || 'overview';
@@ -197,7 +239,7 @@ export class EmployeeViewDetails {
   loadDocuments(emp:any){
     this.api.get('/employee/employee_based_document/'+emp+"/").subscribe((response:any)=>{
       if (response.status == 200) {
-        this.documentList=response.documents
+        this.documentList = response.documents || [];
       }
     })
 
@@ -271,8 +313,7 @@ export class EmployeeViewDetails {
 
   // Salary helpers
    getSalaryObject() {
-    return this.employee?.salary_components[0]
- 
+    return this.employee?.salary_components?.[0] ?? null;
   }
 
   getEarnings(): any[] {
@@ -287,7 +328,7 @@ export class EmployeeViewDetails {
 
   getBenefits(): any[] {
     const s = this.getSalaryObject();
-    return s.benefits || [];
+    return s?.benefits || [];
   }
 
   sumMonthly(items: any[]): number {
@@ -1258,6 +1299,238 @@ export class EmployeeViewDetails {
   goToCamp(): void {
     if (this.currentCamp) {
       this.router.navigate(['/payroll/camp-management', this.currentCamp.id]);
+    }
+  }
+
+  refreshWorkforce(): void {
+    if (!this.employee) {
+      this.trackedDocuments = [];
+      this.expiryAlerts = [];
+      this.allocation = null;
+      this.transfers = [];
+      return;
+    }
+    const employeeId = String(this.employee.id || this.id || '');
+    const empCode = String(this.employee.emp_id || '');
+    this.identityOverlay = this.workforce.getIdentity(employeeId, empCode, this.employee);
+    this.trackedDocuments = this.buildTrackedDocuments();
+    this.expiryAlerts = this.trackedDocuments.filter((d) => d.status !== 'valid');
+    this.allocation = this.workforce.getAllocation(employeeId, empCode);
+    this.allocationProject = this.allocation ? this.workforce.getProject(this.allocation.projectId) : null;
+    this.allocationSite = this.allocation ? this.workforce.getSite(this.allocation.siteId) : null;
+    this.transfers = this.workforce.getTransfers(employeeId, empCode);
+  }
+
+  private buildTrackedDocuments(): TrackedDocument[] {
+    const overlay = this.identityOverlay || {};
+    return [
+      this.toTrackedDoc('Emirates ID', 'bi-person-vcard', this.employee?.emirates_id, overlay.emiratesIdExpiry),
+      this.toTrackedDoc('Passport', 'bi-journal-richtext', this.employee?.passport_number, overlay.passportExpiry),
+      this.toTrackedDoc(
+        'Visa',
+        'bi-stamp',
+        overlay.visaNumber || this.employee?.visa_number || this.employee?.visa_no,
+        overlay.visaExpiry || this.employee?.visa_expiry
+      ),
+      this.toTrackedDoc(
+        'Work Permit / Labour Card',
+        'bi-card-checklist',
+        this.employee?.labour_card_number,
+        overlay.labourCardExpiry
+      ),
+    ];
+  }
+
+  private toTrackedDoc(
+    label: string,
+    icon: string,
+    number: string | null | undefined,
+    expiry: string | null | undefined
+  ): TrackedDocument {
+    const daysLeft = this.daysUntil(expiry);
+    const { status, statusLabel } = this.docStatus(number, daysLeft);
+    return {
+      key: label,
+      label,
+      icon,
+      number: number || 'Not recorded',
+      expiry: expiry || null,
+      daysLeft,
+      status,
+      statusLabel,
+    };
+  }
+
+  private daysUntil(dateStr: string | null | undefined): number | null {
+    if (!dateStr) return null;
+    const expiry = new Date(dateStr);
+    if (Number.isNaN(expiry.getTime())) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
+    return Math.round((expiry.getTime() - today.getTime()) / 86400000);
+  }
+
+  private docStatus(number: string | null | undefined, daysLeft: number | null): { status: DocStatus; statusLabel: string } {
+    if (!number) return { status: 'missing', statusLabel: 'Missing' };
+    if (daysLeft == null) return { status: 'missing', statusLabel: 'No expiry date' };
+    if (daysLeft < 0) return { status: 'expired', statusLabel: `Expired ${Math.abs(daysLeft)} days ago` };
+    if (daysLeft <= 30) return { status: 'urgent', statusLabel: `${daysLeft} days left` };
+    if (daysLeft <= 90) return { status: 'expiring', statusLabel: `${daysLeft} days left` };
+    return { status: 'valid', statusLabel: 'Valid' };
+  }
+
+  get filteredProjects(): Project[] {
+    const q = this.projectQuery.trim().toLowerCase();
+    const list = this.workforce.getProjects();
+    if (!q) return list;
+    return list.filter((p) => `${p.name} ${p.code} ${p.client}`.toLowerCase().includes(q));
+  }
+
+  get filteredSites(): ProjectSite[] {
+    const sites = this.workforce.getSitesForProject(this.transferProjectId);
+    const q = this.siteQuery.trim().toLowerCase();
+    if (!q) return sites;
+    return sites.filter((s) => `${s.name} ${s.location}`.toLowerCase().includes(q));
+  }
+
+  projectLabel(id: string): string {
+    return this.workforce.getProject(id)?.name || '—';
+  }
+
+  siteLabel(id: string): string {
+    const site = this.workforce.getSite(id);
+    return site ? `${site.name}` : '—';
+  }
+
+  openTransferModal(): void {
+    this.transferProjectId = this.allocation?.projectId || '';
+    this.transferSiteId = '';
+    this.transferDate = new Date().toISOString().slice(0, 10);
+    this.transferReason = this.allocation ? '' : 'Initial site allocation';
+    this.projectQuery = this.allocationProject?.name || '';
+    this.siteQuery = '';
+    this.openTransferField = null;
+    this.showTransferModal = true;
+  }
+
+  closeTransferModal(): void {
+    this.showTransferModal = false;
+    this.openTransferField = null;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.searchable-select')) {
+      this.openTransferField = null;
+    }
+  }
+
+  onProjectSearch(event: Event): void {
+    this.projectQuery = (event.target as HTMLInputElement).value;
+    this.transferProjectId = '';
+    this.transferSiteId = '';
+    this.siteQuery = '';
+    this.openTransferField = 'project';
+    this.projectHighlight = 0;
+  }
+
+  onSiteSearch(event: Event): void {
+    this.siteQuery = (event.target as HTMLInputElement).value;
+    this.transferSiteId = '';
+    this.openTransferField = 'site';
+    this.siteHighlight = 0;
+  }
+
+  clearTransferProject(): void {
+    this.transferProjectId = '';
+    this.projectQuery = '';
+    this.transferSiteId = '';
+    this.siteQuery = '';
+    this.openTransferField = 'project';
+    this.projectHighlight = 0;
+  }
+
+  clearTransferSite(): void {
+    this.transferSiteId = '';
+    this.siteQuery = '';
+    this.openTransferField = 'site';
+    this.siteHighlight = 0;
+  }
+
+  docBadgeClass(status: DocStatus): string {
+    if (status === 'valid') return 'doc-ok';
+    if (status === 'expiring') return 'doc-warn';
+    if (status === 'urgent' || status === 'expired') return 'doc-danger';
+    return 'doc-muted';
+  }
+
+  confirmTransfer(): void {
+    if (!this.employee || !this.transferProjectId || !this.transferSiteId || !this.transferDate) {
+      this.toast.show('Select project, site and date', 'error');
+      return;
+    }
+    if (this.allocation?.siteId === this.transferSiteId) {
+      this.toast.show('Employee is already on this site', 'error');
+      return;
+    }
+    if (!this.transferReason.trim()) {
+      this.toast.show('Enter a transfer reason', 'error');
+      return;
+    }
+    this.workforce.transferEmployee({
+      employeeId: String(this.employee.id || this.id),
+      empCode: this.employee.emp_id || String(this.employee.id || this.id),
+      toProjectId: this.transferProjectId,
+      toSiteId: this.transferSiteId,
+      effectiveDate: this.transferDate,
+      reason: this.transferReason,
+    });
+    this.toast.show(this.allocation ? 'Employee transferred' : 'Employee assigned to site', 'success');
+    this.closeTransferModal();
+    this.refreshWorkforce();
+  }
+
+  openTransferFieldBox(field: 'project' | 'site'): void {
+    this.openTransferField = field;
+    if (field === 'project') this.projectHighlight = 0;
+    if (field === 'site') this.siteHighlight = 0;
+  }
+
+  selectTransferProject(project: Project): void {
+    this.transferProjectId = project.id;
+    this.projectQuery = project.name;
+    this.transferSiteId = '';
+    this.siteQuery = '';
+    this.openTransferField = 'site';
+    this.siteHighlight = 0;
+  }
+
+  selectTransferSite(site: ProjectSite): void {
+    this.transferSiteId = site.id;
+    this.siteQuery = site.name;
+    this.openTransferField = null;
+  }
+
+  onTransferKey(event: KeyboardEvent, field: 'project' | 'site'): void {
+    const items = field === 'project' ? this.filteredProjects : this.filteredSites;
+    if (!items.length) return;
+    const highlightKey = field === 'project' ? 'projectHighlight' : 'siteHighlight';
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this[highlightKey] = Math.min(this[highlightKey] + 1, items.length - 1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this[highlightKey] = Math.max(this[highlightKey] - 1, 0);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const item = items[this[highlightKey]];
+      if (!item) return;
+      if (field === 'project') this.selectTransferProject(item as Project);
+      else this.selectTransferSite(item as ProjectSite);
+    } else if (event.key === 'Escape') {
+      this.openTransferField = null;
     }
   }
 }

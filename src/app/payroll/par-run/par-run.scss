@@ -726,6 +726,13 @@ $warm-dark: #1f2937;
     border-color: $warm-orange;
     color: $warm-orange;
   }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    color: $warm-gray;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
 }
 
 // Modal Styles
@@ -1013,6 +1020,11 @@ $warm-dark: #1f2937;
 
   .employee-month-header {
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 
     h6 {
       margin: 0;
@@ -1022,6 +1034,24 @@ $warm-dark: #1f2937;
       display: flex;
       align-items: center;
     }
+  }
+
+  .employee-month-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    .btn-secondary {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.8rem;
+    }
+  }
+
+  .selection-hint {
+    font-size: 0.75rem;
+    color: $warm-orange;
+    font-weight: 600;
   }
 }
 
@@ -1113,4 +1143,70 @@ $warm-dark: #1f2937;
 
 .modal-backdrop.show {
   z-index: 1050;
+}
+
+.searchable-select {
+  position: relative;
+
+  .searchable-select-input {
+    position: relative;
+  }
+
+  .form-control {
+    padding-right: 2rem;
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: $warm-gray;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+
+    &:hover {
+      color: $warm-dark;
+    }
+  }
+
+  .dropdown-menu {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+
+    .dropdown-item {
+      font-size: 0.875rem;
+      padding: 0.45rem 0.75rem;
+      cursor: pointer;
+
+      &.active,
+      &:hover:not(.disabled) {
+        background: #e1dfef;
+        color: $warm-orange;
+      }
+
+      &.disabled {
+        color: $warm-gray;
+        cursor: default;
+      }
+    }
+  }
+}
+
+.employee-month-table input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: $warm-orange;
 }
