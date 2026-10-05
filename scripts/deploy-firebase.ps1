@@ -22,6 +22,6 @@ if (-not (Test-Path $buildPath)) {
     exit 1
 }
 
-Write-Host "Deploying to Firebase Hosting (esarwawms)..." -ForegroundColor Cyan
-firebase deploy --only hosting --project esarwawms
+Write-Host "Deploying to Firebase Hosting (esarwademo-acpr)..." -ForegroundColor Cyan
+firebase deploy --only hosting --project logicflow-esarwa
 exit $LASTEXITCODE

@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "esarwawms",
+    "site": "esarwademo-acpr",
     "public": "dist/aa-son/browser",
     "ignore": [
       "firebase.json",
